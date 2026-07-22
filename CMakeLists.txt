@@ -21,6 +21,7 @@ set(SOURCES
     src/world/level.cpp
     src/world/tile.cpp
     src/world/room.cpp
+    src/world/room_library.cpp
     src/render/renderer.cpp
     src/render/render_stack.cpp
     src/render/layers/map_layer.cpp

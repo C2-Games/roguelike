@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <memory>
 
+#include "world/room_library.h"
 #include "world/tile.h"
 
 Level::Level(int roomCount) : roomCount(roomCount) { generate(); }
@@ -13,14 +14,13 @@ void Level::addRoom(Room room) {
 }
 
 void Level::generate() {
-  // Generate rooms, each with a randomly chosen floor-plan shape.
-  const RoomShape shapes[] = {RoomShape::Rectangular, RoomShape::LShape,
-                              RoomShape::TShape, RoomShape::CrossShape};
-  const int shapeCount = 4;
+  // Load the authored room library from disk. Path is relative to the game's
+  // working directory (repo root when launched from there).
+  RoomLibrary library;
+  library.scan("assets/rooms");
 
   for (int i = 0; i < roomCount; i++) {
-    RoomShape shape = shapes[rand() % shapeCount];
-    addRoom(Room::generate(i, shape));
+    addRoom(Room::loadFromFile(i, library.pickRandom()));
     roomConnections.push_back({});
   }
 

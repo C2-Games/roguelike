@@ -1,24 +1,12 @@
 #ifndef ROOM_H
 #define ROOM_H
 
+#include <filesystem>
+#include <string>
 #include <vector>
 
 #include "core/coordinate.h"
 #include "world/tile.h"
-
-/**
- * @brief Describes the floor-plan shape used when procedurally generating a
- * room.
- *
- * All shapes fit within the Room::WIDTH × Room::HEIGHT grid. Tiles outside
- * the carved region are set to TileType::Void.
- */
-enum class RoomShape {
-  Rectangular,  ///< Full 175×50 box.
-  LShape,       ///< Left column + bottom-right rectangle.
-  TShape,       ///< Full-width top bar + centred vertical stem.
-  CrossShape,   ///< Full-width horizontal band + full-height vertical band.
-};
 
 /**
  * @brief Represents a single room on the game map.
@@ -26,14 +14,18 @@ enum class RoomShape {
  * A Room owns a fixed-size 2-D tile grid (WIDTH × HEIGHT). Tiles outside the
  * shaped floor area are TileType::Void. Door positions on the room's perimeter
  * walls are tracked in doorPositions so Level can wire room connections.
+ *
+ * Rooms are authored as text files under assets/rooms/ and loaded via
+ * Room::loadFromFile.
  */
 struct Room {
   static constexpr int WIDTH = 175;  ///< Tile columns per room.
   static constexpr int HEIGHT = 50;  ///< Tile rows per room.
 
   int roomID;                             ///< Unique identifier for this room.
+  std::string name;                       ///< Human-readable name from @name.
   std::vector<std::vector<Tile>> tiles;   ///< Tile grid, indexed [x][y].
-  std::vector<Coordinate> doorPositions;  ///< Wall positions that are doors.
+  std::vector<Coordinate> doorPositions;  ///< Door positions in A,B,C,... order.
 
   /// True when the tile is inside the player's current FoV. Recomputed each
   /// frame by Level::updateVisibility. Indexed [x][y].
@@ -51,16 +43,25 @@ struct Room {
   Room(int id);
 
   /**
-   * @brief Procedurally generate a Room with the given shape.
+   * @brief Load a Room from a text file authored under assets/rooms/.
    *
-   * Fills the grid with Void, carves a floor region matching @p shape, converts
-   * perimeter floors to Walls, and places doors at well-known wall positions.
+   * File format:
+   *   - Optional header lines starting with `@key: value` (e.g. `@name: foo`,
+   *     `@levels: 1-3`). Unrecognized keys are ignored.
+   *   - Grid begins at the first non-`@` line. Must be exactly HEIGHT rows,
+   *     each exactly WIDTH characters wide.
+   *   - Tile legend: `#` Wall, `.` Floor, `o` Pillar, ` ` Void.
+   *   - Doors are labelled A-Z (or a-z). Each labelled cell becomes a Door
+   *     tile; doorPositions is populated in alphabetical order so the file
+   *     author controls which door is index 0, 1, etc.
    *
-   * @param roomID Unique identifier assigned to the generated room.
-   * @param shape  Floor-plan shape to carve.
+   * Throws std::runtime_error on any parse or dimension violation.
+   *
+   * @param roomID Unique identifier assigned to the loaded room.
+   * @param path   Path to the room file.
    * @return A fully populated Room ready to be added to a Level.
    */
-  static Room generate(int roomID, RoomShape shape);
+  static Room loadFromFile(int roomID, const std::filesystem::path& path);
 
   /**
    * @brief Reset every cell in the visible grid to false.

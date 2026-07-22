@@ -9,6 +9,7 @@ const std::unordered_map<int, TileAttributes> Tile::typeAttributes = {
     {static_cast<int>(TileType::Floor), {'.', true}},
     {static_cast<int>(TileType::Door), {'+', true}},
     {static_cast<int>(TileType::Void), {' ', false}},
+    {static_cast<int>(TileType::Pillar), {'o', false}},
 };
 
 char Tile::getSymbol() const {
