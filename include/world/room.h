@@ -27,6 +27,20 @@ struct Room {
   std::vector<std::vector<Tile>> tiles;   ///< Tile grid, indexed [x][y].
   std::vector<Coordinate> doorPositions;  ///< Door positions in A,B,C,... order.
 
+  /// Candidate coordinates marked with `!` in the room file. Level (or a
+  /// dedicated spawner) is responsible for rolling which of these become
+  /// actual enemies on first entry. The underlying tile is Floor.
+  std::vector<Coordinate> enemySpawns;
+
+  /// Candidate coordinates marked with `$` in the room file. Reserved for
+  /// loot placement by later systems. The underlying tile is Floor.
+  std::vector<Coordinate> lootSpawns;
+
+  /// Candidate coordinates marked with `?` in the room file. Reserved for
+  /// misc / random-item placement by later systems. The underlying tile is
+  /// Floor.
+  std::vector<Coordinate> itemSpawns;
+
   /// True when the tile is inside the player's current FoV. Recomputed each
   /// frame by Level::updateVisibility. Indexed [x][y].
   std::vector<std::vector<bool>> visible;
@@ -51,6 +65,10 @@ struct Room {
    *   - Grid begins at the first non-`@` line. Must be exactly HEIGHT rows,
    *     each exactly WIDTH characters wide.
    *   - Tile legend: `#` Wall, `.` Floor, `o` Pillar, ` ` Void.
+   *   - Spawn markers: `!` enemy spawn candidate, `$` loot spawn candidate,
+   *     `?` random-item spawn candidate. Each renders as Floor and its
+   *     coordinate is recorded on the matching Room::*Spawns vector so
+   *     downstream systems can roll actual entities on first entry.
    *   - Doors are labelled A-Z (or a-z). Each labelled cell becomes a Door
    *     tile; doorPositions is populated in alphabetical order so the file
    *     author controls which door is index 0, 1, etc.

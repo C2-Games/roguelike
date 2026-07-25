@@ -19,17 +19,33 @@ std::string trim(std::string s) {
 
 // Parse a single grid character into its TileType. Letters A-Z / a-z are
 // treated as door labels (returned as Door here; the label itself is captured
-// separately by the caller for ordering).
+// separately by the caller for ordering). Spawn markers (`!`, `$`, `?`) are
+// authored on top of walkable floor and therefore resolve to Floor here; the
+// spawn coordinate is recorded separately by the caller.
 TileType charToRoomTile(char c) {
   if (c == '#') return TileType::Wall;
   if (c == '.') return TileType::Floor;
   if (c == 'o') return TileType::Pillar;
   if (c == ' ') return TileType::Void;
+  if (c == '!' || c == '$' || c == '?') return TileType::Floor;
   if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) return TileType::Door;
   std::ostringstream oss;
   oss << "Unrecognized room-file character: '" << c << "' (0x" << std::hex
       << static_cast<int>(static_cast<unsigned char>(c)) << ")";
   throw std::runtime_error(oss.str());
+}
+
+// Category a spawn-marker character belongs to. `None` is returned for every
+// non-marker character so the caller can branch uniformly.
+enum class SpawnKind { None, Enemy, Loot, Item };
+
+SpawnKind charToSpawnKind(char c) {
+  switch (c) {
+    case '!': return SpawnKind::Enemy;
+    case '$': return SpawnKind::Loot;
+    case '?': return SpawnKind::Item;
+    default:  return SpawnKind::None;
+  }
 }
 
 }  // namespace
@@ -148,6 +164,12 @@ Room Room::loadFromFile(int roomID, const std::filesystem::path& path) {
                                    std::string(1, label) + "' in " +
                                    path.string());
         }
+      }
+      switch (charToSpawnKind(c)) {
+        case SpawnKind::Enemy: room.enemySpawns.push_back({x, y}); break;
+        case SpawnKind::Loot:  room.lootSpawns.push_back({x, y});  break;
+        case SpawnKind::Item:  room.itemSpawns.push_back({x, y});  break;
+        case SpawnKind::None:  break;
       }
     }
     ++y;
