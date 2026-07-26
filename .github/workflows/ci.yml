@@ -1,0 +1,188 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  # step 1: code checks.
+  clang-formatting:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install clang-format
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format
+
+      - name: Check formatting/linting
+        run: |
+          find src include -type f \( -name '*.cpp' -o -name '*.h' -o -name '*.hpp' \) \
+            -print0 | xargs -0 clang-format --dry-run --Werror -style=file
+
+  cppcheck-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install cppcheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cppcheck
+
+      - name: Run cppcheck
+        run: |
+          cppcheck \
+            --enable=all \
+            --std=c++20 \
+            --error-exitcode=1 \
+            --suppress=missingIncludeSystem \
+            src/ include/
+
+  codeql-checks:
+    runs-on: ubuntu-latest
+
+    permissions:
+      security-events: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: cpp
+
+      - uses: github/codeql-action/autobuild@v3
+
+      - uses: github/codeql-action/analyze@v3
+
+
+  tidy-linting:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-tidy libncurses-dev
+
+      - name: Restore cache
+        uses: actions/cache@v4
+        with:
+          path: build
+          key: build-${{ runner.os }}-${{ hashFiles('CMakeLists.txt', 'src/**', 'include/**') }}
+          restore-keys: |
+            build-${{ runner.os }}-
+
+      - name: Configure
+        run: |
+          cmake \
+            -B build \
+            -S . \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+      - name: Run clang-tidy
+        run: |
+          find src -name "*.cpp" -print0 | xargs -0 clang-tidy -p build
+
+  # step 2: build binaries (MacOS (silicon) & linux -- FUCK WINDOWS).
+  build:
+    needs:
+      - clang-formatting
+      - cppcheck-checks
+      - codeql-checks
+      - tidy-linting
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore cache
+        uses: actions/cache@v4
+        with:
+          path: build
+          key: build-${{ runner.os }}-${{ hashFiles('CMakeLists.txt', 'src/**', 'include/**') }}
+          restore-keys: |
+            build-${{ runner.os }}-
+
+      - name: Install ncurses (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libncurses-dev
+
+      - name: Install ncurses (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install ncurses
+
+      - name: Configure
+        run: |
+          EXTRA_ARGS=""
+          if [ "${{ runner.os }}" = "macOS" ]; then
+            EXTRA_ARGS="-DCMAKE_PREFIX_PATH=$(brew --prefix ncurses)"
+          fi
+
+          cmake \
+            -B build \
+            -S . \
+            -DCMAKE_BUILD_TYPE=Release \
+            $EXTRA_ARGS
+
+      - name: Build
+        run: cmake --build build --parallel
+
+  # step 3 (dependent): version bumping (if PR to main).
+  version-bumped:
+    if: github.base_ref == 'main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch main and tags
+        run: git fetch origin main --tags
+
+        # basically. just need to make sure the PR bumped the version.
+      - name: Validating VERSION bump
+        run: |
+          VERSION=$(tr -d '[:space:]' < VERSION)
+          TAG=$(git describe --tags --abbrev=0 origin/main 2>/dev/null | sed 's/^v//' || true)
+
+          echo "Current VERSION file: $VERSION"
+          echo "Latest tag on main:   ${TAG:-<none>}"
+
+          if [ -z "$TAG" ]; then
+            echo "No existing tag on main yet — nothing to compare against, passing."
+            exit 0
+          fi
+
+          if [ "$VERSION" = "$TAG" ]; then
+            echo "::error::VERSION ($VERSION) matches the latest tag on main ($TAG). Bump the VERSION file before merging a release PR."
+            exit 1
+          fi
+
+          echo "VERSION has been bumped ($TAG -> $VERSION)."

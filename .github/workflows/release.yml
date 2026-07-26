@@ -1,19 +1,38 @@
 name: Release
 
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches: [main]
 
+concurrency:
+  group: release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
-  build:
+  # step 1: build official MacOS & linus binaries & create artifacts for release.
+  build-binaries:
+    if: github.event.pull_request.merged == true
+
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            asset_name: linux-x86_64
+          - os: macos-latest
+            asset_name: macos-arm64
+
     runs-on: ${{ matrix.os }}
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
 
       - name: Install ncurses (Linux)
         if: runner.os == 'Linux'
@@ -23,63 +42,111 @@ jobs:
 
       - name: Install ncurses (macOS)
         if: runner.os == 'macOS'
-        run: brew install ncurses
+        run: |
+          brew install ncurses
 
       - name: Configure
-        run: cmake -B build -S .
-
-      - name: Build
-        run: cmake --build build -j
-
-      - name: Package artifact
         run: |
-          mkdir -p package
-          cp build/roguelike package/
-          cp -r assets package/
-          tar -czf roguelike-${{ matrix.os }}.tar.gz -C package .
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: roguelike-${{ matrix.os }}
-          path: roguelike-${{ matrix.os }}.tar.gz
-
-  check-version:
-    needs: build
-    runs-on: ubuntu-latest
-    outputs:
-      changed: ${{ steps.check.outputs.changed }}
-      version: ${{ steps.check.outputs.version }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - id: check
-        run: |
-          version=$(cat VERSION | tr -d '[:space:]')
-          latest_tag=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || true)
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          if [ "$version" != "$latest_tag" ]; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "changed=false" >> "$GITHUB_OUTPUT"
+          EXTRA_ARGS=""
+          if [ "${{ runner.os }}" = "macOS" ]; then
+            EXTRA_ARGS="-DCMAKE_PREFIX_PATH=$(brew --prefix ncurses)"
           fi
 
+          cmake \
+            -B build \
+            -S . \
+            -DCMAKE_BUILD_TYPE=Release \
+            $EXTRA_ARGS
+
+      - name: Build
+        run: |
+          cmake --build build \
+            --config Release \
+            --parallel
+
+      - name: Install
+        run: |
+          cmake --install build \
+            --prefix package
+
+      - name: Read version
+        id: version
+        run: |
+          echo "version=$(tr -d '[:space:]' < VERSION)" >> "$GITHUB_OUTPUT"
+
+      - name: Create release archive
+        run: |
+          tar -czf "roguelike-${{ steps.version.outputs.version }}-${{ matrix.asset_name }}.tar.gz" \
+            -C package .
+
+      - name: Generate checksum
+        run: |
+          sha256sum \
+            "roguelike-${{ steps.version.outputs.version }}-${{ matrix.asset_name }}.tar.gz" \
+            > "roguelike-${{ steps.version.outputs.version }}-${{ matrix.asset_name }}.sha256"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: roguelike-${{ matrix.asset_name }}
+          path: |
+            roguelike-${{ steps.version.outputs.version }}-${{ matrix.asset_name }}.tar.gz
+            roguelike-${{ steps.version.outputs.version }}-${{ matrix.asset_name }}.sha256
+
+  # publish release w/ binary distributions.
   publish-release:
-    needs: check-version
-    if: needs.check-version.outputs.changed == 'true'
+    needs: build-binaries
+
+    if: github.event.pull_request.merged == true
+
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
+
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 0
+
+      - name: Read version
+        id: version
+        run: |
+          echo "version=$(tr -d '[:space:]' < VERSION)" >> "$GITHUB_OUTPUT"
+
+      - name: Verify release tag
+        run: |
+          git fetch --tags
+
+          if git rev-parse "v${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
+            echo "::error::Tag v${{ steps.version.outputs.version }} already exists."
+            exit 1
+          fi
+
+      - name: Extract release notes
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          printf '%s\n' "$PR_BODY" \
+            | awk '/^## Release Notes/{f=1; next} /^## /{f=0} f' \
+            > notes.md
+
+          if [ ! -s notes.md ]; then
+            echo "::error::Release Notes section is missing from the pull request."
+            exit 1
+          fi
+
       - uses: actions/download-artifact@v4
         with:
           pattern: roguelike-*
-          path: dist
           merge-multiple: true
-      - uses: softprops/action-gh-release@v2
+          path: dist
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ needs.check-version.outputs.version }}
-          generate_release_notes: true
-          files: dist/*.tar.gz
+          name: Roguelike v${{ steps.version.outputs.version }}
+          tag_name: v${{ steps.version.outputs.version }}
+          target_commitish: ${{ github.event.pull_request.merge_commit_sha }}
+          body_path: notes.md
+          prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+          files: |
+            dist/*.tar.gz
+            dist/*.sha256
