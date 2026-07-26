@@ -23,6 +23,8 @@ set(SOURCES
     src/world/tile.cpp
     src/world/room.cpp
     src/world/room_library.cpp
+    src/world/weapon.cpp
+    src/world/projectile.cpp
     src/render/renderer.cpp
     src/render/render_stack.cpp
     src/render/layers/map_layer.cpp
@@ -41,6 +43,10 @@ target_include_directories(roguelike PRIVATE
 
 # Link ncurses.
 target_link_libraries(roguelike PRIVATE ${CURSES_LIBRARIES})
+
+# need to explicitly expose wide-character ncurses macro for MacOS/homebrew
+# builds.
+target_compile_definitions(roguelike PRIVATE _XOPEN_SOURCE_EXTENDED)
 
 # compiler warnings.
 target_compile_options(roguelike PRIVATE

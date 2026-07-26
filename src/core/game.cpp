@@ -2,6 +2,7 @@
 
 #include <ncurses.h>
 
+#include <algorithm>
 #include <chrono>
 #include <cstdlib>
 #include <iostream>
@@ -9,6 +10,7 @@
 
 #include "entities/enemy.h"
 #include "render/ui.h"
+#include "world/projectile.h"
 
 Game::Game(int width, int height, int fps)
     : termWidth(width),
@@ -28,9 +30,9 @@ Game::Game(int width, int height, int fps)
                                     geom.originX, level));
   renderer.addLayer(2, std::make_unique<EntityLayer>(
                            geom.winHeight, geom.winWidth, geom.originY,
-                           geom.originX, level, player, enemies));
+                           geom.originX, level, player, enemies, projectiles));
 
-  const int hud_margin = 5;
+  const int hud_margin = 2;
   renderer.addLayer(3, std::make_unique<HUDLayer>(termHeight, termWidth,
                                                   hud_margin, player, level));
 
@@ -91,19 +93,34 @@ void Game::handleInput() {
     case KEY_UP:
     case 'w':  // Up
       newPlayerPos.y -= 1;
+      player.setLastDirection(Coordinate(0, -1));
       break;
     case KEY_DOWN:
     case 's':  // Down
       newPlayerPos.y += 1;
+      player.setLastDirection(Coordinate(0, 1));
       break;
     case KEY_LEFT:
     case 'a':  // Left
       newPlayerPos.x -= 1;
+      player.setLastDirection(Coordinate(-1, 0));
       break;
     case KEY_RIGHT:
     case 'd':  // Right
       newPlayerPos.x += 1;
+      player.setLastDirection(Coordinate(1, 0));
       break;
+    case ' ': {
+      // "fire" a projectile in the player's last-faced direction.
+      Coordinate dir = player.getLastDirection();  // acts as an offset.
+      Coordinate spawnPos = player.getPosition() + dir;
+      const Weapon& weapon = player.getWeapon();
+
+      projectiles.push_back(std::make_unique<Projectile>(
+          spawnPos, dir, weapon.getDamage(), weapon.getSpeed(),
+          weapon.getRange(), weapon.getColor()));
+      return;
+    }
     case 'q':
     case 'Q':
       isRunning = false;
@@ -150,6 +167,20 @@ void Game::update() {
       }
     }
   }
+
+  // advance (actually fire them) projectiles, apply any collisions, and drop
+  // any that expired.
+  const Room& room = level.getCurrentRoom();
+  for (auto& projectile : projectiles) {
+    if (projectile->isActive()) {
+      projectile->update(room, enemies);
+    }
+  }
+  projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(),
+                                   [](const std::unique_ptr<Projectile>& p) {
+                                     return !p->isActive();
+                                   }),
+                    projectiles.end());
 }
 
 void Game::render() { renderer.compose(); };

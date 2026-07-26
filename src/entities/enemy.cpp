@@ -39,4 +39,7 @@ void Enemy::moveTowardPlayer(Coordinate playerPos) {
   }
 }
 
-void Enemy::takeDamage(int damage) { health -= damage; }
+void Enemy::takeDamage(int damage) {
+  health -= damage;
+  if (health < 0) health = 0;
+}

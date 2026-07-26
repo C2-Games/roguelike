@@ -71,3 +71,6 @@ Testing/
 
 # IDE config files/dirs
 .vscode/*
+
+# mac bs.
+*.DS_Store

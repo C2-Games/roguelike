@@ -13,6 +13,7 @@
 #include "render/layers/map_layer.h"
 #include "render/renderer.h"
 #include "world/level.h"
+#include "world/projectile.h"
 
 class Enemy;
 
@@ -43,6 +44,7 @@ class Game {
   Player player;
   Level level;
   std::vector<std::unique_ptr<Enemy>> enemies;
+  std::vector<std::unique_ptr<Projectile>> projectiles;
 
   bool isRunning;
   Renderer renderer;

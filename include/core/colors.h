@@ -13,9 +13,16 @@ enum class ColorPair : short {
   Default = 0,        ///< Terminal default (used inside the FoV).
   FogUnexplored = 1,  ///< Solid dark grey block over never-seen tiles.
   FogExplored = 2,    ///< Light grey terrain for previously seen tiles.
+
   // -- Reserved hooks (not yet initialised) ------------------------------
   EnemyDefault = 3,  ///< Placeholder for future enemy tinting.
   DoorDefault = 4,   ///< Placeholder for future door tinting.
+
+  // -- Weapon/projectile colors ------------------------------------------
+  WeaponBasic = 5,   ///< Basic Bolt color.
+  WeaponRapid = 6,   ///< Rapid Dart color.
+  WeaponHeavy = 7,   ///< Heavy Slug color.
+  WeaponSniper = 8,  ///< Sniper Round color.
 };
 
 /**

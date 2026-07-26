@@ -37,7 +37,16 @@ class HUDLayer : public RenderStack {
   void drawRoomID(int row, int col);
 
   /**
-   * @brief Draw the HP indicator and room ID each frame.
+   * @brief Draw the player's current weapon name and stats at a fixed
+   * screen position, tinted with the weapon's colour.
+   *
+   * @param row Absolute row to draw the weapon stats at.
+   * @param col Absolute column to draw the weapon stats at.
+   */
+  void drawWeaponStats(int row, int col);
+
+  /**
+   * @brief Draw the HP indicator, room ID, and weapon stats each frame.
    *
    */
   void doRender() override;

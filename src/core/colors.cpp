@@ -30,4 +30,10 @@ void initColors() {
   // the "shadow" of previously seen area stays visible after the FoV
   // moves off it.
   registerPair(ColorPair::FogExplored, COLOR_WHITE, kGreyDark);
+
+  // Weapon/projectile colors: one distinct foreground per WeaponType.
+  registerPair(ColorPair::WeaponBasic, COLOR_CYAN, COLOR_BLACK);
+  registerPair(ColorPair::WeaponRapid, COLOR_YELLOW, COLOR_BLACK);
+  registerPair(ColorPair::WeaponHeavy, COLOR_RED, COLOR_BLACK);
+  registerPair(ColorPair::WeaponSniper, COLOR_MAGENTA, COLOR_BLACK);
 }
