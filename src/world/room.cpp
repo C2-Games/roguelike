@@ -41,10 +41,14 @@ enum class SpawnKind { None, Enemy, Loot, Item };
 
 SpawnKind charToSpawnKind(char c) {
   switch (c) {
-    case '!': return SpawnKind::Enemy;
-    case '$': return SpawnKind::Loot;
-    case '?': return SpawnKind::Item;
-    default:  return SpawnKind::None;
+    case '!':
+      return SpawnKind::Enemy;
+    case '$':
+      return SpawnKind::Loot;
+    case '?':
+      return SpawnKind::Item;
+    default:
+      return SpawnKind::None;
   }
 }
 
@@ -144,8 +148,8 @@ Room Room::loadFromFile(int roomID, const std::filesystem::path& path) {
     if (static_cast<int>(line.size()) > WIDTH) {
       throw std::runtime_error(
           "Row " + std::to_string(y) + " in " + path.string() +
-          " is too wide: " + std::to_string(line.size()) +
-          " chars (expected " + std::to_string(WIDTH) + ")");
+          " is too wide: " + std::to_string(line.size()) + " chars (expected " +
+          std::to_string(WIDTH) + ")");
     }
     if (static_cast<int>(line.size()) < WIDTH) {
       line.append(WIDTH - line.size(), ' ');
@@ -154,10 +158,11 @@ Room Room::loadFromFile(int roomID, const std::filesystem::path& path) {
     for (int x = 0; x < WIDTH; ++x) {
       char c = line[x];
       TileType type = charToRoomTile(c);
-      room.tiles[x][y] = Tile(type, {x, y});
+      room.tiles[x][y] = Tile(type, Coordinate(x, y));
       if (type == TileType::Door) {
         // Normalize to uppercase for consistent ordering; a/A treated same.
-        char label = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+        char label =
+            static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
         auto [it, inserted] = labelledDoors.emplace(label, Coordinate{x, y});
         if (!inserted) {
           throw std::runtime_error("Duplicate door label '" +
@@ -166,10 +171,17 @@ Room Room::loadFromFile(int roomID, const std::filesystem::path& path) {
         }
       }
       switch (charToSpawnKind(c)) {
-        case SpawnKind::Enemy: room.enemySpawns.push_back({x, y}); break;
-        case SpawnKind::Loot:  room.lootSpawns.push_back({x, y});  break;
-        case SpawnKind::Item:  room.itemSpawns.push_back({x, y});  break;
-        case SpawnKind::None:  break;
+        case SpawnKind::Enemy:
+          room.enemySpawns.push_back(Coordinate(x, y));
+          break;
+        case SpawnKind::Loot:
+          room.lootSpawns.push_back(Coordinate(x, y));
+          break;
+        case SpawnKind::Item:
+          room.itemSpawns.push_back(Coordinate(x, y));
+          break;
+        case SpawnKind::None:
+          break;
       }
     }
     ++y;

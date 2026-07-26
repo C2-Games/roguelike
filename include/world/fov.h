@@ -17,7 +17,7 @@ class FOV {
    * FOV.
    *
    */
-  FOV(std::set<Coordinate> offsets);
+  explicit FOV(std::set<Coordinate> offsets);
 
   /**
    * @brief Determine if a position is in an origin's FOV.

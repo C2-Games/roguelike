@@ -4,7 +4,7 @@
 struct Coordinate {
   int x, y;
 
-  Coordinate(int x = 0, int y = 0) : x(x), y(y) {}
+  explicit Coordinate(int x = 0, int y = 0) : x(x), y(y) {}
 
   Coordinate operator+(const Coordinate& other) const {
     return Coordinate(x + other.x, y + other.y);

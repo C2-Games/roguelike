@@ -69,7 +69,7 @@ void Level::spawnEnemiesForRoom(int roomID) {
   for (int x = 0; x < Room::WIDTH; x++) {
     for (int y = 0; y < Room::HEIGHT; y++) {
       if (room.tiles[x][y].getType() == TileType::Floor) {
-        floorTiles.push_back({x, y});
+        floorTiles.push_back(Coordinate(x, y));
       }
     }
   }

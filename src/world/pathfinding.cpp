@@ -51,7 +51,7 @@ GoalMap computeGoalMap(const Room& room, Coordinate goal) {
       if (map[nx][ny] != kUnreachable) continue;  // already visited
       map[nx][ny] = nextDist;
       // Push the neighbor onto the frontier for further exploration.
-      frontier.push({nx, ny});
+      frontier.push(Coordinate(nx, ny));
     }
   }
 

@@ -1,7 +1,9 @@
 
 #include "world/fov.h"
 
+#include <algorithm>
 #include <cmath>
+#include <iterator>
 #include <set>
 #include <utility>
 #include <vector>
@@ -21,9 +23,9 @@ std::vector<Coordinate> FOV::absoluteFOV(Coordinate origin) const {
   positions.reserve(offsets.size());
 
   // iterate through & get the absolute position based on origin pos.
-  for (const Coordinate& offset : offsets) {
-    positions.push_back(origin + offset);
-  };
+  std::transform(
+      offsets.begin(), offsets.end(), std::back_inserter(positions),
+      [&origin](const Coordinate& offset) { return origin + offset; });
 
   return positions;
 };

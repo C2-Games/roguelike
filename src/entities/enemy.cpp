@@ -12,7 +12,7 @@
 #include "world/tile.h"
 
 namespace {
-  // A bunch of helper functions for enemy movement and pathfinding.
+// A bunch of helper functions for enemy movement and pathfinding.
 
 // 4-connected neighbor offsets (N, E, S, W). Matches the offsets used inside
 // pathfinding.cpp so enemy movement stays consistent with the goal map.
@@ -30,12 +30,11 @@ bool inBounds(int x, int y) {
 bool isOccupiedByOtherEnemy(
     const Enemy* self, Coordinate coord,
     const std::vector<std::unique_ptr<Enemy>>& allEnemies) {
-  for (const auto& e : allEnemies) {
-    if (e.get() == self) continue;
-    if (!e->isAlive()) continue;
-    if (e->getPosition() == coord) return true;
-  }
-  return false;
+  return std::any_of(allEnemies.begin(), allEnemies.end(),
+                     [&](const std::unique_ptr<Enemy>& e) {
+                       return e.get() != self && e->isAlive() &&
+                              e->getPosition() == coord;
+                     });
 }
 
 // Pick a strictly-decreasing goal-map neighbor to step onto.
@@ -70,7 +69,7 @@ Coordinate stepDownGradient(
     if (!inBounds(nx, ny)) continue;
     int d = map[nx][ny];
     if (d >= currentDist) continue;  // must strictly decrease
-    candidates.push_back({{nx, ny}, d});
+    candidates.push_back({Coordinate(nx, ny), d});
   }
 
   // Fisher-Yates shuffle for random tiebreaking. std::rand() matches the
@@ -84,10 +83,11 @@ Coordinate stepDownGradient(
       candidates.begin(), candidates.end(),
       [](const Cand& a, const Cand& b) { return a.dist < b.dist; });
 
-  for (const Cand& c : candidates) {
-    if (!isOccupiedByOtherEnemy(self, c.coord, allEnemies)) return c.coord;
-  }
-  return pos;
+  auto it =
+      std::find_if(candidates.begin(), candidates.end(), [&](const Cand& c) {
+        return !isOccupiedByOtherEnemy(self, c.coord, allEnemies);
+      });
+  return it != candidates.end() ? it->coord : pos;
 }
 
 // Pick a random walkable Floor neighbor not occupied by another enemy.
@@ -104,12 +104,11 @@ Coordinate pickWanderTile(
     int ny = pos.y + kDy[i];
     if (!inBounds(nx, ny)) continue;
     if (room.tiles[nx][ny].getType() != TileType::Floor) continue;
-    if (isOccupiedByOtherEnemy(self, {nx, ny}, allEnemies)) continue;
-    candidates.push_back({nx, ny});
+    if (isOccupiedByOtherEnemy(self, Coordinate(nx, ny), allEnemies)) continue;
+    candidates.push_back(Coordinate(nx, ny));
   }
   if (candidates.empty()) return pos;
-  return candidates[static_cast<std::size_t>(std::rand()) %
-                    candidates.size()];
+  return candidates[static_cast<std::size_t>(std::rand()) % candidates.size()];
 }
 
 }  // namespace
@@ -151,7 +150,7 @@ void Enemy::moveTowardPlayer(
   }
 
   // Determine the tile to attempt to step onto.
-  Coordinate nextTile = position;  // default: stay
+  Coordinate nextTile;
   if (target.has_value()) {
     const GoalMap& map = level.getGoalMap(level.getCurrentRoomID(), *target);
     Coordinate chosen = stepDownGradient(this, position, map, allEnemies);

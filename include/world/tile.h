@@ -22,7 +22,8 @@ class Tile {
    * @param type Type of tile. By default, TileType::Wall.
    * @param position Position of tile.
    */
-  Tile(TileType type = TileType::Wall, Coordinate position = Coordinate(0, 0));
+  explicit Tile(TileType type = TileType::Wall,
+                Coordinate position = Coordinate(0, 0));
 
   /**
    * @brief Get the tile symbol.
