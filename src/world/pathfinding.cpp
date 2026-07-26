@@ -9,7 +9,7 @@ namespace {
 
 // Returns true if the tile at (x, y) blocks 4-connected pathfinding for
 // enemies. Walls, Void, Pillars, and Doors are all blocking; only Floor is
-// passable. 
+// passable.
 bool isBlocking(const Room& room, int x, int y) {
   if (x < 0 || x >= Room::WIDTH || y < 0 || y >= Room::HEIGHT) return true;
   TileType type = room.tiles[x][y].getType();
@@ -19,8 +19,7 @@ bool isBlocking(const Room& room, int x, int y) {
 }  // namespace
 
 GoalMap computeGoalMap(const Room& room, Coordinate goal) {
-  GoalMap map(Room::WIDTH,
-              std::vector<int>(Room::HEIGHT, kUnreachable));
+  GoalMap map(Room::WIDTH, std::vector<int>(Room::HEIGHT, kUnreachable));
 
   // Reject out-of-bounds or blocking goal tiles up front. Returning the
   // all-kUnreachable map is a well-defined "no reachable path" result the
