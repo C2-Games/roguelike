@@ -159,7 +159,7 @@ void Game::update() {
 
   for (auto& enemy : enemies) {
     if (enemy->isAlive()) {
-      enemy->moveTowardPlayer(playerPos);
+      enemy->moveTowardPlayer(playerPos, level, enemies);
 
       // Check collision with player
       if (enemy->getPosition() == playerPos) {

@@ -8,6 +8,7 @@
 
 #include "core/coordinate.h"
 #include "entities/enemy.h"
+#include "world/pathfinding.h"
 #include "world/room.h"
 
 /**
@@ -105,6 +106,35 @@ class Level {
    */
   void setCurrentRoomID(int id) { currentRoomID = id; }
 
+  /**
+   * @brief Fetch (and lazily compute) the enemy goal map for a given target.
+   *
+   * A goal map is a BFS distance grid rooted at `goal`, treating Walls, Void,
+   * Pillars, and Doors as blocking (see computeGoalMap). Multiple enemies in
+   * the same room targeting the same coordinate reuse a single cached map.
+   *
+   * The cache is keyed by (roomID, goal) and remains valid as long as room
+   * geometry does not change. When the cache grows beyond a soft cap it is
+   * cleared wholesale; entries are then recomputed on demand.
+   *
+   * Callers must not retain the returned reference across a call to
+   * clearGoalMapCache() (nor across a call that could trigger the internal
+   * cap-based eviction — currently only another getGoalMap() call).
+   *
+   * @param roomID Room whose tile grid drives the BFS.
+   * @param goal   Target tile the map is rooted at (distance 0).
+   * @return Const reference to the cached GoalMap.
+   */
+  const GoalMap& getGoalMap(int roomID, Coordinate goal);
+
+  /**
+   * @brief Drop every cached goal map.
+   *
+   * Cheap; entries regenerate on next getGoalMap() call. Intended for use if
+   * room geometry ever mutates (not currently possible)
+   */
+  void clearGoalMapCache() { goalMapCache.clear(); }
+
   // Getters
   int getRoomCount() const { return roomCount; }
   int getCurrentRoomID() const { return currentRoomID; }
@@ -120,6 +150,18 @@ class Level {
   std::map<int, std::vector<std::unique_ptr<Enemy>>>
       roomEnemies;                  ///< Per-room enemy lists.
   std::map<int, bool> roomVisited;  ///< Lazy-init visit flags.
+
+  /// Lazily-populated cache of goal maps keyed by (roomID, target coord).
+  /// Since room geometry is immutable at runtime, entries stay valid until
+  /// evicted for capacity reasons. See getGoalMap() for reference-lifetime
+  /// rules.
+  std::map<std::pair<int, Coordinate>, GoalMap> goalMapCache;
+
+  /// Soft cap on cached goal maps. When exceeded, the cache is cleared
+  /// wholesale — cheap since BFS is microseconds at Room::WIDTH x HEIGHT.
+  /// Sized to comfortably hold the current player position plus a handful
+  /// of active "last known" coords per room across several rooms.
+  static constexpr std::size_t kGoalMapCacheCap = 32;
 
   /**
    * @brief Spawn fresh enemies for the given room and store them in
