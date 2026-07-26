@@ -6,7 +6,7 @@
 
 #include "core/coordinate.h"
 
-enum class TileType { Wall, Floor, Door, Void };
+enum class TileType { Wall, Floor, Door, Void, Pillar };
 
 struct TileAttributes {
   char symbol;
