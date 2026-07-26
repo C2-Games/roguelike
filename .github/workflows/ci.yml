@@ -47,6 +47,7 @@ jobs:
             --error-exitcode=1 \
             --suppress=missingIncludeSystem \
             --suppress=unusedFunction \
+            -I include \
             src/ include/
 
   codeql-checks:
