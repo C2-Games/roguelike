@@ -43,6 +43,10 @@ target_include_directories(roguelike PRIVATE
 # Link ncurses.
 target_link_libraries(roguelike PRIVATE ${CURSES_LIBRARIES})
 
+# need to explicitly expose wide-character ncurses macro for MacOS/homebrew
+# builds.
+target_compile_definitions(roguelike PRIVATE _XOPEN_SOURCE_EXTENDED)
+
 # compiler warnings.
 target_compile_options(roguelike PRIVATE
     $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wpedantic>
