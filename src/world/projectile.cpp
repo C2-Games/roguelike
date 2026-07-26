@@ -1,5 +1,7 @@
 #include "world/projectile.h"
 
+#include <algorithm>
+
 Projectile::Projectile(Coordinate position, Coordinate direction, int damage,
                        int tilesPerTick, int range, ColorPair color)
     : position(position),
@@ -28,15 +30,13 @@ void Projectile::update(const Room& room,
     }
 
     // stop on first alive enemy hit.
-    bool hitEnemy = false;
-    for (auto& enemy : enemies) {
-      if (enemy->isAlive() && enemy->getPosition() == candidate) {
-        enemy->takeDamage(damage);
-        hitEnemy = true;
-        break;
-      }
-    }
-    if (hitEnemy) {
+    auto hit = std::find_if(enemies.begin(), enemies.end(),
+                            [&candidate](const std::unique_ptr<Enemy>& enemy) {
+                              return enemy->isAlive() &&
+                                     enemy->getPosition() == candidate;
+                            });
+    if (hit != enemies.end()) {
+      (*hit)->takeDamage(damage);
       deactivate();
       return;
     }

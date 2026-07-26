@@ -1,0 +1,158 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - VERSION
+
+concurrency:
+  group: release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  # step 1: gate — only release if VERSION differs from the latest tag on main.
+  check-version:
+    runs-on: ubuntu-latest
+
+    outputs:
+      should_release: ${{ steps.check.outputs.should_release }}
+      version: ${{ steps.check.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compare VERSION against latest tag
+        id: check
+        run: |
+          VERSION=$(tr -d '[:space:]' < VERSION)
+          TAG=$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || true)
+
+          echo "Current VERSION file: $VERSION"
+          echo "Latest tag on main:   ${TAG:-<none>}"
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          if [ "$VERSION" = "$TAG" ]; then
+            echo "VERSION matches latest tag — nothing to release."
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "VERSION differs from latest tag — releasing."
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  # step 2: build official MacOS & linux binaries & create artifacts for release.
+  build-binaries:
+    needs: check-version
+    if: needs.check-version.outputs.should_release == 'true'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            asset_name: linux-x86_64
+          - os: macos-latest
+            asset_name: macos-arm64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install ncurses (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libncurses-dev
+
+      - name: Install ncurses (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install ncurses
+
+      - name: Configure
+        run: |
+          EXTRA_ARGS=""
+          if [ "${{ runner.os }}" = "macOS" ]; then
+            EXTRA_ARGS="-DCMAKE_PREFIX_PATH=$(brew --prefix ncurses)"
+          fi
+
+          cmake \
+            -B build \
+            -S . \
+            -DCMAKE_BUILD_TYPE=Release \
+            $EXTRA_ARGS
+
+      - name: Build
+        run: |
+          cmake --build build \
+            --config Release \
+            --parallel
+
+      - name: Install
+        run: |
+          cmake --install build \
+            --prefix package
+
+      - name: Create release archive
+        run: |
+          tar -czf "roguelike-${{ needs.check-version.outputs.version }}-${{ matrix.asset_name }}.tar.gz" \
+            -C package .
+
+      - name: Generate checksum
+        run: |
+          sha256sum \
+            "roguelike-${{ needs.check-version.outputs.version }}-${{ matrix.asset_name }}.tar.gz" \
+            > "roguelike-${{ needs.check-version.outputs.version }}-${{ matrix.asset_name }}.sha256"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: roguelike-${{ matrix.asset_name }}
+          path: |
+            roguelike-${{ needs.check-version.outputs.version }}-${{ matrix.asset_name }}.tar.gz
+            roguelike-${{ needs.check-version.outputs.version }}-${{ matrix.asset_name }}.sha256
+
+  # publish release w/ binary distributions.
+  publish-release:
+    needs: [check-version, build-binaries]
+    if: needs.check-version.outputs.should_release == 'true'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify release tag
+        run: |
+          git fetch --tags
+
+          if git rev-parse "v${{ needs.check-version.outputs.version }}" >/dev/null 2>&1; then
+            echo "::error::Tag v${{ needs.check-version.outputs.version }} already exists."
+            exit 1
+          fi
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: roguelike-*
+          merge-multiple: true
+          path: dist
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Roguelike v${{ needs.check-version.outputs.version }}
+          tag_name: v${{ needs.check-version.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true
+          prerelease: ${{ contains(needs.check-version.outputs.version, '-') }}
+          files: |
+            dist/*.tar.gz
+            dist/*.sha256

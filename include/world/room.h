@@ -22,10 +22,11 @@ struct Room {
   static constexpr int WIDTH = 175;  ///< Tile columns per room.
   static constexpr int HEIGHT = 50;  ///< Tile rows per room.
 
-  int roomID;                             ///< Unique identifier for this room.
-  std::string name;                       ///< Human-readable name from @name.
-  std::vector<std::vector<Tile>> tiles;   ///< Tile grid, indexed [x][y].
-  std::vector<Coordinate> doorPositions;  ///< Door positions in A,B,C,... order.
+  int roomID;                            ///< Unique identifier for this room.
+  std::string name;                      ///< Human-readable name from @name.
+  std::vector<std::vector<Tile>> tiles;  ///< Tile grid, indexed [x][y].
+  std::vector<Coordinate>
+      doorPositions;  ///< Door positions in A,B,C,... order.
 
   /// Candidate coordinates marked with `!` in the room file. Level (or a
   /// dedicated spawner) is responsible for rolling which of these become
@@ -54,7 +55,7 @@ struct Room {
    *
    * @param id Unique room identifier.
    */
-  Room(int id);
+  explicit Room(int id);
 
   /**
    * @brief Load a Room from a text file authored under assets/rooms/.

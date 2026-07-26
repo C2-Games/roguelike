@@ -1,15 +1,19 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.16)
+
 project(Roguelike)
+
+# project config.
+include(GNUInstallDirs)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Find and configure ncurses (wide-character build).
+# dependencies.
 set(CURSES_NEED_NCURSES TRUE)
 set(CURSES_NEED_WIDE TRUE)
 find_package(Curses REQUIRED)
 
-# Source files.
+# source files.
 set(SOURCES
     src/main.cpp
     src/core/colors.cpp
@@ -34,23 +38,37 @@ set(SOURCES
     src/render/layers/debug_layer.cpp
 )
 
-# Create executable.
+# executable.
 add_executable(roguelike ${SOURCES})
 
+# include directories.
 target_include_directories(roguelike PRIVATE
-    ${CMAKE_SOURCE_DIR}/include
+    ${PROJECT_SOURCE_DIR}/include
     ${CURSES_INCLUDE_DIRS}
 )
 
-# Link ncurses.
-target_link_libraries(roguelike PRIVATE ${CURSES_LIBRARIES})
+# linked thrid-party libraries.
+target_link_libraries(roguelike PRIVATE
+    ${CURSES_LIBRARIES}
+)
 
-# need to explicitly expose wide-character ncurses macro for MacOS/homebrew
-# builds.
-target_compile_definitions(roguelike PRIVATE _XOPEN_SOURCE_EXTENDED)
+# expose the wide-char ncurses API for macOS/Homebrew builds.
+target_compile_definitions(roguelike PRIVATE
+    _XOPEN_SOURCE_EXTENDED
+)
 
 # compiler warnings.
 target_compile_options(roguelike PRIVATE
     $<$<CXX_COMPILER_ID:GNU,Clang>:-Wall -Wextra -Wpedantic>
     $<$<CXX_COMPILER_ID:MSVC>:/W4>
+)
+
+# installation.
+install(TARGETS roguelike
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+install(FILES
+    README.md
+    DESTINATION .
 )
