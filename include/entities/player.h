@@ -4,6 +4,7 @@
 #include "core/coordinate.h"
 #include "entities/entity.h"
 #include "world/fov.h"
+#include "world/weapon.h"
 
 class Player : public Entity {
  public:
@@ -69,11 +70,34 @@ class Player : public Entity {
    */
   void setSightRadius(int rx, int ry);
 
+  /**
+   * @brief Get the direction the player last faced (from movement input).
+   *
+   * @return Coordinate
+   */
+  Coordinate getLastDirection() const { return lastDirection; }
+
+  /**
+   * @brief Set the direction the player last faced.
+   *
+   * @param dir New facing direction.
+   */
+  void setLastDirection(Coordinate dir) { lastDirection = dir; }
+
+  /**
+   * @brief Get the player's currently equipped weapon.
+   *
+   * @return const Weapon&
+   */
+  const Weapon& getWeapon() const { return weapon; }
+
  private:
   int maxHealth;
   int sightRx;
   int sightRy;
   FOV fov;
+  Coordinate lastDirection = Coordinate(1, 0);
+  Weapon weapon;
 };
 
 #endif

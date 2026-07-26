@@ -8,6 +8,7 @@
 #include "entities/player.h"
 #include "render/render_stack.h"
 #include "world/level.h"
+#include "world/projectile.h"
 
 class EntityLayer : public RenderStack {
  public:
@@ -26,16 +27,24 @@ class EntityLayer : public RenderStack {
    * entities outside the player's sight are not drawn.
    * @param player The player entity to draw each frame.
    * @param enemies The enemy list to draw each frame.
+   * @param projectiles The projectile list to draw each frame.
    */
   EntityLayer(int h, int w, int y, int x, const Level& level,
               const Player& player,
-              const std::vector<std::unique_ptr<Enemy>>& enemies);
+              const std::vector<std::unique_ptr<Enemy>>& enemies,
+              const std::vector<std::unique_ptr<Projectile>>& projectiles);
 
   /**
    * @brief Draw enemy entities that are inside the player's current FoV.
    *
    */
   void drawEnemies();
+
+  /**
+   * @brief Draw active projectiles that are inside the player's current FoV.
+   *
+   */
+  void drawProjectiles();
 
   /**
    * @brief Draw player entity.
@@ -61,6 +70,7 @@ class EntityLayer : public RenderStack {
   const Level& level;
   const Player& player;
   const std::vector<std::unique_ptr<Enemy>>& enemies;
+  const std::vector<std::unique_ptr<Projectile>>& projectiles;
 };
 
 #endif
