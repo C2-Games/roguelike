@@ -4,8 +4,9 @@ project(Roguelike)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Find and configure ncurses.
+# Find and configure ncurses (wide-character build).
 set(CURSES_NEED_NCURSES TRUE)
+set(CURSES_NEED_WIDE TRUE)
 find_package(Curses REQUIRED)
 
 # Source files.
