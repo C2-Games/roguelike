@@ -72,3 +72,5 @@ install(FILES
     README.md
     DESTINATION .
 )
+
+install(DIRECTORY assets DESTINATION .)
