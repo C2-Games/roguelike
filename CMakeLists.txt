@@ -28,6 +28,7 @@ set(SOURCES
     src/world/room.cpp
     src/world/room_library.cpp
     src/world/pathfinding.cpp
+    src/world/goal_map_cache.cpp
     src/world/weapon.cpp
     src/world/projectile.cpp
     src/render/renderer.cpp
