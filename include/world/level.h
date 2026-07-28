@@ -11,6 +11,8 @@
 #include "world/pathfinding.h"
 #include "world/room.h"
 
+struct GameServices;
+
 /**
  * @brief Describes a one-way portal from a door tile to a destination room.
  *
@@ -34,8 +36,11 @@ class Level {
    * @brief Construct a Level and immediately generate its rooms.
    *
    * @param roomCount Number of rooms to generate.
+   * @param services  Shared services (RNG source) used by room selection
+   *   and enemy spawn placement. Stored by reference; must outlive the
+   *   Level.
    */
-  explicit Level(int roomCount);
+  explicit Level(int roomCount, GameServices& services);
 
   /**
    * @brief Add a room to the level.
@@ -143,6 +148,7 @@ class Level {
  private:
   int roomCount;
   int currentRoomID = 0;
+  GameServices& services;                         ///< Injected RNG source.
   std::map<int, Room> roomList;                   ///< All rooms keyed by ID.
   std::vector<std::vector<int>> roomConnections;  ///< Adjacency list.
   std::map<std::pair<int, Coordinate>, DoorConnection>

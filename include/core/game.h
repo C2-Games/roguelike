@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 
+#include "core/services.h"
 #include "entities/enemy.h"
 #include "entities/player.h"
 #include "render/layers/debug_layer.h"
@@ -41,6 +42,8 @@ class Game {
   int termWidth, termHeight;
   const int fps;
   double currentFps;
+  /// Keep this before player and level to ensure proper initialization order.
+  GameServices services;
   Player player;
   Level level;
   std::vector<std::unique_ptr<Enemy>> enemies;
