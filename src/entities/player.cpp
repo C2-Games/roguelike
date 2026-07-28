@@ -2,7 +2,7 @@
 
 #include "core/coordinate.h"
 #include "entities/entity.h"
-#include "world/fov.h"
+#include "entities/fov.h"
 
 Player::Player(int x, int y, int health, int speed, int sightRx, int sightRy)
     : Entity(x, y, '@', health, speed),
