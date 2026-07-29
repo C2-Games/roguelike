@@ -6,7 +6,7 @@
 #include <utility>
 
 #include "core/coordinate.h"
-#include "world/pathfinding.h"
+#include "world/systems/pathfinding.h"
 
 struct Room;
 

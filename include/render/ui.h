@@ -3,7 +3,7 @@
 
 #include <algorithm>
 
-#include "world/room.h"
+#include "world/map/room.h"
 
 struct UI {
   int winHeight, winWidth;  ///< Window size, clamped to the terminal size.

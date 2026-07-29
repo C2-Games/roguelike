@@ -7,8 +7,8 @@
 #include "entities/enemy.h"
 #include "entities/player.h"
 #include "render/render_stack.h"
-#include "world/projectile.h"
-#include "world/room_graph.h"
+#include "world/map/room_graph.h"
+#include "world/objects/projectile.h"
 
 class EntityLayer : public RenderStack {
  public:

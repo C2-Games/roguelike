@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "core/coordinate.h"
-#include "world/room.h"
+#include "world/map/room.h"
 
 struct GameServices;
 

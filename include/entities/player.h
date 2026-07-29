@@ -4,7 +4,7 @@
 #include "core/coordinate.h"
 #include "entities/entity.h"
 #include "entities/fov.h"
-#include "world/weapon.h"
+#include "world/objects/weapon.h"
 
 class Player : public Entity {
  public:

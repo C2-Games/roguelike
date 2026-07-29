@@ -8,10 +8,10 @@
 #include "core/coordinate.h"
 #include "core/services.h"
 #include "entities/move_context.h"
-#include "world/goal_map_cache.h"
-#include "world/pathfinding.h"
-#include "world/room.h"
-#include "world/tile.h"
+#include "world/map/room.h"
+#include "world/map/tile.h"
+#include "world/systems/goal_map_cache.h"
+#include "world/systems/pathfinding.h"
 
 namespace {
 // A bunch of helper functions for enemy movement and pathfinding.

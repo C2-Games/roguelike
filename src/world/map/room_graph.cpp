@@ -1,10 +1,10 @@
-#include "world/room_graph.h"
+#include "world/map/room_graph.h"
 
 #include <utility>
 
 #include "core/paths.h"
 #include "core/services.h"
-#include "world/room_library.h"
+#include "world/map/room_library.h"
 
 RoomGraph::RoomGraph(int roomCount, GameServices& services)
     : roomCount_(roomCount), services_(services) {

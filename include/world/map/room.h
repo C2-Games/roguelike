@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "core/coordinate.h"
-#include "world/tile.h"
+#include "world/map/tile.h"
 
 /**
  * @brief Represents a single room on the game map.

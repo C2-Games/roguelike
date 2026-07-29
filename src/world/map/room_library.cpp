@@ -1,4 +1,4 @@
-#include "world/room_library.h"
+#include "world/map/room_library.h"
 
 #include <algorithm>
 #include <stdexcept>

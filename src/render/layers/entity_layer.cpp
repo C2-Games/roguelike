@@ -5,7 +5,7 @@
 #include <memory>
 
 #include "render/ui.h"
-#include "world/room.h"
+#include "world/map/room.h"
 
 EntityLayer::EntityLayer(
     int h, int w, int y, int x, const RoomGraph& graph, const Player& player,

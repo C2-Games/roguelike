@@ -1,8 +1,8 @@
-#include "world/goal_map_cache.h"
+#include "world/systems/goal_map_cache.h"
 
 #include <utility>
 
-#include "world/room.h"
+#include "world/map/room.h"
 
 const GoalMap& GoalMapCache::getOrCompute(const Room& room,
                                           Coordinate goal) const {

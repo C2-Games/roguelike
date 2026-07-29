@@ -12,9 +12,9 @@
 #include "entities/enemy_registry.h"
 #include "entities/move_context.h"
 #include "render/ui.h"
-#include "world/projectile.h"
-#include "world/projectile_context.h"
-#include "world/visibility.h"
+#include "world/objects/projectile.h"
+#include "world/objects/projectile_context.h"
+#include "world/systems/visibility.h"
 
 Game::Game(int width, int height, int fps)
     : termWidth(width),

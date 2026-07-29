@@ -1,4 +1,4 @@
-#include "world/tile.h"
+#include "world/map/tile.h"
 
 Tile::Tile(TileType type, Coordinate position)
     : type(type), position(position) {}

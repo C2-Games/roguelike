@@ -1,7 +1,7 @@
-#include "world/visibility.h"
+#include "world/systems/visibility.h"
 
 #include "entities/fov.h"
-#include "world/room.h"
+#include "world/map/room.h"
 
 namespace visibility {
 

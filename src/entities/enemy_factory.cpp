@@ -5,8 +5,8 @@
 #include "core/coordinate.h"
 #include "core/services.h"
 #include "entities/enemy.h"
-#include "world/room.h"
-#include "world/tile.h"
+#include "world/map/room.h"
+#include "world/map/tile.h"
 
 namespace enemy_factory {
 

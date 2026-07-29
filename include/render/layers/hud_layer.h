@@ -3,7 +3,7 @@
 
 #include "entities/player.h"
 #include "render/render_stack.h"
-#include "world/room_graph.h"
+#include "world/map/room_graph.h"
 
 class HUDLayer : public RenderStack {
  public:

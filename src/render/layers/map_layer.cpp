@@ -4,7 +4,7 @@
 
 #include "core/colors.h"
 #include "render/ui.h"
-#include "world/room.h"
+#include "world/map/room.h"
 
 MapLayer::MapLayer(int h, int w, int y, int x, const RoomGraph& graph)
     : RenderStack(h, w, y, x), graph(graph) {}

@@ -6,7 +6,7 @@
 
 #include "core/colors.h"
 #include "render/ui.h"
-#include "world/weapon.h"
+#include "world/objects/weapon.h"
 
 HUDLayer::HUDLayer(int h, int w, int margin, const Player& player,
                    const RoomGraph& graph)
