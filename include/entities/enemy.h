@@ -36,7 +36,7 @@ class Enemy : public Entity {
    *
    * @return int
    */
-  int getAttackDamage() const { return attackDamage; };
+  int getAttackDamage() const { return attackDamage_; };
 
   /**
    * @brief Reduce enemy health by damage amount.
@@ -69,22 +69,22 @@ class Enemy : public Entity {
   void moveTowardPlayer(const MoveContext& ctx);
 
  private:
-  int attackDamage;
-  FOV attackFOV;
+  int attackDamage_;
+  FOV attackFOV_;
 
   /// Turns (actual moves) the enemy will keep hunting toward the last-seen
   /// player tile after losing line of sight. Set at construction, immutable
   /// afterward.
-  int chaseMemoryDuration;
+  int chaseMemoryDuration_;
 
   /// Remaining hunting-memory moves. Decrements by one per actual move
   /// while the player is out of FoV. Reset to chaseMemoryDuration whenever
   /// the player re-enters FoV.
-  int chaseTurnsRemaining;
+  int chaseTurnsRemaining_;
 
   /// Last tile the player was seen on. Empty when the enemy has never
   /// spotted the player or when chase memory has expired.
-  std::optional<Coordinate> lastKnownPlayerPos;
+  std::optional<Coordinate> lastKnownPlayerPos_;
 };
 
 #endif

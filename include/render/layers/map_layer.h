@@ -39,7 +39,7 @@ class MapLayer : public RenderStack {
   void onResize(int termHeight, int termWidth) override;
 
  private:
-  const RoomGraph& graph;
+  const RoomGraph& graph_;
 };
 
 #endif

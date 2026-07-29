@@ -67,10 +67,10 @@ class EntityLayer : public RenderStack {
   void onResize(int termHeight, int termWidth) override;
 
  private:
-  const RoomGraph& graph;
-  const Player& player;
-  const std::vector<std::unique_ptr<Enemy>>& enemies;
-  const std::vector<std::unique_ptr<Projectile>>& projectiles;
+  const RoomGraph& graph_;
+  const Player& player_;
+  const std::vector<std::unique_ptr<Enemy>>& enemies_;
+  const std::vector<std::unique_ptr<Projectile>>& projectiles_;
 };
 
 #endif

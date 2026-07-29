@@ -5,16 +5,16 @@
 
 Projectile::Projectile(Coordinate position, Coordinate direction, int damage,
                        int tilesPerTick, int range, ColorPair color)
-    : position(position),
-      direction(direction),
-      damage(damage),
-      tilesPerTick(tilesPerTick),
-      remainingRange(range),
-      color(color) {}
+    : position_(position),
+      direction_(direction),
+      damage_(damage),
+      tilesPerTick_(tilesPerTick),
+      remainingRange_(range),
+      color_(color) {}
 
 void Projectile::update(const ProjectileContext& ctx) {
-  for (int i = 0; i < tilesPerTick; ++i) {
-    Coordinate candidate = position + direction;
+  for (int i = 0; i < tilesPerTick_; ++i) {
+    Coordinate candidate = position_ + direction_;
 
     // Check before touching tile.
     if (candidate.x < 0 || candidate.x >= Room::WIDTH || candidate.y < 0 ||
@@ -32,15 +32,15 @@ void Projectile::update(const ProjectileContext& ctx) {
     // Try to damage an entity at the candidate tile. The context's tryHit
     // closure encapsulates "who lives on this tile" so Projectile stays
     // decoupled from the enemy vector layout.
-    if (ctx.tryHit(candidate, damage)) {
+    if (ctx.tryHit(candidate, damage_)) {
       deactivate();
       return;
     }
 
     // Advance and check remaining range.
-    position = candidate;
-    --remainingRange;
-    if (remainingRange <= 0) {
+    position_ = candidate;
+    --remainingRange_;
+    if (remainingRange_ <= 0) {
       deactivate();
       return;
     }

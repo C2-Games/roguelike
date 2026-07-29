@@ -52,9 +52,9 @@ class HUDLayer : public RenderStack {
   void doRender() override;
 
  private:
-  const Player& player;
-  const RoomGraph& graph;
-  const int margin;
+  const Player& player_;
+  const RoomGraph& graph_;
+  const int margin_;
 };
 
 #endif

@@ -23,8 +23,8 @@ class DebugLayer : public RenderStack {
   void doRender() override;
 
  private:
-  const double& currentFps;
-  const Player& player;
+  const double& currentFps_;
+  const Player& player_;
 };
 
 #endif

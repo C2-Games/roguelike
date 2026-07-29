@@ -1,6 +1,6 @@
 #include "world/objects/weapon.h"
 
-const std::unordered_map<int, WeaponAttributes> Weapon::typeAttributes = {
+const std::unordered_map<int, WeaponAttributes> Weapon::typeAttributes_ = {
     {static_cast<int>(WeaponType::Basic),
      {10, 2, 15, ColorPair::WeaponBasic, "Basic Bolt"}},
     {static_cast<int>(WeaponType::Rapid),
@@ -11,24 +11,24 @@ const std::unordered_map<int, WeaponAttributes> Weapon::typeAttributes = {
      {30, 4, 30, ColorPair::WeaponSniper, "Sniper Round"}},
 };
 
-Weapon::Weapon(WeaponType type) : type(type) {}
+Weapon::Weapon(WeaponType type) : type_(type) {}
 
 int Weapon::getDamage() const {
-  return typeAttributes.at(static_cast<int>(type)).damage;
+  return typeAttributes_.at(static_cast<int>(type_)).damage;
 }
 
 int Weapon::getSpeed() const {
-  return typeAttributes.at(static_cast<int>(type)).speed;
+  return typeAttributes_.at(static_cast<int>(type_)).speed;
 }
 
 int Weapon::getRange() const {
-  return typeAttributes.at(static_cast<int>(type)).range;
+  return typeAttributes_.at(static_cast<int>(type_)).range;
 }
 
 ColorPair Weapon::getColor() const {
-  return typeAttributes.at(static_cast<int>(type)).color;
+  return typeAttributes_.at(static_cast<int>(type_)).color;
 }
 
 const char* Weapon::getName() const {
-  return typeAttributes.at(static_cast<int>(type)).name;
+  return typeAttributes_.at(static_cast<int>(type_)).name;
 }

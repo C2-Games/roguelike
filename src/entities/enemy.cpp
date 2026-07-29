@@ -118,34 +118,34 @@ Coordinate pickWanderTile(const Enemy* self, Coordinate pos,
 Enemy::Enemy(int x, int y, char symbol, int health, int speed, int attackDamage,
              FOV attackFOV, int chaseMemoryDuration)
     : Entity(x, y, symbol, health, speed),
-      attackDamage(attackDamage),
-      attackFOV(attackFOV),
-      chaseMemoryDuration(chaseMemoryDuration),
-      chaseTurnsRemaining(0),
-      lastKnownPlayerPos(std::nullopt) {}
+      attackDamage_(attackDamage),
+      attackFOV_(attackFOV),
+      chaseMemoryDuration_(chaseMemoryDuration),
+      chaseTurnsRemaining_(0),
+      lastKnownPlayerPos_(std::nullopt) {}
 
 void Enemy::moveTowardPlayer(const MoveContext& ctx) {
-  const bool inFoV = attackFOV.in(position, ctx.playerPos);
+  const bool inFoV = attackFOV_.in(position_, ctx.playerPos);
 
   // Memory refresh runs every frame so the enemy locks on the moment the
   // player enters its FoV, regardless of speed throttling.
   if (inFoV) {
-    lastKnownPlayerPos = ctx.playerPos;
-    chaseTurnsRemaining = chaseMemoryDuration;
+    lastKnownPlayerPos_ = ctx.playerPos;
+    chaseTurnsRemaining_ = chaseMemoryDuration_;
   }
 
   // Decide what tile the enemy is trying to reach this frame.
   std::optional<Coordinate> target;
   if (inFoV) {
     target = ctx.playerPos;
-  } else if (chaseTurnsRemaining > 0 && lastKnownPlayerPos.has_value()) {
-    if (position == *lastKnownPlayerPos) {
+  } else if (chaseTurnsRemaining_ > 0 && lastKnownPlayerPos_.has_value()) {
+    if (position_ == *lastKnownPlayerPos_) {
       // Arrived at the last-known tile but the player has since moved.
       // Give up and fall through to idle wander.
-      lastKnownPlayerPos.reset();
-      chaseTurnsRemaining = 0;
+      lastKnownPlayerPos_.reset();
+      chaseTurnsRemaining_ = 0;
     } else {
-      target = *lastKnownPlayerPos;
+      target = *lastKnownPlayerPos_;
     }
   }
 
@@ -153,35 +153,35 @@ void Enemy::moveTowardPlayer(const MoveContext& ctx) {
   Coordinate nextTile;
   if (target.has_value()) {
     const GoalMap& map = ctx.cache.getOrCompute(ctx.room, *target);
-    Coordinate chosen = stepDownGradient(this, position, map, ctx);
-    if (chosen == position) {
+    Coordinate chosen = stepDownGradient(this, position_, map, ctx);
+    if (chosen == position_) {
       // No legal down-gradient step (target unreachable or all reachable
       // neighbors blocked by other enemies). Wander instead so the enemy
       // still feels alive.
-      nextTile = pickWanderTile(this, position, ctx);
+      nextTile = pickWanderTile(this, position_, ctx);
     } else {
       nextTile = chosen;
     }
   } else {
     // Idle — never spotted the player, or memory just expired. Wander.
-    nextTile = pickWanderTile(this, position, ctx);
+    nextTile = pickWanderTile(this, position_, ctx);
   }
 
   // Apply the intent. Entity::moveTo throttles by speed, so this may or may
   // not update `position` this frame.
-  const Coordinate oldPos = position;
+  const Coordinate oldPos = position_;
   moveTo(nextTile);
 
   // Chase memory ticks down per ACTUAL move (not per frame). Only counts
   // while the player is out of FoV; in-FoV frames already reset the counter
   // above.
-  if (!inFoV && !(position == oldPos) && chaseTurnsRemaining > 0) {
-    --chaseTurnsRemaining;
-    if (chaseTurnsRemaining == 0) lastKnownPlayerPos.reset();
+  if (!inFoV && !(position_ == oldPos) && chaseTurnsRemaining_ > 0) {
+    --chaseTurnsRemaining_;
+    if (chaseTurnsRemaining_ == 0) lastKnownPlayerPos_.reset();
   }
 }
 
 void Enemy::takeDamage(int damage) {
-  health -= damage;
-  if (health < 0) health = 0;
+  health_ -= damage;
+  if (health_ < 0) health_ = 0;
 }

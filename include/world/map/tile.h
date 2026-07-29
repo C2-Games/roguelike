@@ -44,14 +44,14 @@ class Tile {
    *
    * @return TileType
    */
-  TileType getType() const { return type; }
+  TileType getType() const { return type_; }
 
   /**
    * @brief Get the tile poisition.
    *
    * @return Coordinate
    */
-  Coordinate getPosition() const { return position; }
+  Coordinate getPosition() const { return position_; }
 
   /**
    * @brief Convert symbol to tile type.
@@ -63,11 +63,11 @@ class Tile {
   static TileType charToTileType(char ch);
 
  private:
-  TileType type;
-  Coordinate position;
+  TileType type_;
+  Coordinate position_;
 
   // Static lookup table for tile attributes based on TileType.
-  static const std::unordered_map<int, TileAttributes> typeAttributes;
+  static const std::unordered_map<int, TileAttributes> typeAttributes_;
 };
 
 #endif

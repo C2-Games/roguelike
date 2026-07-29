@@ -39,29 +39,29 @@ class Game {
   void run();
 
  private:
-  int termWidth, termHeight;
-  const int fps;
-  double currentFps;
+  int termWidth_, termHeight_;
+  const int fps_;
+  double currentFps_;
   /// Always declare first so subsystems that store `GameServices&` initialize
   /// with a valid reference. Member-init order follows declaration order in
   /// C++.
-  GameServices services;
-  Player player;
-  RoomGraph roomGraph;
-  EnemyRegistry enemyRegistry;
-  GoalMapCache goalMapCache;
-  std::vector<std::unique_ptr<Enemy>> enemies;
-  std::vector<std::unique_ptr<Projectile>> projectiles;
+  GameServices services_;
+  Player player_;
+  RoomGraph roomGraph_;
+  EnemyRegistry enemyRegistry_;
+  GoalMapCache goalMapCache_;
+  std::vector<std::unique_ptr<Enemy>> enemies_;
+  std::vector<std::unique_ptr<Projectile>> projectiles_;
 
-  bool isRunning;
-  Renderer renderer;
+  bool isRunning_;
+  Renderer renderer_;
 
   /**
    * @brief Get the frame duraction in milliseconds.
    *
    * @return std::chrono::milliseconds
    */
-  auto getDuration() const { return std::chrono::milliseconds(1000 / fps); };
+  auto getDuration() const { return std::chrono::milliseconds(1000 / fps_); };
 
   /**
    * @brief Handles user input for player movement and game controls.

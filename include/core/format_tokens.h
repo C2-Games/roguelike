@@ -2,7 +2,8 @@
 #define FORMAT_TOKENS_H
 
 /**
- * @brief Format tokens used by the `assets/rooms/*.txt` parser.
+ * @brief Format tokens used by the room-template parser (`*.txt` files
+ * under `assets/rooms/`).
  *
  * These are the characters and keywords the parser recognizes when loading
  * a Room from disk. They also appear (as documentation) in the .txt files

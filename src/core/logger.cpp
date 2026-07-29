@@ -18,13 +18,13 @@ static std::string timestamp() {
 }
 
 Logger::Logger() {
-  logStream.open(paths::kGameLogPath, std::ios::trunc);
-  errStream.open(paths::kErrorLogPath, std::ios::app);
+  logStream_.open(paths::kGameLogPath, std::ios::trunc);
+  errStream_.open(paths::kErrorLogPath, std::ios::app);
 }
 
 Logger::~Logger() {
-  if (logStream.is_open()) logStream.close();
-  if (errStream.is_open()) errStream.close();
+  if (logStream_.is_open()) logStream_.close();
+  if (errStream_.is_open()) errStream_.close();
 }
 
 Logger& Logger::get() {
@@ -33,15 +33,15 @@ Logger& Logger::get() {
 }
 
 void Logger::log(const std::string& msg) {
-  if (logStream.is_open()) {
-    logStream << "[" << timestamp() << "] " << msg << "\n";
-    logStream.flush();
+  if (logStream_.is_open()) {
+    logStream_ << "[" << timestamp() << "] " << msg << "\n";
+    logStream_.flush();
   }
 }
 
 void Logger::error(const std::string& msg) {
-  if (errStream.is_open()) {
-    errStream << "[" << timestamp() << "] " << msg << "\n";
-    errStream.flush();
+  if (errStream_.is_open()) {
+    errStream_ << "[" << timestamp() << "] " << msg << "\n";
+    errStream_.flush();
   }
 }

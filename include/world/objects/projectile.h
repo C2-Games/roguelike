@@ -38,32 +38,32 @@ class Projectile {
    *
    * @return Coordinate
    */
-  Coordinate getPosition() const { return position; }
+  Coordinate getPosition() const { return position_; }
 
   /**
    * @brief Get the projectile's render color.
    *
    * @return ColorPair
    */
-  ColorPair getColor() const { return color; }
+  ColorPair getColor() const { return color_; }
 
   /**
    * @brief Whether the projectile is still in flight.
    *
    * @return bool
    */
-  bool isActive() const { return active; }
+  bool isActive() const { return active_; }
 
  private:
-  Coordinate position;
-  Coordinate direction;
-  int damage;
-  int tilesPerTick;
-  int remainingRange;
-  ColorPair color;
-  bool active = true;
+  Coordinate position_;
+  Coordinate direction_;
+  int damage_;
+  int tilesPerTick_;
+  int remainingRange_;
+  ColorPair color_;
+  bool active_ = true;
 
-  void deactivate() { active = false; }
+  void deactivate() { active_ = false; }
 };
 
 #endif

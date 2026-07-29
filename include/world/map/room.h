@@ -13,7 +13,7 @@
  *
  * A Room owns a fixed-size 2-D tile grid (WIDTH × HEIGHT). Tiles outside the
  * shaped floor area are TileType::Void. Door positions on the room's perimeter
- * walls are tracked in doorPositions so Level can wire room connections.
+ * walls are tracked in doorPositions so RoomGraph can wire room connections.
  *
  * Rooms are authored as text files under assets/rooms/ and loaded via
  * Room::loadFromFile.
@@ -28,8 +28,8 @@ struct Room {
   std::vector<Coordinate>
       doorPositions;  ///< Door positions in A,B,C,... order.
 
-  /// Candidate coordinates marked with `!` in the room file. Level (or a
-  /// dedicated spawner) is responsible for rolling which of these become
+  /// Candidate coordinates marked with `!` in the room file. EnemyRegistry
+  /// (via enemy_factory) is responsible for rolling which of these become
   /// actual enemies on first entry. The underlying tile is Floor.
   std::vector<Coordinate> enemySpawns;
 
