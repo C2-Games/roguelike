@@ -30,7 +30,8 @@ void RoomGraph::generate() {
   //
   // Room 0 has no incoming connection so doorPositions[0] is free to serve
   // as its exit. Every other room reserves doorPositions[0] for the back-link
-  // from the previous room, so it currently uses doorPositions[1] as its forward exit.
+  // from the previous room, so it currently uses doorPositions[1] as its
+  // forward exit.
   for (int i = 0; i < roomCount_ - 1; i++) {
     const Room& roomA = rooms_.at(i);
     const Room& roomB = rooms_.at(i + 1);

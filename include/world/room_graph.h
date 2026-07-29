@@ -47,8 +47,7 @@ class RoomGraph {
    *
    * @return Pointer to the connection, or nullptr if the door is unlinked.
    */
-  const DoorConnection* getDoorConnection(int roomID,
-                                          Coordinate doorPos) const;
+  const DoorConnection* getDoorConnection(int roomID, Coordinate doorPos) const;
 
   /** @brief Total number of rooms in the chain. */
   int getRoomCount() const { return roomCount_; }
@@ -75,8 +74,8 @@ class RoomGraph {
   int roomCount_;
   int currentRoomID_ = 0;
   GameServices& services_;
-  std::map<int, Room> rooms_;                     ///< All rooms keyed by ID.
-  std::vector<std::vector<int>> adjacency_;       ///< Room adjacency list.
+  std::map<int, Room> rooms_;                ///< All rooms keyed by ID.
+  std::vector<std::vector<int>> adjacency_;  ///< Room adjacency list.
   std::map<std::pair<int, Coordinate>, DoorConnection>
       doorConnections_;  ///< (roomID, doorPos) → destination.
 
