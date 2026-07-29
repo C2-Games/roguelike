@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <stdexcept>
 
+#include "core/paths.h"
+
 namespace fs = std::filesystem;
 
 void RoomLibrary::scan(const fs::path& dir) {
@@ -15,7 +17,7 @@ void RoomLibrary::scan(const fs::path& dir) {
 
   for (const auto& entry : fs::directory_iterator(dir)) {
     if (!entry.is_regular_file()) continue;
-    if (entry.path().extension() != ".txt") continue;
+    if (entry.path().extension() != paths::kRoomFileExt) continue;
     paths_.push_back(entry.path());
   }
 

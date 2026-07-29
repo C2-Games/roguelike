@@ -2,6 +2,7 @@
 
 #include <utility>
 
+#include "core/paths.h"
 #include "core/services.h"
 #include "world/room_library.h"
 
@@ -19,7 +20,7 @@ void RoomGraph::generate() {
   // Load the authored room library from disk. Path is relative to the game's
   // working directory (repo root when launched from there).
   RoomLibrary library;
-  library.scan("assets/rooms");
+  library.scan(paths::kRoomsDir);
 
   for (int i = 0; i < roomCount_; i++) {
     addRoom(Room::loadFromFile(i, library.pickRandom(services_.rng)));
