@@ -22,6 +22,8 @@ set(SOURCES
     src/entities/entity.cpp
     src/entities/player.cpp
     src/entities/enemy.cpp
+    src/entities/enemy_factory.cpp
+    src/entities/enemy_registry.cpp
     src/entities/fov.cpp
     src/world/level.cpp
     src/world/tile.cpp

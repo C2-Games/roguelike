@@ -1,12 +1,12 @@
 #ifndef LEVEL_H
 #define LEVEL_H
 
-#include <map>
 #include <memory>
 #include <vector>
 
 #include "core/coordinate.h"
 #include "entities/enemy.h"
+#include "entities/enemy_registry.h"
 #include "world/goal_map_cache.h"
 #include "world/pathfinding.h"
 #include "world/room.h"
@@ -15,14 +15,12 @@
 struct GameServices;
 
 /**
- * @brief Coordinates the room map, per-room enemy lifecycle, visibility, and
- * enemy pathfinding cache.
+ * @brief Thin coordinator over RoomGraph, EnemyRegistry, and GoalMapCache.
  *
  * Ownership breakdown:
  *   - `roomGraph_` owns Rooms + the door graph + current-room cursor.
+ *   - `enemyRegistry_` owns per-room enemy storage + first-visit flags.
  *   - `goalMapCache_` owns the enemy Dijkstra distance-grid cache.
- *   - Level owns per-room enemy vectors and the first-visit flags that drive
- *     enemy persistence across room re-entries.
  *
  * Public getters that used to live on Level (getRoomCount, getCurrentRoom,
  * getDoorConnection, etc.) are retained as thin delegations to roomGraph_
@@ -34,17 +32,14 @@ class Level {
    * @brief Construct a Level and immediately build its room graph.
    *
    * @param roomCount Number of rooms to generate.
-   * @param services  Shared services (RNG source) used by room selection
-   *   and enemy spawn placement. Stored by reference; must outlive the
-   *   Level.
+   * @param services  Shared services (RNG source). Consumed by RoomGraph
+   *   for room selection and by EnemyRegistry for factory calls. Reference
+   *   must outlive the Level.
    */
   explicit Level(int roomCount, GameServices& services);
 
   /**
    * @brief Load enemies for the starting room into the game's active list.
-   *
-   * Called once at game start. Generates enemies for room 0 and moves them
-   * into activeEnemies.
    *
    * @param activeEnemies Game's active enemy list to populate.
    */
@@ -52,11 +47,6 @@ class Level {
 
   /**
    * @brief Persist the current room's enemies and load the next room's.
-   *
-   * Moves activeEnemies into storage for fromRoomID, then moves stored
-   * enemies for toRoomID into activeEnemies (spawning fresh ones on first
-   * visit). Full enemy state — health, position — is preserved across
-   * transitions, enabling future loot/HP persistence.
    *
    * @param fromRoomID    Room being left.
    * @param toRoomID      Room being entered.
@@ -107,20 +97,11 @@ class Level {
   }
 
  private:
-  GameServices& services;      ///< Injected RNG source (used by spawn logic).
-  RoomGraph roomGraph_;        ///< Rooms + door graph + current-room cursor.
+  GameServices& services;  ///< Injected RNG source (used by spawn logic).
+  RoomGraph roomGraph_;    ///< Rooms + door graph + current-room cursor.
+  EnemyRegistry
+      enemyRegistry_;          ///< Per-room enemy storage + first-visit spawn.
   GoalMapCache goalMapCache_;  ///< Enemy pathfinding goal-map cache.
-  std::map<int, std::vector<std::unique_ptr<Enemy>>>
-      roomEnemies;                  ///< Per-room enemy lists.
-  std::map<int, bool> roomVisited;  ///< Lazy-init first-visit flags.
-
-  /**
-   * @brief Spawn fresh enemies for the given room and store them in
-   * roomEnemies.
-   *
-   * @param roomID Room to populate.
-   */
-  void spawnEnemiesForRoom(int roomID);
 };
 
 #endif

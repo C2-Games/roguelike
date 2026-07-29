@@ -72,9 +72,8 @@ Coordinate stepDownGradient(
     candidates.push_back({Coordinate(nx, ny), d});
   }
 
-  // Fisher-Yates shuffle for random tiebreaking. std::rand() matches the
-  // RNG choice elsewhere in the codebase (Level::spawnEnemiesForRoom,
-  // room_library.cpp).
+  // Fisher-Yates shuffle for random tiebreaking. Enemy internals still use
+  // std::rand() here (rather than services.rng) .
   for (std::size_t i = candidates.size(); i > 1; --i) {
     std::size_t j = static_cast<std::size_t>(std::rand()) % i;
     std::swap(candidates[i - 1], candidates[j]);
