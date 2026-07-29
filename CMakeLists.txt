@@ -27,6 +27,7 @@ set(SOURCES
     src/world/tile.cpp
     src/world/room.cpp
     src/world/room_library.cpp
+    src/world/room_graph.cpp
     src/world/pathfinding.cpp
     src/world/goal_map_cache.cpp
     src/world/weapon.cpp

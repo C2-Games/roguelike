@@ -5,67 +5,13 @@
 #include <random>
 
 #include "core/services.h"
-#include "world/room_library.h"
 #include "world/tile.h"
 
 Level::Level(int roomCount, GameServices& services)
-    : roomCount(roomCount), services(services) {
-  generate();
-}
-
-void Level::addRoom(Room room) {
-  int id = room.roomID;
-  roomList.insert({id, std::move(room)});
-}
-
-void Level::generate() {
-  // Load the authored room library from disk. Path is relative to the game's
-  // working directory (repo root when launched from there).
-  RoomLibrary library;
-  library.scan("assets/rooms");
-
-  for (int i = 0; i < roomCount; i++) {
-    addRoom(Room::loadFromFile(i, library.pickRandom(services.rng)));
-    roomConnections.push_back({});
-  }
-
-  // Wire doors in a chain: room 0 ↔ 1 ↔ 2 ↔ … ↔ (N-1).
-  //
-  // Room 0 has no incoming connection so doorPositions[0] is free to serve
-  // as its exit. Every other room reserves doorPositions[0] for the back-link
-  // from the previous room, so it uses doorPositions[1] as its forward exit.
-  // This prevents each iteration from overwriting the previous room's
-  // back-link.
-  for (int i = 0; i < roomCount - 1; i++) {
-    const Room& roomA = roomList.at(i);
-    const Room& roomB = roomList.at(i + 1);
-
-    int exitIdx = (i == 0) ? 0 : 1;
-
-    if (static_cast<int>(roomA.doorPositions.size()) <= exitIdx ||
-        roomB.doorPositions.empty())
-      continue;
-
-    Coordinate doorA = roomA.doorPositions[exitIdx];
-    Coordinate doorB = roomB.doorPositions[0];  // all rooms enter at door[0]
-
-    doorConnections[{i, doorA}] = {i + 1, doorB};  // A → B
-    doorConnections[{i + 1, doorB}] = {i, doorA};  // B → A
-
-    roomConnections[i].push_back(i + 1);
-    roomConnections[i + 1].push_back(i);
-  }
-}
-
-const DoorConnection* Level::getDoorConnection(int roomID,
-                                               Coordinate doorPos) const {
-  auto it = doorConnections.find({roomID, doorPos});
-  if (it != doorConnections.end()) return &it->second;
-  return nullptr;
-}
+    : services(services), roomGraph_(roomCount, services) {}
 
 void Level::spawnEnemiesForRoom(int roomID) {
-  const Room& room = roomList.at(roomID);
+  const Room& room = roomGraph_.getRoom(roomID);
 
   // Collect every Floor tile in the room. Scanning x-major means the first
   // half of the list naturally covers the left/top portion of the shape and
@@ -122,7 +68,7 @@ void Level::transitionEnemies(
 }
 
 void Level::updateVisibility(Coordinate origin, const FOV& fov) {
-  Room& room = roomList.at(currentRoomID);
+  Room& room = roomGraph_.getCurrentRoom();
 
   // Wipe last frame's visibility, then light up the current FoV cells.
   // reveal() is bounds-checked so out-of-room FoV offsets are safely
@@ -134,5 +80,5 @@ void Level::updateVisibility(Coordinate origin, const FOV& fov) {
 }
 
 const GoalMap& Level::getGoalMap(int roomID, Coordinate goal) const {
-  return goalMapCache_.getOrCompute(roomList.at(roomID), goal);
+  return goalMapCache_.getOrCompute(roomGraph_.getRoom(roomID), goal);
 }
