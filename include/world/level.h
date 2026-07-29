@@ -97,8 +97,7 @@ class Level {
   }
 
  private:
-  GameServices& services;  ///< Injected RNG source (used by spawn logic).
-  RoomGraph roomGraph_;    ///< Rooms + door graph + current-room cursor.
+  RoomGraph roomGraph_;  ///< Rooms + door graph + current-room cursor.
   EnemyRegistry
       enemyRegistry_;          ///< Per-room enemy storage + first-visit spawn.
   GoalMapCache goalMapCache_;  ///< Enemy pathfinding goal-map cache.

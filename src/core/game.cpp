@@ -10,6 +10,7 @@
 #include <thread>
 
 #include "entities/enemy.h"
+#include "entities/enemy_registry.h"
 #include "render/ui.h"
 #include "world/projectile.h"
 
@@ -183,6 +184,11 @@ void Game::update() {
                                      return !p->isActive();
                                    }),
                     projectiles.end());
+
+  // Reap dead enemies at end-of-frame. Safe here because all per-frame
+  // iterations over `enemies` (movement, player-collision, projectile
+  // hit-tests) have completed above.
+  EnemyRegistry::reap(enemies);
 }
 
 void Game::render() { renderer.compose(); };
