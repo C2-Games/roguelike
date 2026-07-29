@@ -9,8 +9,8 @@
 #include "world/weapon.h"
 
 HUDLayer::HUDLayer(int h, int w, int margin, const Player& player,
-                   const Level& level)
-    : RenderStack(h, w), player(player), level(level), margin(margin) {}
+                   const RoomGraph& graph)
+    : RenderStack(h, w), player(player), graph(graph), margin(margin) {}
 
 void HUDLayer::drawPlayerHealthBar(int row, int col) {
   mvwprintw(win, row, col, "HP:%d/%d", player.getHealth(),
@@ -18,8 +18,8 @@ void HUDLayer::drawPlayerHealthBar(int row, int col) {
 };
 
 void HUDLayer::drawRoomID(int row, int col) {
-  mvwprintw(win, row, col, "Room:%d/%d", level.getCurrentRoomID() + 1,
-            level.getRoomCount());
+  mvwprintw(win, row, col, "Room:%d/%d", graph.getCurrentRoomID() + 1,
+            graph.getRoomCount());
 };
 
 void HUDLayer::drawWeaponStats(int row, int col) {

@@ -78,7 +78,7 @@ struct Room {
    *
    * @param roomID Unique identifier assigned to the loaded room.
    * @param path   Path to the room file.
-   * @return A fully populated Room ready to be added to a Level.
+   * @return A fully populated Room ready to be added to a RoomGraph.
    */
   static Room loadFromFile(int roomID, const std::filesystem::path& path);
 

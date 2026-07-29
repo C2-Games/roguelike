@@ -7,16 +7,16 @@
 
 #include "core/services.h"
 #include "entities/enemy.h"
+#include "entities/enemy_registry.h"
 #include "entities/player.h"
 #include "render/layers/debug_layer.h"
 #include "render/layers/entity_layer.h"
 #include "render/layers/hud_layer.h"
 #include "render/layers/map_layer.h"
 #include "render/renderer.h"
-#include "world/level.h"
+#include "world/goal_map_cache.h"
 #include "world/projectile.h"
-
-class Enemy;
+#include "world/room_graph.h"
 
 class Game {
  public:
@@ -42,10 +42,14 @@ class Game {
   int termWidth, termHeight;
   const int fps;
   double currentFps;
-  /// Keep this before player and level to ensure proper initialization order.
+  /// Always declare first so subsystems that store `GameServices&` initialize
+  /// with a valid reference. Member-init order follows declaration order in
+  /// C++.
   GameServices services;
   Player player;
-  Level level;
+  RoomGraph roomGraph;
+  EnemyRegistry enemyRegistry;
+  GoalMapCache goalMapCache;
   std::vector<std::unique_ptr<Enemy>> enemies;
   std::vector<std::unique_ptr<Projectile>> projectiles;
 

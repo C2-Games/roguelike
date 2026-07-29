@@ -6,11 +6,11 @@
 #include "render/ui.h"
 #include "world/room.h"
 
-MapLayer::MapLayer(int h, int w, int y, int x, const Level& level)
-    : RenderStack(h, w, y, x), level(level) {}
+MapLayer::MapLayer(int h, int w, int y, int x, const RoomGraph& graph)
+    : RenderStack(h, w, y, x), graph(graph) {}
 
 void MapLayer::drawMap() {
-  const Room& room = level.getCurrentRoom();
+  const Room& room = graph.getCurrentRoom();
 
   for (int x = 0; x < Room::WIDTH; ++x) {
     for (int y = 0; y < Room::HEIGHT; ++y) {

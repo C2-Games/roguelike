@@ -4,15 +4,16 @@
 
 #include <algorithm>
 #include <chrono>
-#include <cstdlib>
 #include <ctime>
 #include <iostream>
 #include <thread>
 
 #include "entities/enemy.h"
 #include "entities/enemy_registry.h"
+#include "entities/move_context.h"
 #include "render/ui.h"
 #include "world/projectile.h"
+#include "world/projectile_context.h"
 #include "world/visibility.h"
 
 Game::Game(int width, int height, int fps)
@@ -21,7 +22,8 @@ Game::Game(int width, int height, int fps)
       fps(fps),
       services(static_cast<std::mt19937::result_type>(std::time(nullptr))),
       player(Room::WIDTH / 2, Room::HEIGHT / 2),
-      level(5, services),
+      roomGraph(5, services),
+      enemyRegistry(services),
       isRunning(true) {
   // generate enemy objects first..
   spawnEnemies();
@@ -31,14 +33,16 @@ Game::Game(int width, int height, int fps)
   UI geom = computeUI(termHeight, termWidth);
   renderer.addLayer(
       1, std::make_unique<MapLayer>(geom.winHeight, geom.winWidth, geom.originY,
-                                    geom.originX, level));
-  renderer.addLayer(2, std::make_unique<EntityLayer>(
-                           geom.winHeight, geom.winWidth, geom.originY,
-                           geom.originX, level, player, enemies, projectiles));
+                                    geom.originX, roomGraph));
+  renderer.addLayer(
+      2, std::make_unique<EntityLayer>(geom.winHeight, geom.winWidth,
+                                       geom.originY, geom.originX, roomGraph,
+                                       player, enemies, projectiles));
 
   const int hud_margin = 2;
-  renderer.addLayer(3, std::make_unique<HUDLayer>(termHeight, termWidth,
-                                                  hud_margin, player, level));
+  renderer.addLayer(
+      3, std::make_unique<HUDLayer>(termHeight, termWidth, hud_margin, player,
+                                    roomGraph));
 
   // if debug build, add the debug window.
 #ifndef NDEBUG
@@ -135,15 +139,15 @@ void Game::handleInput() {
   }
   if (newPlayerPos.x >= 0 && newPlayerPos.x < Room::WIDTH &&
       newPlayerPos.y >= 0 && newPlayerPos.y < Room::HEIGHT &&
-      level.getCurrentRoom()
+      roomGraph.getCurrentRoom()
           .tiles[newPlayerPos.x][newPlayerPos.y]
           .isWalkable()) {
     // Check for a linked door before applying normal movement.
-    if (level.getCurrentRoom()
+    if (roomGraph.getCurrentRoom()
             .tiles[newPlayerPos.x][newPlayerPos.y]
             .getType() == TileType::Door) {
-      const DoorConnection* conn =
-          level.getDoorConnection(level.getCurrentRoomID(), newPlayerPos);
+      const DoorConnection* conn = roomGraph.getDoorConnection(
+          roomGraph.getCurrentRoomID(), newPlayerPos);
       if (conn) {
         transitionRoom(*conn);
         return;
@@ -156,15 +160,32 @@ void Game::handleInput() {
 void Game::update() {
   // Recompute FoV visibility for the current room before anything else
   // runs this frame.
-  visibility::update(level.getCurrentRoom(), player.getPosition(),
+  visibility::update(roomGraph.getCurrentRoom(), player.getPosition(),
                      player.getFOV());
 
-  // Move enemies toward player
-  Coordinate playerPos = player.getPosition();
+  const Coordinate playerPos = player.getPosition();
+  const Room& currentRoom = roomGraph.getCurrentRoom();
 
+  // Build the per-frame contexts once and reuse across every enemy/projectile.
+  MoveContext moveCtx{playerPos, currentRoom, goalMapCache, enemies, services};
+
+  ProjectileContext projCtx{
+      currentRoom, [&](Coordinate pos, int damage) -> bool {
+        // Try to damage the first live enemy sitting on `pos`.
+        auto hit =
+            std::find_if(enemies.begin(), enemies.end(),
+                         [&pos](const std::unique_ptr<Enemy>& e) {
+                           return e->isAlive() && e->getPosition() == pos;
+                         });
+        if (hit == enemies.end()) return false;
+        (*hit)->takeDamage(damage);
+        return true;
+      }};
+
+  // Move enemies toward player.
   for (auto& enemy : enemies) {
     if (enemy->isAlive()) {
-      enemy->moveTowardPlayer(playerPos, level, enemies);
+      enemy->moveTowardPlayer(moveCtx);
 
       // Check collision with player
       if (enemy->getPosition() == playerPos) {
@@ -173,12 +194,10 @@ void Game::update() {
     }
   }
 
-  // advance (actually fire them) projectiles, apply any collisions, and drop
-  // any that expired.
-  const Room& room = level.getCurrentRoom();
+  // Advance projectiles, apply hits, and drop any that expired.
   for (auto& projectile : projectiles) {
     if (projectile->isActive()) {
-      projectile->update(room, enemies);
+      projectile->update(projCtx);
     }
   }
   projectiles.erase(std::remove_if(projectiles.begin(), projectiles.end(),
@@ -195,14 +214,22 @@ void Game::update() {
 
 void Game::render() { renderer.compose(); };
 
-void Game::spawnEnemies() { level.loadInitialEnemies(enemies); }
+void Game::spawnEnemies() {
+  // Load enemies for whichever room the player starts in (RoomGraph's current
+  // cursor). This lets a future SaveSystem restore the starting room by
+  // setting the cursor before construction, without touching this call site.
+  const int startRoomID = roomGraph.getCurrentRoomID();
+  enemyRegistry.loadForRoom(startRoomID, roomGraph.getRoom(startRoomID),
+                            enemies);
+}
 
 void Game::transitionRoom(const DoorConnection& conn) {
   // Persist current room's enemies and load the destination room's.
-  level.transitionEnemies(level.getCurrentRoomID(), conn.destRoomID, enemies);
+  enemyRegistry.transitionActive(roomGraph.getCurrentRoomID(), conn.destRoomID,
+                                 roomGraph.getRoom(conn.destRoomID), enemies);
 
   // Switch the active room.
-  level.setCurrentRoomID(conn.destRoomID);
+  roomGraph.setCurrentRoomID(conn.destRoomID);
 
   // Place the player one tile inward from the destination door so they
   // don't immediately re-trigger the door on the next input.

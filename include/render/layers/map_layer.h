@@ -3,7 +3,7 @@
 
 #include "core/colors.h"
 #include "render/render_stack.h"
-#include "world/level.h"
+#include "world/room_graph.h"
 
 class MapLayer : public RenderStack {
  public:
@@ -14,9 +14,9 @@ class MapLayer : public RenderStack {
    * @param w Width of the layer window (in columns).
    * @param y Row of the window's top-left corner in the terminal.
    * @param x Column of the window's top-left corner in the terminal.
-   * @param level The level class whose current room will be drawn each frame.
+   * @param graph The room graph whose current room will be drawn each frame.
    */
-  MapLayer(int h, int w, int y, int x, const Level& level);
+  MapLayer(int h, int w, int y, int x, const RoomGraph& graph);
 
   /**
    * @brief Draw all room tiles into the map layer window.
@@ -39,7 +39,7 @@ class MapLayer : public RenderStack {
   void onResize(int termHeight, int termWidth) override;
 
  private:
-  const Level& level;
+  const RoomGraph& graph;
 };
 
 #endif

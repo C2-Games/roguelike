@@ -1,6 +1,7 @@
 #include "world/projectile.h"
 
-#include <algorithm>
+#include "world/projectile_context.h"
+#include "world/room.h"
 
 Projectile::Projectile(Coordinate position, Coordinate direction, int damage,
                        int tilesPerTick, int range, ColorPair color)
@@ -11,12 +12,11 @@ Projectile::Projectile(Coordinate position, Coordinate direction, int damage,
       remainingRange(range),
       color(color) {}
 
-void Projectile::update(const Room& room,
-                        std::vector<std::unique_ptr<Enemy>>& enemies) {
+void Projectile::update(const ProjectileContext& ctx) {
   for (int i = 0; i < tilesPerTick; ++i) {
     Coordinate candidate = position + direction;
 
-    // check before touching tile.
+    // Check before touching tile.
     if (candidate.x < 0 || candidate.x >= Room::WIDTH || candidate.y < 0 ||
         candidate.y >= Room::HEIGHT) {
       deactivate();
@@ -24,24 +24,20 @@ void Projectile::update(const Room& room,
     }
 
     // isWalkable() stops the projectile.
-    if (!room.tiles[candidate.x][candidate.y].isWalkable()) {
+    if (!ctx.room.tiles[candidate.x][candidate.y].isWalkable()) {
       deactivate();
       return;
     }
 
-    // stop on first alive enemy hit.
-    auto hit = std::find_if(enemies.begin(), enemies.end(),
-                            [&candidate](const std::unique_ptr<Enemy>& enemy) {
-                              return enemy->isAlive() &&
-                                     enemy->getPosition() == candidate;
-                            });
-    if (hit != enemies.end()) {
-      (*hit)->takeDamage(damage);
+    // Try to damage an entity at the candidate tile. The context's tryHit
+    // closure encapsulates "who lives on this tile" so Projectile stays
+    // decoupled from the enemy vector layout.
+    if (ctx.tryHit(candidate, damage)) {
       deactivate();
       return;
     }
 
-    // end if out of range.
+    // Advance and check remaining range.
     position = candidate;
     --remainingRange;
     if (remainingRange <= 0) {

@@ -5,20 +5,20 @@
 #include <memory>
 
 #include "render/ui.h"
-#include "world/level.h"
+#include "world/room.h"
 
 EntityLayer::EntityLayer(
-    int h, int w, int y, int x, const Level& level, const Player& player,
+    int h, int w, int y, int x, const RoomGraph& graph, const Player& player,
     const std::vector<std::unique_ptr<Enemy>>& enemies,
     const std::vector<std::unique_ptr<Projectile>>& projectiles)
     : RenderStack(h, w, y, x),
-      level(level),
+      graph(graph),
       player(player),
       enemies(enemies),
       projectiles(projectiles) {}
 
 void EntityLayer::drawEnemies() {
-  const Room& room = level.getCurrentRoom();
+  const Room& room = graph.getCurrentRoom();
 
   // iterate through vector of enemies.
   for (const auto& enemy : enemies) {
@@ -37,7 +37,7 @@ void EntityLayer::drawEnemies() {
 };
 
 void EntityLayer::drawProjectiles() {
-  const Room& room = level.getCurrentRoom();
+  const Room& room = graph.getCurrentRoom();
 
   for (const auto& projectile : projectiles) {
     if (!projectile->isActive()) continue;
