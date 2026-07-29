@@ -32,6 +32,7 @@ set(SOURCES
     src/world/room_graph.cpp
     src/world/pathfinding.cpp
     src/world/goal_map_cache.cpp
+    src/world/visibility.cpp
     src/world/weapon.cpp
     src/world/projectile.cpp
     src/render/renderer.cpp

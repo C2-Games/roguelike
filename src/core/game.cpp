@@ -13,6 +13,7 @@
 #include "entities/enemy_registry.h"
 #include "render/ui.h"
 #include "world/projectile.h"
+#include "world/visibility.h"
 
 Game::Game(int width, int height, int fps)
     : termWidth(width),
@@ -155,7 +156,8 @@ void Game::handleInput() {
 void Game::update() {
   // Recompute FoV visibility for the current room before anything else
   // runs this frame.
-  level.updateVisibility(player.getPosition(), player.getFOV());
+  visibility::update(level.getCurrentRoom(), player.getPosition(),
+                     player.getFOV());
 
   // Move enemies toward player
   Coordinate playerPos = player.getPosition();

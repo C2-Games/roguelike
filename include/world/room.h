@@ -43,7 +43,7 @@ struct Room {
   std::vector<Coordinate> itemSpawns;
 
   /// True when the tile is inside the player's current FoV. Recomputed each
-  /// frame by Level::updateVisibility. Indexed [x][y].
+  /// frame by visibility::update. Indexed [x][y].
   std::vector<std::vector<bool>> visible;
 
   /// True once the tile has ever been visible. Persists across frames and

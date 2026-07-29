@@ -56,19 +56,6 @@ class Level {
                          std::vector<std::unique_ptr<Enemy>>& activeEnemies);
 
   /**
-   * @brief Recompute FoV visibility for the current room.
-   *
-   * Clears the current room's visible grid, then marks every tile inside
-   * player FoV as both visible and explored. Called once per frame from
-   * Game::update() so a change to the player's sight radius takes effect on
-   * the next render.
-   *
-   * @param origin World position of the FoV origin (the player).
-   * @param fov Precomputed FoV mask defining which offsets are lit.
-   */
-  void updateVisibility(Coordinate origin, const FOV& fov);
-
-  /**
    * @brief Fetch (and lazily compute) the enemy goal map for a given target.
    *
    * Delegates to an internal GoalMapCache. See GoalMapCache::getOrCompute
@@ -90,6 +77,7 @@ class Level {
   int getRoomCount() const { return roomGraph_.getRoomCount(); }
   int getCurrentRoomID() const { return roomGraph_.getCurrentRoomID(); }
   const Room& getCurrentRoom() const { return roomGraph_.getCurrentRoom(); }
+  Room& getCurrentRoom() { return roomGraph_.getCurrentRoom(); }
   void setCurrentRoomID(int id) { roomGraph_.setCurrentRoomID(id); }
   const DoorConnection* getDoorConnection(int roomID,
                                           Coordinate doorPos) const {

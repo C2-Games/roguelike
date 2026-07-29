@@ -17,18 +17,6 @@ void Level::transitionEnemies(
                                   roomGraph_.getRoom(toRoomID), activeEnemies);
 }
 
-void Level::updateVisibility(Coordinate origin, const FOV& fov) {
-  Room& room = roomGraph_.getCurrentRoom();
-
-  // Wipe last frame's visibility, then light up the current FoV cells.
-  // reveal() is bounds-checked so out-of-room FoV offsets are safely
-  // ignored.
-  room.clearVisible();
-  for (const Coordinate& pos : fov.absoluteFOV(origin)) {
-    room.reveal(pos.x, pos.y);
-  }
-}
-
 const GoalMap& Level::getGoalMap(int roomID, Coordinate goal) const {
   return goalMapCache_.getOrCompute(roomGraph_.getRoom(roomID), goal);
 }

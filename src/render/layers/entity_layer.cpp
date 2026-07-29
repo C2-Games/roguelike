@@ -33,8 +33,6 @@ void EntityLayer::drawEnemies() {
         mvwaddch(win, pos.y, pos.x, enemy->getSymbol());
       }
     };
-    // TODO: if enemy dead, destroy the object & update the vector? lil
-    // optimization??
   };
 };
 
