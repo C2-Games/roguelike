@@ -123,7 +123,7 @@ Enemy::Enemy(int x, int y, char symbol, int health, int speed, int attackDamage,
       lastKnownPlayerPos(std::nullopt) {}
 
 void Enemy::moveTowardPlayer(
-    Coordinate playerPos, Level& level,
+    Coordinate playerPos, const Level& level,
     const std::vector<std::unique_ptr<Enemy>>& allEnemies) {
   const bool inFoV = attackFOV.in(position, playerPos);
 

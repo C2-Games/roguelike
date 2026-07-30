@@ -133,16 +133,6 @@ void Level::updateVisibility(Coordinate origin, const FOV& fov) {
   }
 }
 
-const GoalMap& Level::getGoalMap(int roomID, Coordinate goal) {
-  auto key = std::make_pair(roomID, goal);
-  auto it = goalMapCache.find(key);
-  if (it != goalMapCache.end()) return it->second;
-
-  // Prevent the cache from growing without bound over long play sessions.
-  // Wholesale clear is intentional: entries regenerate cheaply on demand.
-  if (goalMapCache.size() >= kGoalMapCacheCap) goalMapCache.clear();
-
-  GoalMap map = computeGoalMap(roomList.at(roomID), goal);
-  auto [inserted, _] = goalMapCache.emplace(key, std::move(map));
-  return inserted->second;
+const GoalMap& Level::getGoalMap(int roomID, Coordinate goal) const {
+  return goalMapCache_.getOrCompute(roomList.at(roomID), goal);
 }

@@ -71,7 +71,7 @@ class Enemy : public Entity {
    *                   enemy-vs-enemy collision detection during step
    *                   selection and wander.
    */
-  void moveTowardPlayer(Coordinate playerPos, Level& level,
+  void moveTowardPlayer(Coordinate playerPos, const Level& level,
                         const std::vector<std::unique_ptr<Enemy>>& allEnemies);
 
  private:
