@@ -2,6 +2,7 @@
 #define ROOM_LIBRARY_H
 
 #include <filesystem>
+#include <random>
 #include <vector>
 
 /**
@@ -35,14 +36,16 @@ class RoomLibrary {
   std::size_t size() const { return paths_.size(); }
 
   /**
-   * @brief Pick a random template path.
+   * @brief Pick a random template path using the supplied RNG.
    *
-   * Uses std::rand() so it participates in the same RNG state as Level's
-   * other random choices. Callers must ensure the library is non-empty.
+   * Threading the engine in from the caller (typically GameServices::rng)
+   * keeps room-selection reproducible when the seed is pinned. Callers must
+   * ensure the library is non-empty.
    *
+   * @param rng Random engine used for the uniform pick.
    * @return Reference to a path in the internal store.
    */
-  const std::filesystem::path& pickRandom() const;
+  const std::filesystem::path& pickRandom(std::mt19937& rng) const;
 
  private:
   std::vector<std::filesystem::path> paths_;

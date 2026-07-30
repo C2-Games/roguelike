@@ -2,11 +2,16 @@
 
 #include <cstdlib>
 #include <memory>
+#include <random>
 
+#include "core/services.h"
 #include "world/room_library.h"
 #include "world/tile.h"
 
-Level::Level(int roomCount) : roomCount(roomCount) { generate(); }
+Level::Level(int roomCount, GameServices& services)
+    : roomCount(roomCount), services(services) {
+  generate();
+}
 
 void Level::addRoom(Room room) {
   int id = room.roomID;
@@ -20,7 +25,7 @@ void Level::generate() {
   library.scan("assets/rooms");
 
   for (int i = 0; i < roomCount; i++) {
-    addRoom(Room::loadFromFile(i, library.pickRandom()));
+    addRoom(Room::loadFromFile(i, library.pickRandom(services.rng)));
     roomConnections.push_back({});
   }
 
@@ -79,9 +84,11 @@ void Level::spawnEnemiesForRoom(int roomID) {
   // Pick one tile from each half so enemies are spread across the room and
   // are always guaranteed to land on a valid Floor tile regardless of shape.
   std::size_t half = floorTiles.size() / 2;
-  Coordinate spawn1 = floorTiles[static_cast<std::size_t>(rand()) % half];
-  Coordinate spawn2 =
-      floorTiles[half + static_cast<std::size_t>(rand()) % half];
+  std::uniform_int_distribution<std::size_t> firstHalf(0, half - 1);
+  std::uniform_int_distribution<std::size_t> secondHalf(half,
+                                                        floorTiles.size() - 1);
+  Coordinate spawn1 = floorTiles[firstHalf(services.rng)];
+  Coordinate spawn2 = floorTiles[secondHalf(services.rng)];
 
   roomEnemies[roomID].push_back(
       std::make_unique<Enemy>(spawn1.x, spawn1.y, 'G'));

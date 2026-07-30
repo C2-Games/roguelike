@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdlib>
+#include <ctime>
 #include <iostream>
 #include <thread>
 
@@ -16,8 +17,9 @@ Game::Game(int width, int height, int fps)
     : termWidth(width),
       termHeight(height),
       fps(fps),
+      services(static_cast<std::mt19937::result_type>(std::time(nullptr))),
       player(Room::WIDTH / 2, Room::HEIGHT / 2),
-      level(5),
+      level(5, services),
       isRunning(true) {
   // generate enemy objects first..
   spawnEnemies();

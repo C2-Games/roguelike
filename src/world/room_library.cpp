@@ -1,7 +1,6 @@
 #include "world/room_library.h"
 
 #include <algorithm>
-#include <cstdlib>
 #include <stdexcept>
 
 namespace fs = std::filesystem;
@@ -28,8 +27,8 @@ void RoomLibrary::scan(const fs::path& dir) {
   }
 }
 
-const fs::path& RoomLibrary::pickRandom() const {
+const fs::path& RoomLibrary::pickRandom(std::mt19937& rng) const {
   // Caller is required to check empty() first.
-  std::size_t idx = static_cast<std::size_t>(std::rand()) % paths_.size();
-  return paths_[idx];
+  std::uniform_int_distribution<std::size_t> dist(0, paths_.size() - 1);
+  return paths_[dist(rng)];
 }
