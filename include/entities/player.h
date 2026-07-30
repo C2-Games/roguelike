@@ -3,7 +3,7 @@
 
 #include "core/coordinate.h"
 #include "entities/entity.h"
-#include "world/fov.h"
+#include "entities/fov.h"
 #include "world/weapon.h"
 
 class Player : public Entity {
