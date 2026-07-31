@@ -42,8 +42,8 @@ class Logger {
   Logger();
   ~Logger();
 
-  std::ofstream logStream;
-  std::ofstream errStream;
+  std::ofstream logStream_;
+  std::ofstream errStream_;
 };
 
 /**

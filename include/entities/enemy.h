@@ -1,15 +1,13 @@
 #ifndef ENEMY_H
 #define ENEMY_H
 
-#include <memory>
 #include <optional>
-#include <vector>
 
 #include "core/coordinate.h"
 #include "entities/entity.h"
 #include "entities/fov.h"
 
-class Level;
+struct MoveContext;
 
 class Enemy : public Entity {
  public:
@@ -38,7 +36,7 @@ class Enemy : public Entity {
    *
    * @return int
    */
-  int getAttackDamage() const { return attackDamage; };
+  int getAttackDamage() const { return attackDamage_; };
 
   /**
    * @brief Reduce enemy health by damage amount.
@@ -53,7 +51,7 @@ class Enemy : public Entity {
    * Behavior selection (in order):
    * 1. If the player is inside the enemy's attackFOV: refresh chase memory
    *    (lastKnownPlayerPos = playerPos, chaseTurnsRemaining reset) and step
-   *    down-gradient toward the player via Level::getGoalMap.
+   *    down-gradient toward the player via ctx.cache.
    * 2. Else if chase memory is active: step down-gradient toward the
    *    remembered tile. On each actual move, decrement chaseTurnsRemaining;
    *    on arrival or expiry, clear the memory.
@@ -64,33 +62,29 @@ class Enemy : public Entity {
    * reachable neighbor before giving up. Position updates are throttled by
    * Entity::speed via Entity::moveTo.
    *
-   * @param playerPos  Current player world position.
-   * @param level      Level reference; supplies goal maps and current-room
-   *                   tile lookups.
-   * @param allEnemies Every enemy in the current room. Used for
-   *                   enemy-vs-enemy collision detection during step
-   *                   selection and wander.
+   * @param ctx Per-frame context (playerPos, current Room, goal-map cache,
+   *   other enemies for collision, RNG source). Built once per frame by
+   *   Game::update and reused across every enemy.
    */
-  void moveTowardPlayer(Coordinate playerPos, const Level& level,
-                        const std::vector<std::unique_ptr<Enemy>>& allEnemies);
+  void moveTowardPlayer(const MoveContext& ctx);
 
  private:
-  int attackDamage;
-  FOV attackFOV;
+  int attackDamage_;
+  FOV attackFOV_;
 
   /// Turns (actual moves) the enemy will keep hunting toward the last-seen
   /// player tile after losing line of sight. Set at construction, immutable
   /// afterward.
-  int chaseMemoryDuration;
+  int chaseMemoryDuration_;
 
   /// Remaining hunting-memory moves. Decrements by one per actual move
   /// while the player is out of FoV. Reset to chaseMemoryDuration whenever
   /// the player re-enters FoV.
-  int chaseTurnsRemaining;
+  int chaseTurnsRemaining_;
 
   /// Last tile the player was seen on. Empty when the enemy has never
   /// spotted the player or when chase memory has expired.
-  std::optional<Coordinate> lastKnownPlayerPos;
+  std::optional<Coordinate> lastKnownPlayerPos_;
 };
 
 #endif

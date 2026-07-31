@@ -29,7 +29,7 @@ class Renderer {
   void compose();
 
   /**
-   * @brief Resize all layers to a terminal resize.
+   * @brief Resize all layers_ to a terminal resize.
    *
    * @param termHeight New terminal height (rows).
    * @param termWidth New terminal width (columns).
@@ -37,7 +37,7 @@ class Renderer {
   void resizeAll(int termHeight, int termWidth);
 
  private:
-  std::map<int, std::unique_ptr<RenderStack>> layers;
+  std::map<int, std::unique_ptr<RenderStack>> layers_;
 };
 
 #endif

@@ -22,15 +22,18 @@ set(SOURCES
     src/entities/entity.cpp
     src/entities/player.cpp
     src/entities/enemy.cpp
+    src/entities/enemy_factory.cpp
+    src/entities/enemy_registry.cpp
     src/entities/fov.cpp
-    src/world/level.cpp
-    src/world/tile.cpp
-    src/world/room.cpp
-    src/world/room_library.cpp
-    src/world/pathfinding.cpp
-    src/world/goal_map_cache.cpp
-    src/world/weapon.cpp
-    src/world/projectile.cpp
+    src/world/map/tile.cpp
+    src/world/map/room.cpp
+    src/world/map/room_library.cpp
+    src/world/map/room_graph.cpp
+    src/world/systems/pathfinding.cpp
+    src/world/systems/goal_map_cache.cpp
+    src/world/systems/visibility.cpp
+    src/world/objects/weapon.cpp
+    src/world/objects/projectile.cpp
     src/render/renderer.cpp
     src/render/render_stack.cpp
     src/render/layers/map_layer.cpp

@@ -1,10 +1,10 @@
-#include "world/tile.h"
+#include "world/map/tile.h"
 
 Tile::Tile(TileType type, Coordinate position)
-    : type(type), position(position) {}
+    : type_(type), position_(position) {}
 
 // Define all tile types and their attributes in ONE place
-const std::unordered_map<int, TileAttributes> Tile::typeAttributes = {
+const std::unordered_map<int, TileAttributes> Tile::typeAttributes_ = {
     {static_cast<int>(TileType::Wall), {'#', false}},
     {static_cast<int>(TileType::Floor), {'.', true}},
     {static_cast<int>(TileType::Door), {'+', true}},
@@ -13,11 +13,11 @@ const std::unordered_map<int, TileAttributes> Tile::typeAttributes = {
 };
 
 char Tile::getSymbol() const {
-  return typeAttributes.at(static_cast<int>(type)).symbol;
+  return typeAttributes_.at(static_cast<int>(type_)).symbol;
 }
 
 bool Tile::isWalkable() const {
-  return typeAttributes.at(static_cast<int>(type)).walkable;
+  return typeAttributes_.at(static_cast<int>(type_)).walkable;
 }
 
 TileType Tile::charToTileType(char ch) {

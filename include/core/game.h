@@ -7,16 +7,16 @@
 
 #include "core/services.h"
 #include "entities/enemy.h"
+#include "entities/enemy_registry.h"
 #include "entities/player.h"
 #include "render/layers/debug_layer.h"
 #include "render/layers/entity_layer.h"
 #include "render/layers/hud_layer.h"
 #include "render/layers/map_layer.h"
 #include "render/renderer.h"
-#include "world/level.h"
-#include "world/projectile.h"
-
-class Enemy;
+#include "world/map/room_graph.h"
+#include "world/objects/projectile.h"
+#include "world/systems/goal_map_cache.h"
 
 class Game {
  public:
@@ -39,25 +39,29 @@ class Game {
   void run();
 
  private:
-  int termWidth, termHeight;
-  const int fps;
-  double currentFps;
-  /// Keep this before player and level to ensure proper initialization order.
-  GameServices services;
-  Player player;
-  Level level;
-  std::vector<std::unique_ptr<Enemy>> enemies;
-  std::vector<std::unique_ptr<Projectile>> projectiles;
+  int termWidth_, termHeight_;
+  const int fps_;
+  double currentFps_;
+  /// Always declare first so subsystems that store `GameServices&` initialize
+  /// with a valid reference. Member-init order follows declaration order in
+  /// C++.
+  GameServices services_;
+  Player player_;
+  RoomGraph roomGraph_;
+  EnemyRegistry enemyRegistry_;
+  GoalMapCache goalMapCache_;
+  std::vector<std::unique_ptr<Enemy>> enemies_;
+  std::vector<std::unique_ptr<Projectile>> projectiles_;
 
-  bool isRunning;
-  Renderer renderer;
+  bool isRunning_;
+  Renderer renderer_;
 
   /**
    * @brief Get the frame duraction in milliseconds.
    *
    * @return std::chrono::milliseconds
    */
-  auto getDuration() const { return std::chrono::milliseconds(1000 / fps); };
+  auto getDuration() const { return std::chrono::milliseconds(1000 / fps_); };
 
   /**
    * @brief Handles user input for player movement and game controls.

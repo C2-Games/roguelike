@@ -9,7 +9,7 @@
  * @brief Discovers and provides access to authored room template files.
  *
  * Scans a directory (typically assets/rooms/) for *.txt files at startup and
- * exposes them to Level for random selection during room generation.
+ * exposes them to RoomGraph for random selection during room generation.
  */
 class RoomLibrary {
  public:

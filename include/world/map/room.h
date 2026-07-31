@@ -6,14 +6,14 @@
 #include <vector>
 
 #include "core/coordinate.h"
-#include "world/tile.h"
+#include "world/map/tile.h"
 
 /**
  * @brief Represents a single room on the game map.
  *
  * A Room owns a fixed-size 2-D tile grid (WIDTH × HEIGHT). Tiles outside the
  * shaped floor area are TileType::Void. Door positions on the room's perimeter
- * walls are tracked in doorPositions so Level can wire room connections.
+ * walls are tracked in doorPositions so RoomGraph can wire room connections.
  *
  * Rooms are authored as text files under assets/rooms/ and loaded via
  * Room::loadFromFile.
@@ -28,8 +28,8 @@ struct Room {
   std::vector<Coordinate>
       doorPositions;  ///< Door positions in A,B,C,... order.
 
-  /// Candidate coordinates marked with `!` in the room file. Level (or a
-  /// dedicated spawner) is responsible for rolling which of these become
+  /// Candidate coordinates marked with `!` in the room file. EnemyRegistry
+  /// (via enemy_factory) is responsible for rolling which of these become
   /// actual enemies on first entry. The underlying tile is Floor.
   std::vector<Coordinate> enemySpawns;
 
@@ -43,7 +43,7 @@ struct Room {
   std::vector<Coordinate> itemSpawns;
 
   /// True when the tile is inside the player's current FoV. Recomputed each
-  /// frame by Level::updateVisibility. Indexed [x][y].
+  /// frame by visibility::update. Indexed [x][y].
   std::vector<std::vector<bool>> visible;
 
   /// True once the tile has ever been visible. Persists across frames and
@@ -78,7 +78,7 @@ struct Room {
    *
    * @param roomID Unique identifier assigned to the loaded room.
    * @param path   Path to the room file.
-   * @return A fully populated Room ready to be added to a Level.
+   * @return A fully populated Room ready to be added to a RoomGraph.
    */
   static Room loadFromFile(int roomID, const std::filesystem::path& path);
 

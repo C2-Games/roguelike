@@ -1,9 +1,9 @@
-#include "world/pathfinding.h"
+#include "world/systems/pathfinding.h"
 
 #include <queue>
 
-#include "world/room.h"
-#include "world/tile.h"
+#include "world/map/room.h"
+#include "world/map/tile.h"
 
 namespace {
 

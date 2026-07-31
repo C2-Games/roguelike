@@ -5,23 +5,23 @@
 #include <memory>
 
 #include "render/ui.h"
-#include "world/level.h"
+#include "world/map/room.h"
 
 EntityLayer::EntityLayer(
-    int h, int w, int y, int x, const Level& level, const Player& player,
+    int h, int w, int y, int x, const RoomGraph& graph, const Player& player,
     const std::vector<std::unique_ptr<Enemy>>& enemies,
     const std::vector<std::unique_ptr<Projectile>>& projectiles)
     : RenderStack(h, w, y, x),
-      level(level),
-      player(player),
-      enemies(enemies),
-      projectiles(projectiles) {}
+      graph_(graph),
+      player_(player),
+      enemies_(enemies),
+      projectiles_(projectiles) {}
 
 void EntityLayer::drawEnemies() {
-  const Room& room = level.getCurrentRoom();
+  const Room& room = graph_.getCurrentRoom();
 
   // iterate through vector of enemies.
-  for (const auto& enemy : enemies) {
+  for (const auto& enemy : enemies_) {
     // if alive AND inside the player's current FoV, draw symbol.
     // Dynamic content (enemies) is never shown outside the FoV
     if (enemy->isAlive()) {
@@ -30,18 +30,16 @@ void EntityLayer::drawEnemies() {
       if (room.isVisible(pos.x, pos.y)) {
         // Hook: OR in colorAttr(ColorPair::EnemyDefault) — or a
         // per-enemy-type pair — once enemy colouring is designed.
-        mvwaddch(win, pos.y, pos.x, enemy->getSymbol());
+        mvwaddch(win_, pos.y, pos.x, enemy->getSymbol());
       }
     };
-    // TODO: if enemy dead, destroy the object & update the vector? lil
-    // optimization??
   };
 };
 
 void EntityLayer::drawProjectiles() {
-  const Room& room = level.getCurrentRoom();
+  const Room& room = graph_.getCurrentRoom();
 
-  for (const auto& projectile : projectiles) {
+  for (const auto& projectile : projectiles_) {
     if (!projectile->isActive()) continue;
 
     Coordinate pos = projectile->getPosition();
@@ -55,22 +53,22 @@ void EntityLayer::drawProjectiles() {
     wchar_t glyph[] = {L'●', L'\0'};
     short pairId = static_cast<short>(projectile->getColor());
     setcchar(&cc, glyph, A_NORMAL, pairId, nullptr);
-    mvwadd_wch(win, pos.y, pos.x, &cc);
+    mvwadd_wch(win_, pos.y, pos.x, &cc);
   };
 };
 
 void EntityLayer::drawPlayer() {
   // if alive, draw symbol. Player is always at their own FoV origin so
   // no visibility check is needed here.
-  if (player.isAlive()) {
-    Coordinate pos = player.getPosition();
+  if (player_.isAlive()) {
+    Coordinate pos = player_.getPosition();
 
-    mvwaddch(win, pos.y, pos.x, player.getSymbol());
+    mvwaddch(win_, pos.y, pos.x, player_.getSymbol());
   };
 };
 
 void EntityLayer::doRender() {
-  werase(win);  // need to erase each frame.
+  werase(win_);  // need to erase each frame.
 
   // render enemies, then projectiles, then player (top of render).
   this->drawEnemies();
