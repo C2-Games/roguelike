@@ -1,15 +1,12 @@
-#include "world/pathfinding.h"
+#include "world/systems/pathfinding.h"
 
 #include <queue>
 
-#include "world/room.h"
-#include "world/tile.h"
+#include "world/map/room.h"
+#include "world/map/tile.h"
 
 namespace {
 
-// Returns true if the tile at (x, y) blocks 4-connected pathfinding for
-// enemies. Walls, Void, Pillars, and Doors are all blocking; only Floor is
-// passable.
 bool isBlocking(const Room& room, int x, int y) {
   if (x < 0 || x >= Room::WIDTH || y < 0 || y >= Room::HEIGHT) return true;
   TileType type = room.tiles[x][y].getType();

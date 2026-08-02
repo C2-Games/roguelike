@@ -3,7 +3,7 @@
 
 #include "entities/player.h"
 #include "render/render_stack.h"
-#include "world/level.h"
+#include "world/map/level.h"
 
 class HUDLayer : public RenderStack {
  public:
@@ -14,10 +14,10 @@ class HUDLayer : public RenderStack {
    * @param w      Width of the layer window in columns.
    * @param margin The margin between HUD & map layer.
    * @param player The player object to track stats, health, position, etc.
-   * @param level  The level to read the current room ID from.
+   * @param graph  The room graph to read the current room ID from.
    */
   HUDLayer(int h, int w, const int margin, const Player& player,
-           const Level& level);
+           const Level& graph);
 
   /**
    * @brief Draw player health bar at a fixed screen position.
@@ -45,16 +45,13 @@ class HUDLayer : public RenderStack {
    */
   void drawWeaponStats(int row, int col);
 
-  /**
-   * @brief Draw the HP indicator, room ID, and weapon stats each frame.
-   *
-   */
+  /** @brief Draw the HP indicator, room ID, and weapon stats each frame. */
   void doRender() override;
 
  private:
-  const Player& player;
-  const Level& level;
-  const int margin;
+  const Player& player_;
+  const Level& graph_;
+  const int margin_;
 };
 
 #endif

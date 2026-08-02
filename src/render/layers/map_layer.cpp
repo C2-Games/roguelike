@@ -4,13 +4,13 @@
 
 #include "core/colors.h"
 #include "render/ui.h"
-#include "world/room.h"
+#include "world/map/room.h"
 
-MapLayer::MapLayer(int h, int w, int y, int x, const Level& level)
-    : RenderStack(h, w, y, x), level(level) {}
+MapLayer::MapLayer(int h, int w, int y, int x, const Level& graph)
+    : RenderStack(h, w, y, x), graph_(graph) {}
 
 void MapLayer::drawMap() {
-  const Room& room = level.getCurrentRoom();
+  const Room& room = graph_.getCurrentRoom();
 
   for (int x = 0; x < Room::WIDTH; ++x) {
     for (int y = 0; y < Room::HEIGHT; ++y) {
@@ -31,26 +31,26 @@ void MapLayer::drawMap() {
       // Hook: door tiles could branch here on tile.getType() == Door and
       // OR in colorAttr(ColorPair::DoorDefault) once the pair is defined.
       if (room.isVisible(x, y)) {
-        mvwaddch(win, ty, tx, tile.getSymbol());
+        mvwaddch(win_, ty, tx, tile.getSymbol());
       } else if (room.isExplored(x, y)) {
         const char sym = tile.getSymbol();
-        mvwaddch(win, ty, tx, sym | colorAttr(ColorPair::FogExplored));
+        mvwaddch(win_, ty, tx, sym | colorAttr(ColorPair::FogExplored));
       } else {
         // Fog block: ncurses overlay() drops blanks, so we must draw a
         // non-blank glyph. Because the pair has fg == bg, whatever glyph
         // we pick is invisible against its own background and only the
         // solid grey cell shows through. '.' is arbitrary.
-        mvwaddch(win, ty, tx, '.' | colorAttr(ColorPair::FogUnexplored));
+        mvwaddch(win_, ty, tx, '.' | colorAttr(ColorPair::FogUnexplored));
       }
     };
   };
 };
 
 void MapLayer::doRender() {
-  werase(win);  // need to erase each frame.
+  werase(win_);  // need to erase each frame.
 
   // boarder around map.
-  box(win, 0, 0);
+  box(win_, 0, 0);
 
   // draw map.
   this->drawMap();

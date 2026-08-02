@@ -14,35 +14,35 @@ class Entity {
    *
    * @return const int
    */
-  int getHealth() const { return health; };
+  int getHealth() const { return health_; };
 
   /**
    * @brief Get the entities symbol.
    *
    * @return const char
    */
-  char getSymbol() const { return symbol; };
+  char getSymbol() const { return symbol_; };
 
   /**
    * @brief Get the entity position.
    *
    * @return const Coordinate
    */
-  Coordinate getPosition() const { return position; };
+  Coordinate getPosition() const { return position_; };
 
   /**
    * @brief Get entity speed.
    *
    * @return const int [frames / move]
    */
-  int getSpeed() const { return speed; };
+  int getSpeed() const { return speed_; };
 
   /**
    * @brief Entity is alive.
    *
    * @return bool
    */
-  bool isAlive() const { return health > 0; };
+  bool isAlive() const { return health_ > 0; };
 
   /**
    * @brief Move entity to new position.
@@ -55,25 +55,24 @@ class Entity {
   virtual void takeDamage(int damage) = 0;
 
  protected:
-  Coordinate position;
-  char symbol;
-  int health;
-  int speed;
-  int frameCounter;
+  Coordinate position_;
+  char symbol_;
+  int health_;
+  int speed_;
+  int frameCounter_;
 
   /**
    * @brief Move hook that moves player to new position based on their speed.
    *
    * @param newPos The potential new position to move entitiy.
-   *
    */
   void moveHook(Coordinate newPos) {
     // when move hook is called, we assume a frame.
-    frameCounter += 1;
+    frameCounter_ += 1;
 
-    if (frameCounter % speed == 0) {
-      frameCounter = 0;  // reset counter.
-      position = newPos;
+    if (frameCounter_ % speed_ == 0) {
+      frameCounter_ = 0;  // reset counter.
+      position_ = newPos;
     };
   };
 };

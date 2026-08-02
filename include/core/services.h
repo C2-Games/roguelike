@@ -3,16 +3,6 @@
 
 #include <random>
 
-/**
- * @brief Shared cross-cutting services threaded through the game.
- *
- * Currently exposes a single Mersenne Twister random engine used by room
- * selection and enemy spawn placement. Passing this by reference from Game
- * down to consumers replaces ambient std::rand() calls, so seeds are
- * explicit and runs can be reproduced by pinning the seed.
- *
- * Non-copyable to prevent accidental forking of the RNG stream.
- */
 struct GameServices {
   std::mt19937 rng;
 

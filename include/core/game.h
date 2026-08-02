@@ -7,16 +7,16 @@
 
 #include "core/services.h"
 #include "entities/enemy.h"
+#include "entities/enemy_registry.h"
 #include "entities/player.h"
 #include "render/layers/debug_layer.h"
 #include "render/layers/entity_layer.h"
 #include "render/layers/hud_layer.h"
 #include "render/layers/map_layer.h"
 #include "render/renderer.h"
-#include "world/level.h"
-#include "world/projectile.h"
-
-class Enemy;
+#include "world/map/level.h"
+#include "world/objects/projectile.h"
+#include "world/systems/goal_map_cache.h"
 
 class Game {
  public:
@@ -30,69 +30,51 @@ class Game {
    */
   Game(int width, int height, int fps = 60);
 
-  /**
-   * @brief Runs the main game loop.
-   * Handles input, updates game state, and renders the screen at a fixed frame
-   * rate.
-   *
-   */
+  /** @brief Runs the main game loop. */
   void run();
 
  private:
-  int termWidth, termHeight;
-  const int fps;
-  double currentFps;
-  /// Keep this before player and level to ensure proper initialization order.
-  GameServices services;
-  Player player;
-  Level level;
-  std::vector<std::unique_ptr<Enemy>> enemies;
-  std::vector<std::unique_ptr<Projectile>> projectiles;
+  int termWidth_, termHeight_;
+  const int fps_;
+  double currentFps_;
+  GameServices services_;
+  Player player_;
+  Level roomGraph_;
+  EnemyRegistry enemyRegistry_;
+  GoalMapCache goalMapCache_;
+  std::vector<std::unique_ptr<Enemy>> enemies_;
+  std::vector<std::unique_ptr<Projectile>> projectiles_;
 
-  bool isRunning;
-  Renderer renderer;
+  bool isRunning_;
+  Renderer renderer_;
 
   /**
    * @brief Get the frame duraction in milliseconds.
    *
    * @return std::chrono::milliseconds
    */
-  auto getDuration() const { return std::chrono::milliseconds(1000 / fps); };
+  auto getDuration() const { return std::chrono::milliseconds(1000 / fps_); };
 
-  /**
-   * @brief Handles user input for player movement and game controls.
-   * Updates the player's position based on arrow key and 'wasd' input and
-   * allows quitting with 'Q'.
-   *
-   */
+  /** @brief Handles user input for player movement and game controls. */
   void handleInput();
 
   /**
    * @brief Updates the game state - moves enemies toward the player and checks
    * for collisions.
-   *
    */
   void update();
 
   /**
    * @brief Renders the game state. Draws the player, enemies, and UI elements
    * on the screen.
-   *
    */
   void render();
 
-  /**
-   * @brief Spawns enemies in the game.
-   *
-   */
+  /** @brief Spawns enemies in the game. */
   void spawnEnemies();
 
   /**
    * @brief Transition the player to a connected room via a door.
-   *
-   * Persists the current room's enemies, loads the destination room's enemies,
-   * updates the active room, and places the player one tile inward from the
-   * destination door.
    *
    * @param conn The door connection describing the destination.
    */

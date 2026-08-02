@@ -6,38 +6,38 @@
 
 #include "core/colors.h"
 #include "render/ui.h"
-#include "world/weapon.h"
+#include "world/objects/weapon.h"
 
 HUDLayer::HUDLayer(int h, int w, int margin, const Player& player,
-                   const Level& level)
-    : RenderStack(h, w), player(player), level(level), margin(margin) {}
+                   const Level& graph)
+    : RenderStack(h, w), player_(player), graph_(graph), margin_(margin) {}
 
 void HUDLayer::drawPlayerHealthBar(int row, int col) {
-  mvwprintw(win, row, col, "HP:%d/%d", player.getHealth(),
-            player.getMaxHealth());
+  mvwprintw(win_, row, col, "HP:%d/%d", player_.getHealth(),
+            player_.getMaxHealth());
 };
 
 void HUDLayer::drawRoomID(int row, int col) {
-  mvwprintw(win, row, col, "Room:%d/%d", level.getCurrentRoomID() + 1,
-            level.getRoomCount());
+  mvwprintw(win_, row, col, "Room:%d/%d", graph_.getCurrentRoomID() + 1,
+            graph_.getRoomCount());
 };
 
 void HUDLayer::drawWeaponStats(int row, int col) {
-  const Weapon& weapon = player.getWeapon();
+  const Weapon& weapon = player_.getWeapon();
 
-  wattron(win, colorAttr(weapon.getColor()));
-  mvwprintw(win, row, col, "%s DMG:%d SPD:%d RNG:%d", weapon.getName(),
+  wattron(win_, colorAttr(weapon.getColor()));
+  mvwprintw(win_, row, col, "%s DMG:%d SPD:%d RNG:%d", weapon.getName(),
             weapon.getDamage(), weapon.getSpeed(), weapon.getRange());
-  wattroff(win, colorAttr(weapon.getColor()));
+  wattroff(win_, colorAttr(weapon.getColor()));
 };
 
 void HUDLayer::doRender() {
-  werase(win);  // need to erase each frame.
+  werase(win_);  // need to erase each frame.
 
   // fixed HUD band above the map's top border, with a blank gap row
   // separating the HUD text from the border itself.
-  UI geom = computeUI(height, width);
-  int bandRow = std::max(0, geom.originY - margin);
+  UI geom = computeUI(height_, width_);
+  int bandRow = std::max(0, geom.originY - margin_);
 
   // room number, in middle (subtract 4 to center better -- 4 chars in 'Room').
   this->drawRoomID(bandRow + 1, geom.originX + geom.winWidth / 2 - 4);

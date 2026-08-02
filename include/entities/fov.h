@@ -15,19 +15,15 @@ class FOV {
    *
    * @param offsets Set of offset positions (from origin) that defines the
    * FOV.
-   *
    */
   explicit FOV(std::set<Coordinate> offsets);
 
   /**
    * @brief Determine if a position is in an origin's FOV.
    *
-   * Checks whether (position - origin) is one of the stored offsets.
-   *
    * @param origin The position of origin with this FOV.
    * @param position The position of the target.
    * @return bool True if position is in FOV (based on origin).
-   *
    */
   bool in(Coordinate origin, Coordinate position) const;
 
@@ -36,7 +32,6 @@ class FOV {
    *
    * @param origin The position of origin with this FOV.
    * @return std::vector<Coordinate>
-   *
    */
   std::vector<Coordinate> absoluteFOV(Coordinate origin) const;
 };
@@ -48,7 +43,6 @@ class FOV {
  * @param ry Radius in rows (vertical). NOTE: row heights are roughly equiv. to
  * 2-3 column widths.
  * @return FOV
- *
  */
 FOV ellipseFOV(int rx, int ry);
 

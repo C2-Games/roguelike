@@ -6,18 +6,18 @@
 
 Player::Player(int x, int y, int health, int speed, int sightRx, int sightRy)
     : Entity(x, y, '@', health, speed),
-      maxHealth(health),
-      sightRx(sightRx),
-      sightRy(sightRy),
-      fov(ellipseFOV(sightRx, sightRy)) {}
+      maxHealth_(health),
+      sightRx_(sightRx),
+      sightRy_(sightRy),
+      fov_(ellipseFOV(sightRx, sightRy)) {}
 
 void Player::takeDamage(int damage) {
-  health -= damage;
-  if (health < 0) health = 0;
+  health_ -= damage;
+  if (health_ < 0) health_ = 0;
 }
 
 void Player::setSightRadius(int rx, int ry) {
-  sightRx = rx;
-  sightRy = ry;
-  fov = ellipseFOV(rx, ry);
+  sightRx_ = rx;
+  sightRy_ = ry;
+  fov_ = ellipseFOV(rx, ry);
 }

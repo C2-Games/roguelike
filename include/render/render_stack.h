@@ -19,7 +19,7 @@ class RenderStack {
 
   // need to make sure the ncurses::WINDOW is deleted if object is.
   virtual ~RenderStack() {
-    if (win) delwin(win);
+    if (win_) delwin(win_);
   };
 
   // doing this to enforce no copies. each RenderStack object should be unique.
@@ -28,12 +28,7 @@ class RenderStack {
   RenderStack(RenderStack&&) = delete;
   RenderStack& operator=(RenderStack&&) = delete;
 
-  /**
-   * @brief State update hook. Default is a no-op.
-   *
-   * Called by Renderer before doRender() each frame. Override to update
-   * any derived-class state that must be refreshed before drawing.
-   */
+  /** @brief State update hook. Default is a no-op. */
   virtual void doUpdate() {};
 
   /**
@@ -47,10 +42,7 @@ class RenderStack {
     reshape(termHeight, termWidth, 0, 0);
   }
 
-  /**
-   * @brief Draw this layer's content on the WINDOW.
-   *
-   */
+  /** @brief Draw this layer's content on the WINDOW. */
   virtual void doRender() = 0;
 
   /**
@@ -59,21 +51,21 @@ class RenderStack {
    *
    * @param e True to enable, false to disable.
    */
-  void setEnabled(bool e) { enabled = e; };
+  void setEnabled(bool e) { enabled_ = e; };
 
   /**
    * @brief Check whether this layer is currently enabled.
    *
    * @return bool
    */
-  bool isEnabled() const { return enabled; };
+  bool isEnabled() const { return enabled_; };
 
   /**
    * @brief Get the WINDOW.
    *
    * @return WINDOW*
    */
-  WINDOW* getWindow() const { return win; };
+  WINDOW* getWindow() const { return win_; };
 
  protected:
   /**
@@ -86,14 +78,14 @@ class RenderStack {
    */
   void reshape(int h, int w, int y = 0, int x = 0);
 
-  WINDOW* win;
-  int height;
-  int width;
-  int originY;
-  int originX;
+  WINDOW* win_;
+  int height_;
+  int width_;
+  int originY_;
+  int originX_;
 
  private:
-  bool enabled = true;
+  bool enabled_ = true;
 };
 
 #endif

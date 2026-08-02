@@ -1,13 +1,10 @@
 #ifndef PROJECTILE_H
 #define PROJECTILE_H
 
-#include <memory>
-#include <vector>
-
 #include "core/colors.h"
 #include "core/coordinate.h"
-#include "entities/enemy.h"
-#include "world/room.h"
+
+struct ProjectileContext;
 
 class Projectile {
  public:
@@ -27,44 +24,46 @@ class Projectile {
 
   /**
    * @brief Advance the projectile up to tilesPerTick tiles. Deactivates on
-   * the first collision or once its range is exhausted.
+   * the first wall collision, on the first successful hit reported by
+   * `ctx.tryHit`, or once its range is exhausted.
    *
-   * @param room Current room, for bounds/walkability checks.
-   * @param enemies Enemy list; a hit enemy takes damage via takeDamage().
+   * @param ctx Per-frame context (current Room for walkability + a hit-sink
+   *   closure the projectile calls when it lands on a potentially-damaged
+   *   coordinate). Built once per frame by Game::update.
    */
-  void update(const Room& room, std::vector<std::unique_ptr<Enemy>>& enemies);
+  void update(const ProjectileContext& ctx);
 
   /**
    * @brief Get the projectile's current position.
    *
    * @return Coordinate
    */
-  Coordinate getPosition() const { return position; }
+  Coordinate getPosition() const { return position_; }
 
   /**
    * @brief Get the projectile's render color.
    *
    * @return ColorPair
    */
-  ColorPair getColor() const { return color; }
+  ColorPair getColor() const { return color_; }
 
   /**
    * @brief Whether the projectile is still in flight.
    *
    * @return bool
    */
-  bool isActive() const { return active; }
+  bool isActive() const { return active_; }
 
  private:
-  Coordinate position;
-  Coordinate direction;
-  int damage;
-  int tilesPerTick;
-  int remainingRange;
-  ColorPair color;
-  bool active = true;
+  Coordinate position_;
+  Coordinate direction_;
+  int damage_;
+  int tilesPerTick_;
+  int remainingRange_;
+  ColorPair color_;
+  bool active_ = true;
 
-  void deactivate() { active = false; }
+  void deactivate() { active_ = false; }
 };
 
 #endif

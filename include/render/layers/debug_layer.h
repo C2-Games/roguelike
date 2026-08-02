@@ -16,15 +16,12 @@ class DebugLayer : public RenderStack {
    */
   DebugLayer(int h, int w, const double& currentFps, const Player& player);
 
-  /**
-   * @brief Draw frame timing and player position at the bottom row.
-   *
-   */
+  /** @brief Draw frame timing and player position at the bottom row. */
   void doRender() override;
 
  private:
-  const double& currentFps;
-  const Player& player;
+  const double& currentFps_;
+  const Player& player_;
 };
 
 #endif

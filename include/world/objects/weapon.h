@@ -9,8 +9,8 @@ enum class WeaponType { Basic, Rapid, Heavy, Sniper };
 
 struct WeaponAttributes {
   int damage;
-  int speed;  // tiles traveled per Game::update() tick
-  int range;  // max tiles traveled before the projectile expires
+  int speed;
+  int range;
   ColorPair color;
   const char* name;
 };
@@ -29,7 +29,7 @@ class Weapon {
    *
    * @return WeaponType
    */
-  WeaponType getType() const { return type; }
+  WeaponType getType() const { return type_; }
 
   /**
    * @brief Get the weapon's projectile damage.
@@ -68,10 +68,10 @@ class Weapon {
   const char* getName() const;
 
  private:
-  WeaponType type;
+  WeaponType type_;
 
   // lookup table for weapon attributes based on WeaponType.
-  static const std::unordered_map<int, WeaponAttributes> typeAttributes;
+  static const std::unordered_map<int, WeaponAttributes> typeAttributes_;
 };
 
 #endif

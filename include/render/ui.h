@@ -3,11 +3,11 @@
 
 #include <algorithm>
 
-#include "world/room.h"
+#include "world/map/room.h"
 
 struct UI {
-  int winHeight, winWidth;  ///< Window size, clamped to the terminal size.
-  int originY, originX;     ///< Top-left of the map window in the terminal.
+  int winHeight, winWidth;
+  int originY, originX;
 };
 
 /**
