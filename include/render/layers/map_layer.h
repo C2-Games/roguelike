@@ -18,16 +18,10 @@ class MapLayer : public RenderStack {
    */
   MapLayer(int h, int w, int y, int x, const Level& graph);
 
-  /**
-   * @brief Draw all room tiles into the map layer window.
-   *
-   */
+  /** @brief Draw all room tiles into the map layer window. */
   void drawMap();
 
-  /**
-   * @brief Render map layer window.
-   *
-   */
+  /** @brief Render map layer window. */
   void doRender() override;
 
   /**

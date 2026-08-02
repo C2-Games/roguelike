@@ -9,17 +9,6 @@ class Enemy;
 struct Room;
 struct GameServices;
 
-/**
- * @brief Per-room enemy storage and first-visit spawn orchestration.
- *
- * Rooms retain their enemies across visits — leaving a room and returning
- * finds the same enemies with the same HP and positions. First-visit
- * detection triggers a factory roll via `enemy_factory::rollForRoom`.
- *
- * Storage is keyed by roomID. Private member names (`perRoom_`, `visited_`)
- * are deliberately generic so this class serves as a template for future
- * per-room stores
- */
 class EnemyRegistry {
  public:
   /**
@@ -55,20 +44,13 @@ class EnemyRegistry {
   void transitionActive(int fromRoomID, int toRoomID, const Room& toRoom,
                         std::vector<std::unique_ptr<Enemy>>& active);
 
-  /**
-   * @brief Drop dead enemies from `active`.
-   *
-   * Closes the EntityLayer TODO about cleaning up dead objects. Not
-   * currently called anywhere; callers can invoke it once per frame or per
-   * turn as their combat model matures.
-   */
+  /** @brief Drop dead enemies from `active`. */
   static void reap(std::vector<std::unique_ptr<Enemy>>& active);
 
  private:
   GameServices& services_;
-  std::map<int, std::vector<std::unique_ptr<Enemy>>>
-      perRoom_;                  ///< Enemy vectors keyed by roomID.
-  std::map<int, bool> visited_;  ///< First-visit flags keyed by roomID.
+  std::map<int, std::vector<std::unique_ptr<Enemy>>> perRoom_;
+  std::map<int, bool> visited_;
 
   /**
    * @brief If `roomID` has never been visited, factory-roll its enemies

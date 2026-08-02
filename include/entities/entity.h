@@ -65,7 +65,6 @@ class Entity {
    * @brief Move hook that moves player to new position based on their speed.
    *
    * @param newPos The potential new position to move entitiy.
-   *
    */
   void moveHook(Coordinate newPos) {
     // when move hook is called, we assume a frame.

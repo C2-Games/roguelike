@@ -40,8 +40,6 @@ class Player : public Entity {
   /**
    * @brief Get the player's current field-of-view mask.
    *
-   * The FOV is cached and only rebuilt when setSightRadius() is called.
-   *
    * @return const FOV& Offset set centred on the player.
    */
   const FOV& getFOV() const { return fov_; }
@@ -62,8 +60,6 @@ class Player : public Entity {
 
   /**
    * @brief Change the player's sight radii and rebuild the cached FOV.
-   *
-   * Intended for future sight-modifying items (torches, curses, potions).
    *
    * @param rx New horizontal FoV radius (columns).
    * @param ry New vertical FoV radius (rows).

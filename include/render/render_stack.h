@@ -28,12 +28,7 @@ class RenderStack {
   RenderStack(RenderStack&&) = delete;
   RenderStack& operator=(RenderStack&&) = delete;
 
-  /**
-   * @brief State update hook. Default is a no-op.
-   *
-   * Called by Renderer before doRender() each frame. Override to update
-   * any derived-class state that must be refreshed before drawing.
-   */
+  /** @brief State update hook. Default is a no-op. */
   virtual void doUpdate() {};
 
   /**
@@ -47,10 +42,7 @@ class RenderStack {
     reshape(termHeight, termWidth, 0, 0);
   }
 
-  /**
-   * @brief Draw this layer's content on the WINDOW.
-   *
-   */
+  /** @brief Draw this layer's content on the WINDOW. */
   virtual void doRender() = 0;
 
   /**

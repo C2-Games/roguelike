@@ -9,7 +9,6 @@
 
 namespace {
 
-// Trim leading/trailing whitespace from a string in place.
 std::string trim(std::string s) {
   auto notSpace = [](unsigned char c) { return !std::isspace(c); };
   s.erase(s.begin(), std::find_if(s.begin(), s.end(), notSpace));
@@ -17,11 +16,6 @@ std::string trim(std::string s) {
   return s;
 }
 
-// Parse a single grid character into its TileType. Letters A-Z / a-z are
-// treated as door labels (returned as Door here; the label itself is captured
-// separately by the caller for ordering). Spawn markers (`!`, `$`, `?`) are
-// authored on top of walkable floor and therefore resolve to Floor here; the
-// spawn coordinate is recorded separately by the caller.
 TileType charToRoomTile(char c) {
   if (c == '#') return TileType::Wall;
   if (c == '.') return TileType::Floor;
@@ -35,8 +29,6 @@ TileType charToRoomTile(char c) {
   throw std::runtime_error(oss.str());
 }
 
-// Category a spawn-marker character belongs to. `None` is returned for every
-// non-marker character so the caller can branch uniformly.
 enum class SpawnKind { None, Enemy, Loot, Item };
 
 SpawnKind charToSpawnKind(char c) {

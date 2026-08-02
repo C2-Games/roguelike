@@ -8,46 +8,20 @@
 #include "core/coordinate.h"
 #include "world/map/tile.h"
 
-/**
- * @brief Represents a single room on the game map.
- *
- * A Room owns a fixed-size 2-D tile grid (WIDTH × HEIGHT). Tiles outside the
- * shaped floor area are TileType::Void. Door positions on the room's perimeter
- * walls are tracked in doorPositions so RoomGraph can wire room connections.
- *
- * Rooms are authored as text files under assets/rooms/ and loaded via
- * Room::loadFromFile.
- */
 struct Room {
-  static constexpr int WIDTH = 175;  ///< Tile columns per room.
-  static constexpr int HEIGHT = 50;  ///< Tile rows per room.
+  static constexpr int WIDTH = 175;
+  static constexpr int HEIGHT = 50;
 
-  int roomID;                            ///< Unique identifier for this room.
-  std::string name;                      ///< Human-readable name from @name.
-  std::vector<std::vector<Tile>> tiles;  ///< Tile grid, indexed [x][y].
-  std::vector<Coordinate>
-      doorPositions;  ///< Door positions in A,B,C,... order.
+  int roomID;
+  std::string name;
+  std::vector<std::vector<Tile>> tiles;
+  std::vector<Coordinate> doorPositions;
 
-  /// Candidate coordinates marked with `!` in the room file. EnemyRegistry
-  /// (via enemy_factory) is responsible for rolling which of these become
-  /// actual enemies on first entry. The underlying tile is Floor.
   std::vector<Coordinate> enemySpawns;
-
-  /// Candidate coordinates marked with `$` in the room file. Reserved for
-  /// loot placement by later systems. The underlying tile is Floor.
   std::vector<Coordinate> lootSpawns;
-
-  /// Candidate coordinates marked with `?` in the room file. Reserved for
-  /// misc / random-item placement by later systems. The underlying tile is
-  /// Floor.
   std::vector<Coordinate> itemSpawns;
 
-  /// True when the tile is inside the player's current FoV. Recomputed each
-  /// frame by visibility::update. Indexed [x][y].
   std::vector<std::vector<bool>> visible;
-
-  /// True once the tile has ever been visible. Persists across frames and
-  /// room re-entries so the map is "remembered" once seen. Indexed [x][y].
   std::vector<std::vector<bool>> explored;
 
   /**
@@ -60,34 +34,13 @@ struct Room {
   /**
    * @brief Load a Room from a text file authored under assets/rooms/.
    *
-   * File format:
-   *   - Optional header lines starting with `@key: value` (e.g. `@name: foo`,
-   *     `@levels: 1-3`). Unrecognized keys are ignored.
-   *   - Grid begins at the first non-`@` line. Must be exactly HEIGHT rows,
-   *     each exactly WIDTH characters wide.
-   *   - Tile legend: `#` Wall, `.` Floor, `o` Pillar, ` ` Void.
-   *   - Spawn markers: `!` enemy spawn candidate, `$` loot spawn candidate,
-   *     `?` random-item spawn candidate. Each renders as Floor and its
-   *     coordinate is recorded on the matching Room::*Spawns vector so
-   *     downstream systems can roll actual entities on first entry.
-   *   - Doors are labelled A-Z (or a-z). Each labelled cell becomes a Door
-   *     tile; doorPositions is populated in alphabetical order so the file
-   *     author controls which door is index 0, 1, etc.
-   *
-   * Throws std::runtime_error on any parse or dimension violation.
-   *
    * @param roomID Unique identifier assigned to the loaded room.
    * @param path   Path to the room file.
    * @return A fully populated Room ready to be added to a RoomGraph.
    */
   static Room loadFromFile(int roomID, const std::filesystem::path& path);
 
-  /**
-   * @brief Reset every cell in the visible grid to false.
-   *
-   * Called at the start of each visibility pass before the new FoV cells
-   * are marked visible. The explored grid is left untouched.
-   */
+  /** @brief Reset every cell in the visible grid to false. */
   void clearVisible();
 
   /**
@@ -112,9 +65,6 @@ struct Room {
 
   /**
    * @brief Mark a tile as currently visible and permanently explored.
-   *
-   * No-op if (x, y) falls outside the room grid so callers may pass raw
-   * FoV coordinates without clamping first.
    *
    * @param x Column.
    * @param y Row.

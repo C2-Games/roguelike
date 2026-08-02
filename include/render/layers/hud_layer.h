@@ -45,10 +45,7 @@ class HUDLayer : public RenderStack {
    */
   void drawWeaponStats(int row, int col);
 
-  /**
-   * @brief Draw the HP indicator, room ID, and weapon stats each frame.
-   *
-   */
+  /** @brief Draw the HP indicator, room ID, and weapon stats each frame. */
   void doRender() override;
 
  private:

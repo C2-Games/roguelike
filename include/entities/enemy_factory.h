@@ -8,14 +8,6 @@ class Enemy;
 struct Room;
 struct GameServices;
 
-/**
- * @brief Free functions that construct enemies for a room.
- *
- * Behavior-preserving today: `rollForRoom` picks two random floor tiles
- * (one from each spatial half of the room) and constructs Enemy objects on
- * them. Future extensions will read `Room::enemySpawns` markers and consult
- * an EnemyAttributes table for per-kind stats.
- */
 namespace enemy_factory {
 
 /**

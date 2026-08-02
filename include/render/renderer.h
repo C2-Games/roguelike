@@ -11,21 +11,12 @@ class Renderer {
   /**
    * @brief Add a rendering layer at a given an index (z-order).
    *
-   * Layers are composited in ascending key order: lower index = closer to
-   * the bottom.
-   *
-   * NOTE: if layer is added on same index as another layer, the current layer
-   * is replaced with the new one.
-   *
    * @param z Z-order index.
    * @param layer RenderStack layer to add.
    */
   void addLayer(int z, std::unique_ptr<RenderStack> layer);
 
-  /**
-   * @brief Composite all enabled layers onto stdscr and flush to terminal.
-   *
-   */
+  /** @brief Composite all enabled layers onto stdscr and flush to terminal. */
   void compose();
 
   /**

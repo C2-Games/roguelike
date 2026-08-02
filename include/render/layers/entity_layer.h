@@ -15,10 +15,6 @@ class EntityLayer : public RenderStack {
   /**
    * @brief Construct a new Entity Layer.
    *
-   * NOTE: The reason we want to pass the player & enemies seperately is because
-   * we want to render the player last. Such that if a player attacks an enemy
-   * via melee, the player will render on top of the enemy.
-   *
    * @param h Height of the layer window (in rows).
    * @param w Width of the layer window (in columns).
    * @param y Row of the window's top-left corner in the terminal.
@@ -34,28 +30,18 @@ class EntityLayer : public RenderStack {
               const std::vector<std::unique_ptr<Enemy>>& enemies,
               const std::vector<std::unique_ptr<Projectile>>& projectiles);
 
-  /**
-   * @brief Draw enemy entities that are inside the player's current FoV.
-   *
-   */
+  /** @brief Draw enemy entities that are inside the player's current FoV. */
   void drawEnemies();
 
   /**
    * @brief Draw active projectiles that are inside the player's current FoV.
-   *
    */
   void drawProjectiles();
 
-  /**
-   * @brief Draw player entity.
-   *
-   */
+  /** @brief Draw player entity. */
   void drawPlayer();
 
-  /**
-   * @brief Draw all alive entities into the layer window.
-   *
-   */
+  /** @brief Draw all alive entities into the layer window. */
   void doRender() override;
 
   /**

@@ -30,21 +30,13 @@ class Game {
    */
   Game(int width, int height, int fps = 60);
 
-  /**
-   * @brief Runs the main game loop.
-   * Handles input, updates game state, and renders the screen at a fixed frame
-   * rate.
-   *
-   */
+  /** @brief Runs the main game loop. */
   void run();
 
  private:
   int termWidth_, termHeight_;
   const int fps_;
   double currentFps_;
-  /// Always declare first so subsystems that store `GameServices&` initialize
-  /// with a valid reference. Member-init order follows declaration order in
-  /// C++.
   GameServices services_;
   Player player_;
   Level roomGraph_;
@@ -63,40 +55,26 @@ class Game {
    */
   auto getDuration() const { return std::chrono::milliseconds(1000 / fps_); };
 
-  /**
-   * @brief Handles user input for player movement and game controls.
-   * Updates the player's position based on arrow key and 'wasd' input and
-   * allows quitting with 'Q'.
-   *
-   */
+  /** @brief Handles user input for player movement and game controls. */
   void handleInput();
 
   /**
    * @brief Updates the game state - moves enemies toward the player and checks
    * for collisions.
-   *
    */
   void update();
 
   /**
    * @brief Renders the game state. Draws the player, enemies, and UI elements
    * on the screen.
-   *
    */
   void render();
 
-  /**
-   * @brief Spawns enemies in the game.
-   *
-   */
+  /** @brief Spawns enemies in the game. */
   void spawnEnemies();
 
   /**
    * @brief Transition the player to a connected room via a door.
-   *
-   * Persists the current room's enemies, loads the destination room's enemies,
-   * updates the active room, and places the player one tile inward from the
-   * destination door.
    *
    * @param conn The door connection describing the destination.
    */

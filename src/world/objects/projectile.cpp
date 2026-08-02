@@ -29,9 +29,7 @@ void Projectile::update(const ProjectileContext& ctx) {
       return;
     }
 
-    // Try to damage an entity at the candidate tile. The context's tryHit
-    // closure encapsulates "who lives on this tile" so Projectile stays
-    // decoupled from the enemy vector layout.
+    // Try to damage an entity at the candidate tile.
     if (ctx.tryHit(candidate, damage_)) {
       deactivate();
       return;

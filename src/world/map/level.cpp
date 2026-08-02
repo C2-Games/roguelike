@@ -16,8 +16,6 @@ void Level::addRoom(Room room) {
 }
 
 void Level::generate() {
-  // Load the authored room library from disk. Path is relative to the game's
-  // working directory (repo root when launched from there).
   RoomLibrary library;
   library.scan("assets/rooms");
 
@@ -54,7 +52,7 @@ void Level::generate() {
 }
 
 const DoorConnection* Level::getDoorConnection(int roomID,
-                                                   Coordinate doorPos) const {
+                                               Coordinate doorPos) const {
   auto it = doorConnections_.find({roomID, doorPos});
   if (it != doorConnections_.end()) return &it->second;
   return nullptr;

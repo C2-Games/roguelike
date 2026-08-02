@@ -4,17 +4,6 @@
 #include <fstream>
 #include <string>
 
-/**
- * Simple file-based logger for use during ncurses gameplay (stdout is
- * unavailable while ncurses is active).
- *
- * game.log  — truncated each run; use for general debug/info messages.
- * error.log — appended each run; persists errors across sessions.
- *
- * Usage:
- *   LOG("player moved to 5,3");
- *   LOG_ERR("failed to open room file");
- */
 class Logger {
  public:
   /**

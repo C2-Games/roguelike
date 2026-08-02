@@ -10,26 +10,11 @@
 
 struct GameServices;
 
-/**
- * @brief Describes a one-way portal from a door tile to a destination room.
- *
- * Two DoorConnection records (one per direction) form a bidirectional link
- * between rooms. Stored in RoomGraph keyed by (roomID, doorPos).
- */
 struct DoorConnection {
-  int destRoomID;          ///< ID of the room the door leads to.
-  Coordinate destDoorPos;  ///< Position of the matching door in that room.
+  int destRoomID;
+  Coordinate destDoorPos;
 };
 
-/**
- * @brief Owns the collection of rooms and the door graph between them.
- *
- * On construction it loads `roomCount` randomly-picked rooms from
- * assets/rooms/ and wires them into a linear chain of bidirectional door
- * connections. The current-room index is a mutable cursor: callers move it
- * via setCurrentRoomID when the player transitions through a door.
- *
- */
 class Level {
  public:
   /**
@@ -38,7 +23,7 @@ class Level {
    * @param roomCount How many rooms to include in the chain.
    * @param services  Shared services; RNG used to pick rooms from the
    *                  authored library. Stored by reference; must outlive
- *                  the Level.
+   *                  the Level.
    */
   Level(int roomCount, GameServices& services);
 
@@ -74,10 +59,9 @@ class Level {
   int roomCount_;
   int currentRoomID_ = 0;
   GameServices& services_;
-  std::map<int, Room> rooms_;                ///< All rooms keyed by ID.
-  std::vector<std::vector<int>> adjacency_;  ///< Room adjacency list.
-  std::map<std::pair<int, Coordinate>, DoorConnection>
-      doorConnections_;  ///< (roomID, doorPos) → destination.
+  std::map<int, Room> rooms_;
+  std::vector<std::vector<int>> adjacency_;
+  std::map<std::pair<int, Coordinate>, DoorConnection> doorConnections_;
 
   /**
    * @brief Load rooms from the library and wire the door chain. Called

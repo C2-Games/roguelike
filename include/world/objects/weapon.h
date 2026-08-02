@@ -9,8 +9,8 @@ enum class WeaponType { Basic, Rapid, Heavy, Sniper };
 
 struct WeaponAttributes {
   int damage;
-  int speed;  // tiles traveled per Game::update() tick
-  int range;  // max tiles traveled before the projectile expires
+  int speed;
+  int range;
   ColorPair color;
   const char* name;
 };
