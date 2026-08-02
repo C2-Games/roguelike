@@ -3,7 +3,7 @@
 
 #include "entities/player.h"
 #include "render/render_stack.h"
-#include "world/map/room_graph.h"
+#include "world/map/level.h"
 
 class HUDLayer : public RenderStack {
  public:
@@ -17,7 +17,7 @@ class HUDLayer : public RenderStack {
    * @param graph  The room graph to read the current room ID from.
    */
   HUDLayer(int h, int w, const int margin, const Player& player,
-           const RoomGraph& graph);
+           const Level& graph);
 
   /**
    * @brief Draw player health bar at a fixed screen position.
@@ -53,7 +53,7 @@ class HUDLayer : public RenderStack {
 
  private:
   const Player& player_;
-  const RoomGraph& graph_;
+  const Level& graph_;
   const int margin_;
 };
 

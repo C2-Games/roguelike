@@ -14,7 +14,7 @@
 #include "render/layers/hud_layer.h"
 #include "render/layers/map_layer.h"
 #include "render/renderer.h"
-#include "world/map/room_graph.h"
+#include "world/map/level.h"
 #include "world/objects/projectile.h"
 #include "world/systems/goal_map_cache.h"
 
@@ -47,7 +47,7 @@ class Game {
   /// C++.
   GameServices services_;
   Player player_;
-  RoomGraph roomGraph_;
+  Level roomGraph_;
   EnemyRegistry enemyRegistry_;
   GoalMapCache goalMapCache_;
   std::vector<std::unique_ptr<Enemy>> enemies_;

@@ -28,7 +28,7 @@ set(SOURCES
     src/world/map/tile.cpp
     src/world/map/room.cpp
     src/world/map/room_library.cpp
-    src/world/map/room_graph.cpp
+    src/world/map/level.cpp
     src/world/systems/pathfinding.cpp
     src/world/systems/goal_map_cache.cpp
     src/world/systems/visibility.cpp

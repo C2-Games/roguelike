@@ -7,7 +7,7 @@
 #include "entities/enemy.h"
 #include "entities/player.h"
 #include "render/render_stack.h"
-#include "world/map/room_graph.h"
+#include "world/map/level.h"
 #include "world/objects/projectile.h"
 
 class EntityLayer : public RenderStack {
@@ -29,7 +29,7 @@ class EntityLayer : public RenderStack {
    * @param enemies The enemy list to draw each frame.
    * @param projectiles The projectile list to draw each frame.
    */
-  EntityLayer(int h, int w, int y, int x, const RoomGraph& graph,
+  EntityLayer(int h, int w, int y, int x, const Level& graph,
               const Player& player,
               const std::vector<std::unique_ptr<Enemy>>& enemies,
               const std::vector<std::unique_ptr<Projectile>>& projectiles);
@@ -67,7 +67,7 @@ class EntityLayer : public RenderStack {
   void onResize(int termHeight, int termWidth) override;
 
  private:
-  const RoomGraph& graph_;
+  const Level& graph_;
   const Player& player_;
   const std::vector<std::unique_ptr<Enemy>>& enemies_;
   const std::vector<std::unique_ptr<Projectile>>& projectiles_;

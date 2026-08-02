@@ -1,21 +1,21 @@
-#include "world/map/room_graph.h"
+#include "world/map/level.h"
 
 #include <utility>
 
 #include "core/services.h"
 #include "world/map/room_library.h"
 
-RoomGraph::RoomGraph(int roomCount, GameServices& services)
+Level::Level(int roomCount, GameServices& services)
     : roomCount_(roomCount), services_(services) {
   generate();
 }
 
-void RoomGraph::addRoom(Room room) {
+void Level::addRoom(Room room) {
   int id = room.roomID;
   rooms_.insert({id, std::move(room)});
 }
 
-void RoomGraph::generate() {
+void Level::generate() {
   // Load the authored room library from disk. Path is relative to the game's
   // working directory (repo root when launched from there).
   RoomLibrary library;
@@ -53,7 +53,7 @@ void RoomGraph::generate() {
   }
 }
 
-const DoorConnection* RoomGraph::getDoorConnection(int roomID,
+const DoorConnection* Level::getDoorConnection(int roomID,
                                                    Coordinate doorPos) const {
   auto it = doorConnections_.find({roomID, doorPos});
   if (it != doorConnections_.end()) return &it->second;

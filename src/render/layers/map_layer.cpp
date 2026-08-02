@@ -6,7 +6,7 @@
 #include "render/ui.h"
 #include "world/map/room.h"
 
-MapLayer::MapLayer(int h, int w, int y, int x, const RoomGraph& graph)
+MapLayer::MapLayer(int h, int w, int y, int x, const Level& graph)
     : RenderStack(h, w, y, x), graph_(graph) {}
 
 void MapLayer::drawMap() {

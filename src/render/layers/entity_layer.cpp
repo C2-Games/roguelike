@@ -8,7 +8,7 @@
 #include "world/map/room.h"
 
 EntityLayer::EntityLayer(
-    int h, int w, int y, int x, const RoomGraph& graph, const Player& player,
+    int h, int w, int y, int x, const Level& graph, const Player& player,
     const std::vector<std::unique_ptr<Enemy>>& enemies,
     const std::vector<std::unique_ptr<Projectile>>& projectiles)
     : RenderStack(h, w, y, x),

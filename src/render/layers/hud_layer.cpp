@@ -9,7 +9,7 @@
 #include "world/objects/weapon.h"
 
 HUDLayer::HUDLayer(int h, int w, int margin, const Player& player,
-                   const RoomGraph& graph)
+                   const Level& graph)
     : RenderStack(h, w), player_(player), graph_(graph), margin_(margin) {}
 
 void HUDLayer::drawPlayerHealthBar(int row, int col) {

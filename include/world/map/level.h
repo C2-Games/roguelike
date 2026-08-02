@@ -1,5 +1,5 @@
-#ifndef ROOM_GRAPH_H
-#define ROOM_GRAPH_H
+#ifndef LEVEL_H
+#define LEVEL_H
 
 #include <map>
 #include <utility>
@@ -30,7 +30,7 @@ struct DoorConnection {
  * via setCurrentRoomID when the player transitions through a door.
  *
  */
-class RoomGraph {
+class Level {
  public:
   /**
    * @brief Construct and immediately load / wire the rooms.
@@ -38,9 +38,9 @@ class RoomGraph {
    * @param roomCount How many rooms to include in the chain.
    * @param services  Shared services; RNG used to pick rooms from the
    *                  authored library. Stored by reference; must outlive
-   *                  the RoomGraph.
+ *                  the Level.
    */
-  RoomGraph(int roomCount, GameServices& services);
+  Level(int roomCount, GameServices& services);
 
   /**
    * @brief Look up the door connection at (roomID, doorPos).
