@@ -7,8 +7,6 @@
 #include <stdexcept>
 #include <string>
 
-#include "core/format_tokens.h"
-
 namespace {
 
 // Trim leading/trailing whitespace from a string in place.
@@ -25,13 +23,11 @@ std::string trim(std::string s) {
 // authored on top of walkable floor and therefore resolve to Floor here; the
 // spawn coordinate is recorded separately by the caller.
 TileType charToRoomTile(char c) {
-  using namespace format_tokens;
-  if (c == kTileWall) return TileType::Wall;
-  if (c == kTileFloor) return TileType::Floor;
-  if (c == kTilePillar) return TileType::Pillar;
-  if (c == kTileVoid) return TileType::Void;
-  if (c == kSpawnEnemy || c == kSpawnLoot || c == kSpawnItem)
-    return TileType::Floor;
+  if (c == '#') return TileType::Wall;
+  if (c == '.') return TileType::Floor;
+  if (c == 'o') return TileType::Pillar;
+  if (c == ' ') return TileType::Void;
+  if (c == '!' || c == '$' || c == '?') return TileType::Floor;
   if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) return TileType::Door;
   std::ostringstream oss;
   oss << "Unrecognized room-file character: '" << c << "' (0x" << std::hex
@@ -44,13 +40,12 @@ TileType charToRoomTile(char c) {
 enum class SpawnKind { None, Enemy, Loot, Item };
 
 SpawnKind charToSpawnKind(char c) {
-  using namespace format_tokens;
   switch (c) {
-    case kSpawnEnemy:
+    case '!':
       return SpawnKind::Enemy;
-    case kSpawnLoot:
+    case '$':
       return SpawnKind::Loot;
-    case kSpawnItem:
+    case '?':
       return SpawnKind::Item;
     default:
       return SpawnKind::None;
@@ -108,7 +103,7 @@ Room Room::loadFromFile(int roomID, const std::filesystem::path& path) {
       gridStart = in.tellg();
       continue;
     }
-    if (trimmed[0] != format_tokens::kHeaderPrefix) {
+    if (trimmed[0] != '@') {
       // Rewind — this line belongs to the grid.
       in.clear();
       in.seekg(gridStart);
@@ -116,7 +111,7 @@ Room Room::loadFromFile(int roomID, const std::filesystem::path& path) {
     }
 
     // Parse "@key: value".
-    auto colon = trimmed.find(format_tokens::kHeaderSeparator);
+    auto colon = trimmed.find(':');
     if (colon == std::string::npos) {
       throw std::runtime_error("Malformed header (no colon) in " +
                                path.string() + ": " + trimmed);
@@ -124,7 +119,7 @@ Room Room::loadFromFile(int roomID, const std::filesystem::path& path) {
     std::string key = trim(trimmed.substr(1, colon - 1));
     std::string value = trim(trimmed.substr(colon + 1));
 
-    if (key == format_tokens::kHeaderKeyName) {
+    if (key == "name") {
       room.name = value;
     }
     // Other keys (levels, author, ...) are parsed by the library layer or

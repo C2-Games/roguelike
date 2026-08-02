@@ -5,8 +5,6 @@
 #include <iomanip>
 #include <sstream>
 
-#include "core/paths.h"
-
 static std::string timestamp() {
   auto now = std::chrono::system_clock::now();
   std::time_t t = std::chrono::system_clock::to_time_t(now);
@@ -18,8 +16,8 @@ static std::string timestamp() {
 }
 
 Logger::Logger() {
-  logStream_.open(paths::kGameLogPath, std::ios::trunc);
-  errStream_.open(paths::kErrorLogPath, std::ios::app);
+  logStream_.open("game.log", std::ios::trunc);
+  errStream_.open("error.log", std::ios::app);
 }
 
 Logger::~Logger() {
