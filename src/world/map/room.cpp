@@ -21,24 +21,22 @@ TileType charToRoomTile(char c) {
   if (c == '.') return TileType::Floor;
   if (c == 'o') return TileType::Pillar;
   if (c == ' ') return TileType::Void;
-  if (c == '!' || c == '$' || c == '?') return TileType::Floor;
-  if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) return TileType::Door;
+  if (c == 'E' || c == 'L') return TileType::Floor;
+  if (c >= '0' && c <= '9') return TileType::Door;
   std::ostringstream oss;
   oss << "Unrecognized room-file character: '" << c << "' (0x" << std::hex
       << static_cast<int>(static_cast<unsigned char>(c)) << ")";
   throw std::runtime_error(oss.str());
 }
 
-enum class SpawnKind { None, Enemy, Loot, Item };
+enum class SpawnKind { None, Enemy, LootOrItem };
 
 SpawnKind charToSpawnKind(char c) {
   switch (c) {
-    case '!':
+    case 'E':
       return SpawnKind::Enemy;
-    case '$':
-      return SpawnKind::Loot;
-    case '?':
-      return SpawnKind::Item;
+    case 'L':
+      return SpawnKind::LootOrItem;
     default:
       return SpawnKind::None;
   }
@@ -122,7 +120,7 @@ Room Room::loadFromFile(int roomID, const std::filesystem::path& path) {
 
   // --- Parse grid ---
   // Collect door positions keyed by label so we can insert them into
-  // doorPositions in alphabetical order regardless of scan order.
+  // doorPositions in numeric order regardless of scan order.
   std::map<char, Coordinate> labelledDoors;
 
   int y = 0;
@@ -152,9 +150,8 @@ Room Room::loadFromFile(int roomID, const std::filesystem::path& path) {
       TileType type = charToRoomTile(c);
       room.tiles[x][y] = Tile(type, Coordinate(x, y));
       if (type == TileType::Door) {
-        // Normalize to uppercase for consistent ordering; a/A treated same.
-        char label =
-            static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+        // Digits have no case; the label is just the digit itself.
+        char label = c;
         auto [it, inserted] = labelledDoors.emplace(label, Coordinate{x, y});
         if (!inserted) {
           throw std::runtime_error("Duplicate door label '" +
@@ -166,10 +163,8 @@ Room Room::loadFromFile(int roomID, const std::filesystem::path& path) {
         case SpawnKind::Enemy:
           room.enemySpawns.push_back(Coordinate(x, y));
           break;
-        case SpawnKind::Loot:
+        case SpawnKind::LootOrItem:
           room.lootSpawns.push_back(Coordinate(x, y));
-          break;
-        case SpawnKind::Item:
           room.itemSpawns.push_back(Coordinate(x, y));
           break;
         case SpawnKind::None:
@@ -185,7 +180,7 @@ Room Room::loadFromFile(int roomID, const std::filesystem::path& path) {
                              std::to_string(HEIGHT));
   }
 
-  // std::map iterates in key order, so doors land in alphabetical sequence.
+  // std::map iterates in key order, so doors land in numeric sequence.
   for (const auto& [label, coord] : labelledDoors) {
     (void)label;
     room.doorPositions.push_back(coord);
