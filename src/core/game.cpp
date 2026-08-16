@@ -4,7 +4,6 @@
 
 #include <algorithm>
 #include <chrono>
-#include <ctime>
 #include <iostream>
 #include <thread>
 
@@ -16,11 +15,17 @@
 #include "world/objects/projectile_context.h"
 #include "world/systems/visibility.h"
 
+namespace {
+// Fixed until a real seed-input/new-game flow exists: every launch should
+// reproduce the same room/enemy layout for a given level config.
+constexpr std::mt19937::result_type kDefaultSeed = 80085;
+}  // namespace
+
 Game::Game(int width, int height, int fps)
     : termWidth_(width),
       termHeight_(height),
       fps_(fps),
-      services_(static_cast<std::mt19937::result_type>(std::time(nullptr))),
+      services_(kDefaultSeed),
       player_(Room::WIDTH / 2, Room::HEIGHT / 2),
       roomGraph_(5, services_),
       enemyRegistry_(services_),
