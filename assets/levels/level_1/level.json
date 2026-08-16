@@ -1,0 +1,8 @@
+{
+  "id": 1,
+  "name": "Level 1",
+  "description": "Goblin's Den",
+  "roomCount": 8,
+  "startRoomID": 1,
+  "bossRoomID": 8
+}

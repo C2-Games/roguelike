@@ -1,0 +1,29 @@
+{
+  "name": "goblin",
+  "symbol": [ [ "G" ] ],
+  "class": "base",
+  "attributes": {
+    "tier_1": {
+      "health": 50,
+      "damage": {
+        "amount": 10,
+        "type": "base"
+      },
+      "fov": [ 20, 10 ],
+      "chase": 5,
+      "speed": 10,
+      "extra_drops": null
+    },
+    "tier_2": {
+      "health": 100,
+      "damage": {
+        "amount": 10,
+        "type": "poison"
+      },
+      "fov": [ 20, 10 ],
+      "chase": 5,
+      "speed": 10,
+      "extra_drops": null
+    }
+  }
+}

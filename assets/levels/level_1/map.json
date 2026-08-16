@@ -1,0 +1,35 @@
+{
+  "levelID": 1,
+  "rooms": [
+    { "id": 1, "connections": [
+        { "direction": "N", "to": 2 },
+        { "direction": "E", "to": 3 },
+        { "direction": "W", "to": 4 }
+    ]},
+    { "id": 2, "connections": [
+        { "direction": "S", "to": 1 },
+        { "direction": "E", "to": 6 }
+    ]},
+    { "id": 3, "connections": [
+        { "direction": "W", "to": 1 },
+        { "direction": "N", "to": 7 }
+    ]},
+    { "id": 4, "connections": [
+        { "direction": "E", "to": 1 }
+    ]},
+    { "id": 5, "connections": [
+        { "direction": "N", "to": 6 },
+        { "direction": "S", "to": 8 }
+    ]},
+    { "id": 6, "connections": [
+        { "direction": "W", "to": 2 },
+        { "direction": "S", "to": 5 }
+    ]},
+    { "id": 7, "connections": [
+        { "direction": "S", "to": 3 }
+    ]},
+    { "id": 8, "connections": [
+        { "direction": "N", "to": 5 }
+    ]}
+  ]
+}

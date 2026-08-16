@@ -1,0 +1,11 @@
+{
+  "id": 4,
+  "name": "Twin Halls",
+  "ref": "twin_halls.txt",
+  "enemies": [
+    { "type": "goblin", "class": "base", "tier": 1, "min": 2, "max": 4, "prob_dist": 0.8 }
+  ],
+  "loot": [
+    { "type": "gold_pouch", "class": "currency", "tier": 1, "min": 2, "max": 5 }
+  ]
+}
