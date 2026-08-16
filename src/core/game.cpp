@@ -8,7 +8,6 @@
 #include <thread>
 
 #include "entities/enemy.h"
-#include "entities/enemy_registry.h"
 #include "entities/move_context.h"
 #include "render/ui.h"
 #include "world/objects/projectile.h"
@@ -27,12 +26,9 @@ Game::Game(int width, int height, int fps)
       fps_(fps),
       services_(kDefaultSeed),
       player_(Room::WIDTH / 2, Room::HEIGHT / 2),
-      roomGraph_("assets/levels/level_1", services_),
-      enemyRegistry_(services_),
+      enemyCatalog_("assets/enemies"),
+      roomGraph_("assets/levels/level_1", services_, enemyCatalog_),
       isRunning_(true) {
-  // generate enemy objects first..
-  spawnEnemies();
-
   // add window overlays.
   // TODO: probably want to create an Enum for layer ordering.
   UI geom = computeUI(termHeight_, termWidth_);
@@ -42,7 +38,7 @@ Game::Game(int width, int height, int fps)
   renderer_.addLayer(
       2, std::make_unique<EntityLayer>(geom.winHeight, geom.winWidth,
                                        geom.originY, geom.originX, roomGraph_,
-                                       player_, enemies_, projectiles_));
+                                       player_, projectiles_));
 
   const int hud_margin = 2;
   renderer_.addLayer(
@@ -169,27 +165,28 @@ void Game::update() {
                      player_.getFOV());
 
   const Coordinate playerPos = player_.getPosition();
-  const Room& currentRoom = roomGraph_.getCurrentRoom();
+  Room& currentRoom = roomGraph_.getCurrentRoom();
 
   // Build the per-frame contexts once and reuse across every enemy/projectile.
-  MoveContext moveCtx{playerPos, currentRoom, goalMapCache_, enemies_,
-                      services_};
+  MoveContext moveCtx{playerPos, currentRoom, goalMapCache_,
+                      currentRoom.enemies(), services_};
 
   ProjectileContext projCtx{
       currentRoom, [&](Coordinate pos, int damage) -> bool {
         // Try to damage the first live enemy sitting on `pos`.
+        auto& enemies = currentRoom.enemies();
         auto hit =
-            std::find_if(enemies_.begin(), enemies_.end(),
+            std::find_if(enemies.begin(), enemies.end(),
                          [&pos](const std::unique_ptr<Enemy>& e) {
                            return e->isAlive() && e->getPosition() == pos;
                          });
-        if (hit == enemies_.end()) return false;
+        if (hit == enemies.end()) return false;
         (*hit)->takeDamage(damage);
         return true;
       }};
 
   // Move enemies toward player.
-  for (auto& enemy : enemies_) {
+  for (auto& enemy : currentRoom.enemies()) {
     if (enemy->isAlive()) {
       enemy->moveTowardPlayer(moveCtx);
 
@@ -215,27 +212,12 @@ void Game::update() {
   // Reap dead enemies at end-of-frame. Safe here because all per-frame
   // iterations over `enemies` (movement, player-collision, projectile
   // hit-tests) have completed above.
-  EnemyRegistry::reap(enemies_);
+  RoomEnemyState::reap(currentRoom.enemies());
 }
 
 void Game::render() { renderer_.compose(); };
 
-void Game::spawnEnemies() {
-  // Load enemies for whichever room the player starts in (RoomGraph's current
-  // cursor). This lets a future SaveSystem restore the starting room by
-  // setting the cursor before construction, without touching this call site.
-  const int startRoomID = roomGraph_.getCurrentRoomID();
-  enemyRegistry_.loadForRoom(startRoomID, roomGraph_.getRoom(startRoomID),
-                             enemies_);
-}
-
 void Game::transitionRoom(const DoorConnection& conn) {
-  // Persist current room's enemies and load the destination room's.
-  enemyRegistry_.transitionActive(
-      roomGraph_.getCurrentRoomID(), conn.destRoomID,
-      roomGraph_.getRoom(conn.destRoomID), enemies_);
-
-  // Switch the active room.
   roomGraph_.setCurrentRoomID(conn.destRoomID);
 
   // Place the player one tile inward from the destination door so they

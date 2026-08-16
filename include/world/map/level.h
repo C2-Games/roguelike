@@ -11,6 +11,7 @@
 #include "world/map/room.h"
 
 struct GameServices;
+class EnemyCatalog;
 
 struct DoorConnection {
   int destRoomID;
@@ -21,13 +22,16 @@ class Level {
  public:
   /**
    * @brief Load a level directory (level.json, map.json, and every room's
-   * JSON metadata + referenced .txt template) and wire the room graph.
+   * JSON metadata + referenced .txt template), wire the room graph, and
+   * spawn every room's enemies.
    *
    * @param levelDir Directory containing the level's config files.
    * @param services Shared services; stored by reference; must outlive
    *                 the Level.
+   * @param catalog  Resolves each room's spawn-table entries to stats.
    */
-  Level(const std::filesystem::path& levelDir, GameServices& services);
+  Level(const std::filesystem::path& levelDir, GameServices& services,
+       const EnemyCatalog& catalog);
 
   /**
    * @brief Look up the door connection at (roomID, doorPos).
@@ -71,9 +75,14 @@ class Level {
   std::map<int, std::vector<EnemySpawnConfig>> roomEnemyConfig_;
 
   /** @brief Populate rooms_, roomEnemyConfig_, and doorConnections_ from a
-   *  parsed LevelConfig. Called from the constructor; not intended to be
-   *  re-run. */
-  void buildFromConfig(const LevelConfig& config);
+   *  parsed LevelConfig, spawn each room's enemies, and seal any of its
+   *  doors left unlinked by this level's adjacency back to Wall tiles.
+   *  Called from the constructor; not intended to be re-run. */
+  void buildFromConfig(const LevelConfig& config, const EnemyCatalog& catalog);
+
+  /** @brief Convert every door tile with no entry in doorConnections_ back
+   *  to a Wall tile. */
+  void sealUnlinkedDoors();
 };
 
 #endif

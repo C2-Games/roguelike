@@ -7,10 +7,7 @@
 
 #include "entities/fov.h"
 
-/**
- * @brief Resolved per-tier stats for one enemy type, denormalized from its
- * an assets/enemies JSON file into the shape Enemy's constructor needs.
- */
+/** @brief Resolved per-tier stats for one enemy type. */
 struct EnemyTierAttributes {
   char symbol;
   int health;

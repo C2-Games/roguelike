@@ -36,7 +36,7 @@ set(SOURCES
     src/entities/enemy.cpp
     src/entities/enemy_catalog.cpp
     src/entities/enemy_factory.cpp
-    src/entities/enemy_registry.cpp
+    src/entities/room_enemy_state.cpp
     src/entities/fov.cpp
     src/world/map/tile.cpp
     src/world/map/room.cpp

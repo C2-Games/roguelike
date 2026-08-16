@@ -4,24 +4,23 @@
 
 #include <memory>
 
+#include "entities/enemy.h"
 #include "render/ui.h"
 #include "world/map/room.h"
 
 EntityLayer::EntityLayer(
     int h, int w, int y, int x, const Level& graph, const Player& player,
-    const std::vector<std::unique_ptr<Enemy>>& enemies,
     const std::vector<std::unique_ptr<Projectile>>& projectiles)
     : RenderStack(h, w, y, x),
       graph_(graph),
       player_(player),
-      enemies_(enemies),
       projectiles_(projectiles) {}
 
 void EntityLayer::drawEnemies() {
   const Room& room = graph_.getCurrentRoom();
 
   // iterate through vector of enemies.
-  for (const auto& enemy : enemies_) {
+  for (const auto& enemy : room.enemies()) {
     // if alive AND inside the player's current FoV, draw symbol.
     // Dynamic content (enemies) is never shown outside the FoV
     if (enemy->isAlive()) {

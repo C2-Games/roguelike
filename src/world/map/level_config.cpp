@@ -85,7 +85,6 @@ RoomConfig parseRoomConfig(const nlohmann::json& j) {
       config.enemies.push_back(parseEnemySpawnConfig(entry));
     }
   }
-  // "loot" is intentionally never parsed here.
   return config;
 }
 

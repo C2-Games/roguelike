@@ -18,8 +18,6 @@ int parseTierKey(const std::string& key) {
 }
 
 EnemyTierAttributes parseTierAttributes(char symbol, const nlohmann::json& attrs) {
-  // FOV has no default constructor, so every field must be supplied via
-  // aggregate init in one shot rather than default-constructed then assigned.
   const auto& fovArr = attrs.at("fov");
   return EnemyTierAttributes{
       symbol,

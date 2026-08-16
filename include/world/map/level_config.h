@@ -19,10 +19,7 @@ struct RoomEdge {
   int to;
 };
 
-/**
- * @brief One enemy spawn-table entry from a room's JSON metadata. `class` and
- * `loot` are intentionally never parsed — out of scope for this feature.
- */
+/** @brief One enemy spawn-table entry from a room's JSON metadata. */
 struct EnemySpawnConfig {
   std::string type;
   int tier;
@@ -74,10 +71,8 @@ LevelConfig loadLevelConfig(const std::filesystem::path& levelDir);
 Direction parseDirection(const std::string& token);
 
 /**
- * @brief Find the door on `room`'s edge matching `dir`. Every authored room
- * template has exactly one door per compass edge (north at y=0, south at
- * y=HEIGHT-1, west at x=0, east at x=WIDTH-1), independent of that
- * template's own numeric door labels.
+ * @brief Find the door on `room`'s edge matching `dir` (north at y=0, south
+ * at y=HEIGHT-1, west at x=0, east at x=WIDTH-1).
  *
  * @throws std::runtime_error if `room` has no door on that edge.
  */

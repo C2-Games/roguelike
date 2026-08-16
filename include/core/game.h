@@ -6,8 +6,7 @@
 #include <vector>
 
 #include "core/services.h"
-#include "entities/enemy.h"
-#include "entities/enemy_registry.h"
+#include "entities/enemy_catalog.h"
 #include "entities/player.h"
 #include "render/layers/debug_layer.h"
 #include "render/layers/entity_layer.h"
@@ -39,10 +38,9 @@ class Game {
   double currentFps_;
   GameServices services_;
   Player player_;
+  EnemyCatalog enemyCatalog_;
   Level roomGraph_;
-  EnemyRegistry enemyRegistry_;
   GoalMapCache goalMapCache_;
-  std::vector<std::unique_ptr<Enemy>> enemies_;
   std::vector<std::unique_ptr<Projectile>> projectiles_;
 
   bool isRunning_;
@@ -69,9 +67,6 @@ class Game {
    * on the screen.
    */
   void render();
-
-  /** @brief Spawns enemies in the game. */
-  void spawnEnemies();
 
   /**
    * @brief Transition the player to a connected room via a door.
