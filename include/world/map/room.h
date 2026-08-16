@@ -21,9 +21,6 @@ struct Room {
   std::vector<Coordinate> lootSpawns;
   std::vector<Coordinate> itemSpawns;
 
-  std::vector<std::vector<bool>> visible;
-  std::vector<std::vector<bool>> explored;
-
   /**
    * @brief Construct an empty Room filled with default Wall tiles.
    *

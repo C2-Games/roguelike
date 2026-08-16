@@ -20,6 +20,12 @@ bool Tile::isWalkable() const {
   return typeAttributes_.at(static_cast<int>(type_)).walkable;
 }
 
+void Tile::reveal() {
+  visible_ = true;
+  // Only mark explored if the tile is not Void.
+  if (type_ != TileType::Void) explored_ = true;
+}
+
 TileType Tile::charToTileType(char ch) {
   switch (ch) {
     case '#':
