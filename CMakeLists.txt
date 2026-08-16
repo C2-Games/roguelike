@@ -40,7 +40,6 @@ set(SOURCES
     src/entities/fov.cpp
     src/world/map/tile.cpp
     src/world/map/room.cpp
-    src/world/map/room_library.cpp
     src/world/map/level.cpp
     src/world/map/level_config.cpp
     src/world/systems/pathfinding.cpp

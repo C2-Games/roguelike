@@ -27,7 +27,7 @@ Game::Game(int width, int height, int fps)
       fps_(fps),
       services_(kDefaultSeed),
       player_(Room::WIDTH / 2, Room::HEIGHT / 2),
-      roomGraph_(5, services_),
+      roomGraph_("assets/levels/level_1", services_),
       enemyRegistry_(services_),
       isRunning_(true) {
   // generate enemy objects first..

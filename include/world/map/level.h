@@ -1,11 +1,13 @@
 #ifndef LEVEL_H
 #define LEVEL_H
 
+#include <filesystem>
 #include <map>
 #include <utility>
 #include <vector>
 
 #include "core/coordinate.h"
+#include "world/map/level_config.h"
 #include "world/map/room.h"
 
 struct GameServices;
@@ -18,14 +20,14 @@ struct DoorConnection {
 class Level {
  public:
   /**
-   * @brief Construct and immediately load / wire the rooms.
+   * @brief Load a level directory (level.json, map.json, and every room's
+   * JSON metadata + referenced .txt template) and wire the room graph.
    *
-   * @param roomCount How many rooms to include in the chain.
-   * @param services  Shared services; RNG used to pick rooms from the
-   *                  authored library. Stored by reference; must outlive
-   *                  the Level.
+   * @param levelDir Directory containing the level's config files.
+   * @param services Shared services; stored by reference; must outlive
+   *                 the Level.
    */
-  Level(int roomCount, GameServices& services);
+  Level(const std::filesystem::path& levelDir, GameServices& services);
 
   /**
    * @brief Look up the door connection at (roomID, doorPos).
@@ -34,8 +36,8 @@ class Level {
    */
   const DoorConnection* getDoorConnection(int roomID, Coordinate doorPos) const;
 
-  /** @brief Total number of rooms in the chain. */
-  int getRoomCount() const { return roomCount_; }
+  /** @brief Total number of rooms in the level. */
+  int getRoomCount() const { return meta_.roomCount; }
 
   /** @brief ID of the room the player is currently in. */
   int getCurrentRoomID() const { return currentRoomID_; }
@@ -48,29 +50,30 @@ class Level {
 
   /**
    * @brief Mutable access to the current room, for systems that update
-   * per-frame Room state (e.g. visibility bitmaps).
+   * per-frame Room state (e.g. visibility bitmaps, enemy state).
    */
   Room& getCurrentRoom() { return rooms_.at(currentRoomID_); }
 
   /** @brief Const access to any room by ID. */
   const Room& getRoom(int roomID) const { return rooms_.at(roomID); }
 
+  /** @brief The authored enemy spawn table for a room, by ID. */
+  const std::vector<EnemySpawnConfig>& getRoomEnemyConfig(int roomID) const {
+    return roomEnemyConfig_.at(roomID);
+  }
+
  private:
-  int roomCount_;
-  int currentRoomID_ = 0;
+  LevelMeta meta_;
+  int currentRoomID_;
   GameServices& services_;
   std::map<int, Room> rooms_;
-  std::vector<std::vector<int>> adjacency_;
   std::map<std::pair<int, Coordinate>, DoorConnection> doorConnections_;
+  std::map<int, std::vector<EnemySpawnConfig>> roomEnemyConfig_;
 
-  /**
-   * @brief Load rooms from the library and wire the door chain. Called
-   * from the constructor; not intended to be re-run.
-   */
-  void generate();
-
-  /** @brief Insert a fully-parsed room into the graph. */
-  void addRoom(Room room);
+  /** @brief Populate rooms_, roomEnemyConfig_, and doorConnections_ from a
+   *  parsed LevelConfig. Called from the constructor; not intended to be
+   *  re-run. */
+  void buildFromConfig(const LevelConfig& config);
 };
 
 #endif
