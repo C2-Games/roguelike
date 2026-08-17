@@ -1,5 +1,6 @@
 #include "world/map/level.h"
 
+#include <algorithm>
 #include <stdexcept>
 #include <utility>
 
@@ -11,18 +12,21 @@ namespace {
 // declared direction.
 Direction findReverseDirection(const std::vector<RoomEdge>& adjacencyEntry,
                                int fromID) {
-  for (const RoomEdge& edge : adjacencyEntry) {
-    if (edge.to == fromID) return edge.direction;
+  auto it = std::find_if(
+      adjacencyEntry.begin(), adjacencyEntry.end(),
+      [fromID](const RoomEdge& edge) { return edge.to == fromID; });
+  if (it != adjacencyEntry.end()) {
+    return it->direction;
   }
-  throw std::runtime_error(
-      "room has no reverse connection back to room " + std::to_string(fromID) +
-      " — map.json's adjacency is not symmetric");
+  throw std::runtime_error("room has no reverse connection back to room " +
+                           std::to_string(fromID) +
+                           " — map.json's adjacency is not symmetric");
 }
 
 }  // namespace
 
 Level::Level(const std::filesystem::path& levelDir, GameServices& services,
-            const EnemyCatalog& catalog)
+             const EnemyCatalog& catalog)
     : services_(services) {
   LevelConfig config = loadLevelConfig(levelDir);
   meta_ = config.meta;
@@ -34,8 +38,8 @@ void Level::buildFromConfig(const LevelConfig& config,
                             const EnemyCatalog& catalog) {
   for (const auto& [id, roomCfg] : config.rooms) {
     auto [it, inserted] = rooms_.insert(
-        {id, Room::loadFromFile(id, std::filesystem::path("assets/rooms") /
-                                        roomCfg.ref)});
+        {id, Room::loadFromFile(
+                 id, std::filesystem::path("assets/rooms") / roomCfg.ref)});
     roomEnemyConfig_[id] = roomCfg.enemies;
     it->second.ensureEnemiesSpawned(roomCfg.enemies, catalog, services_);
   }

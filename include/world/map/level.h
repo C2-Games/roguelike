@@ -31,7 +31,7 @@ class Level {
    * @param catalog  Resolves each room's spawn-table entries to stats.
    */
   Level(const std::filesystem::path& levelDir, GameServices& services,
-       const EnemyCatalog& catalog);
+        const EnemyCatalog& catalog);
 
   /**
    * @brief Look up the door connection at (roomID, doorPos).

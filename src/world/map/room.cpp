@@ -44,8 +44,7 @@ SpawnKind charToSpawnKind(char c) {
 
 }  // namespace
 
-Room::Room(int id)
-    : roomID(id), tiles(WIDTH, std::vector<Tile>(HEIGHT)) {}
+Room::Room(int id) : roomID(id), tiles(WIDTH, std::vector<Tile>(HEIGHT)) {}
 
 void Room::clearVisible() {
   for (auto& col : tiles) {

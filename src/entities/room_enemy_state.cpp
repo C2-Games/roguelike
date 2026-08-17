@@ -4,11 +4,12 @@
 
 #include "entities/enemy_factory.h"
 
-void RoomEnemyState::ensureSpawned(const Room& room,
-                                    const std::vector<EnemySpawnConfig>& spawnTable,
-                                    const EnemyCatalog& catalog,
-                                    GameServices& services) {
-  if (spawned_) return;
+void RoomEnemyState::ensureSpawned(
+    const Room& room, const std::vector<EnemySpawnConfig>& spawnTable,
+    const EnemyCatalog& catalog, GameServices& services) {
+  if (spawned_) {
+    return;
+  }
   spawned_ = true;
   enemies_ = enemy_factory::rollForRoom(room, spawnTable, catalog, services);
 }

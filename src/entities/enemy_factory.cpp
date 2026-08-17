@@ -25,14 +25,17 @@ std::vector<std::unique_ptr<Enemy>> rollForRoom(
     if (nextIdx >= shuffledSpawns.size()) {
       LOG_ERR("Room " + std::to_string(room.roomID) +
               ": spawn table exceeds available spawn points; dropping "
-              "remaining entries from '" + entry.type + "'");
+              "remaining entries from '" +
+              entry.type + "'");
       break;
     }
 
-    if (!std::bernoulli_distribution(entry.probDist)(services.rng)) continue;
+    if (!std::bernoulli_distribution(entry.probDist)(services.rng)) {
+      continue;
+    }
 
     const EnemyTierAttributes* attrs = catalog.find(entry.type, entry.tier);
-    if (!attrs) {
+    if (attrs == nullptr) {
       LOG_ERR("Room " + std::to_string(room.roomID) +
               ": unknown enemy type/tier '" + entry.type + "'/" +
               std::to_string(entry.tier) + "; skipping");
@@ -49,7 +52,7 @@ std::vector<std::unique_ptr<Enemy>> rollForRoom(
 
     int count = std::uniform_int_distribution<int>(lo, hi)(services.rng);
     for (int i = 0; i < count && nextIdx < shuffledSpawns.size();
-        ++i, ++nextIdx) {
+         ++i, ++nextIdx) {
       const Coordinate& pos = shuffledSpawns[nextIdx];
       enemies.push_back(std::make_unique<Enemy>(
           pos.x, pos.y, attrs->symbol, attrs->health, attrs->speed,

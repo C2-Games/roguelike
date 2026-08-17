@@ -29,8 +29,8 @@ class RoomEnemyState {
    * @param services   RNG source for the factory roll.
    */
   void ensureSpawned(const Room& room,
-                      const std::vector<EnemySpawnConfig>& spawnTable,
-                      const EnemyCatalog& catalog, GameServices& services);
+                     const std::vector<EnemySpawnConfig>& spawnTable,
+                     const EnemyCatalog& catalog, GameServices& services);
 
   std::vector<std::unique_ptr<Enemy>>& enemies() { return enemies_; }
   const std::vector<std::unique_ptr<Enemy>>& enemies() const {

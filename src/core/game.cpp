@@ -35,10 +35,9 @@ Game::Game(int width, int height, int fps)
   renderer_.addLayer(
       1, std::make_unique<MapLayer>(geom.winHeight, geom.winWidth, geom.originY,
                                     geom.originX, roomGraph_));
-  renderer_.addLayer(
-      2, std::make_unique<EntityLayer>(geom.winHeight, geom.winWidth,
-                                       geom.originY, geom.originX, roomGraph_,
-                                       player_, projectiles_));
+  renderer_.addLayer(2, std::make_unique<EntityLayer>(
+                            geom.winHeight, geom.winWidth, geom.originY,
+                            geom.originX, roomGraph_, player_, projectiles_));
 
   const int hud_margin = 2;
   renderer_.addLayer(
@@ -180,7 +179,9 @@ void Game::update() {
                          [&pos](const std::unique_ptr<Enemy>& e) {
                            return e->isAlive() && e->getPosition() == pos;
                          });
-        if (hit == enemies.end()) return false;
+        if (hit == enemies.end()) {
+          return false;
+        }
         (*hit)->takeDamage(damage);
         return true;
       }};
