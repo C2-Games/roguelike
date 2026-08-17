@@ -1,0 +1,13 @@
+{
+  "id": 6,
+  "name": "Maze of Whispers",
+  "ref": "maze.txt",
+  "enemies": [
+    { "type": "goblin", "class": "base", "tier": 1, "min": 2, "max": 5, "prob_dist": 0.8 },
+    { "type": "goblin", "class": "base", "tier": 2, "min": 1, "max": 2, "prob_dist": 0.3 }
+  ],
+  "loot": [
+    { "type": "gold_pouch", "class": "currency", "tier": 1, "min": 3, "max": 6 },
+    { "type": "weapon_upgrade", "class": "weapon", "tier": 2, "min": 1, "max": 1 }
+  ]
+}

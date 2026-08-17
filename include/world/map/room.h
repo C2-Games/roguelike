@@ -6,7 +6,11 @@
 #include <vector>
 
 #include "core/coordinate.h"
+#include "entities/room_enemy_state.h"
+#include "world/map/level_config.h"
 #include "world/map/tile.h"
+
+class EnemyCatalog;
 
 struct Room {
   static constexpr int WIDTH = 175;
@@ -21,8 +25,7 @@ struct Room {
   std::vector<Coordinate> lootSpawns;
   std::vector<Coordinate> itemSpawns;
 
-  std::vector<std::vector<bool>> visible;
-  std::vector<std::vector<bool>> explored;
+  RoomEnemyState enemyState;
 
   /**
    * @brief Construct an empty Room filled with default Wall tiles.
@@ -70,6 +73,26 @@ struct Room {
    * @param y Row.
    */
   void reveal(int x, int y);
+
+  std::vector<std::unique_ptr<Enemy>>& enemies() {
+    return enemyState.enemies();
+  }
+  const std::vector<std::unique_ptr<Enemy>>& enemies() const {
+    return enemyState.enemies();
+  }
+
+  /**
+   * @brief Roll this room's enemies on first call; a no-op after.
+   *
+   * @param spawnTable The room's authored enemy entries.
+   * @param catalog    Resolves each entry's type/tier to stats.
+   * @param services   RNG source for the factory roll.
+   */
+  void ensureEnemiesSpawned(const std::vector<EnemySpawnConfig>& spawnTable,
+                            const EnemyCatalog& catalog,
+                            GameServices& services) {
+    enemyState.ensureSpawned(*this, spawnTable, catalog, services);
+  }
 
   Room(Room&&) = default;
   Room& operator=(Room&&) = default;

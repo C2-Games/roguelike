@@ -1,53 +1,71 @@
 #include "world/map/level.h"
 
+#include <algorithm>
+#include <stdexcept>
 #include <utility>
 
 #include "core/services.h"
-#include "world/map/room_library.h"
 
-Level::Level(int roomCount, GameServices& services)
-    : roomCount_(roomCount), services_(services) {
-  generate();
+namespace {
+
+// Look up `adjacencyEntry`'s own edge back to `fromID` and return its
+// declared direction.
+Direction findReverseDirection(const std::vector<RoomEdge>& adjacencyEntry,
+                               int fromID) {
+  auto it = std::find_if(
+      adjacencyEntry.begin(), adjacencyEntry.end(),
+      [fromID](const RoomEdge& edge) { return edge.to == fromID; });
+  if (it != adjacencyEntry.end()) {
+    return it->direction;
+  }
+  throw std::runtime_error("room has no reverse connection back to room " +
+                           std::to_string(fromID) +
+                           " — map.json's adjacency is not symmetric");
 }
 
-void Level::addRoom(Room room) {
-  int id = room.roomID;
-  rooms_.insert({id, std::move(room)});
+}  // namespace
+
+Level::Level(const std::filesystem::path& levelDir, GameServices& services,
+             const EnemyCatalog& catalog)
+    : services_(services) {
+  LevelConfig config = loadLevelConfig(levelDir);
+  meta_ = config.meta;
+  currentRoomID_ = meta_.startRoomID;
+  buildFromConfig(config, catalog);
 }
 
-void Level::generate() {
-  RoomLibrary library;
-  library.scan("assets/rooms");
-
-  for (int i = 0; i < roomCount_; i++) {
-    addRoom(Room::loadFromFile(i, library.pickRandom(services_.rng)));
-    adjacency_.push_back({});
+void Level::buildFromConfig(const LevelConfig& config,
+                            const EnemyCatalog& catalog) {
+  for (const auto& [id, roomCfg] : config.rooms) {
+    auto [it, inserted] = rooms_.insert(
+        {id, Room::loadFromFile(
+                 id, std::filesystem::path("assets/rooms") / roomCfg.ref)});
+    roomEnemyConfig_[id] = roomCfg.enemies;
+    it->second.ensureEnemiesSpawned(roomCfg.enemies, catalog, services_);
   }
 
-  // Currently wires doors in a chain: room 0 ↔ 1 ↔ 2 ↔ … ↔ (N-1).
-  //
-  // Room 0 has no incoming connection so doorPositions[0] is free to serve
-  // as its exit. Every other room reserves doorPositions[0] for the back-link
-  // from the previous room, so it currently uses doorPositions[1] as its
-  // forward exit.
-  for (int i = 0; i < roomCount_ - 1; i++) {
-    const Room& roomA = rooms_.at(i);
-    const Room& roomB = rooms_.at(i + 1);
+  for (const auto& [fromID, edges] : config.adjacency) {
+    const Room& fromRoom = rooms_.at(fromID);
+    for (const RoomEdge& edge : edges) {
+      const Room& toRoom = rooms_.at(edge.to);
+      Coordinate fromDoor = resolveDoorForDirection(fromRoom, edge.direction);
+      Direction reverseDir =
+          findReverseDirection(config.adjacency.at(edge.to), fromID);
+      Coordinate toDoor = resolveDoorForDirection(toRoom, reverseDir);
+      doorConnections_[{fromID, fromDoor}] = {edge.to, toDoor};
+    }
+  }
 
-    int exitIdx = (i == 0) ? 0 : 1;
+  sealUnlinkedDoors();
+}
 
-    if (static_cast<int>(roomA.doorPositions.size()) <= exitIdx ||
-        roomB.doorPositions.empty())
-      continue;
-
-    Coordinate doorA = roomA.doorPositions[exitIdx];
-    Coordinate doorB = roomB.doorPositions[0];  // all rooms enter at door[0]
-
-    doorConnections_[{i, doorA}] = {i + 1, doorB};  // A → B
-    doorConnections_[{i + 1, doorB}] = {i, doorA};  // B → A
-
-    adjacency_[i].push_back(i + 1);
-    adjacency_[i + 1].push_back(i);
+void Level::sealUnlinkedDoors() {
+  for (auto& [id, room] : rooms_) {
+    for (const Coordinate& door : room.doorPositions) {
+      if (doorConnections_.find({id, door}) == doorConnections_.end()) {
+        room.tiles[door.x][door.y] = Tile(TileType::Wall, door);
+      }
+    }
   }
 }
 

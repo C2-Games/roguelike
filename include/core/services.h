@@ -7,7 +7,7 @@ struct GameServices {
   std::mt19937 rng;
 
   /**
-   * @brief Seed the RNG. Typical seed is `std::time(nullptr)` at startup.
+   * @brief Seed the RNG.
    *
    * @param seed Initial RNG seed.
    */

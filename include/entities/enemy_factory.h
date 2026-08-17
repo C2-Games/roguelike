@@ -7,23 +7,23 @@
 class Enemy;
 struct Room;
 struct GameServices;
+struct EnemySpawnConfig;
+class EnemyCatalog;
 
 namespace enemy_factory {
 
 /**
- * @brief Roll a fresh set of enemies for a room.
+ * @brief Roll a fresh set of enemies for a room from its spawn table.
  *
- * Each of the room's authored enemy spawn points independently has a 50%
- * chance of producing an enemy, alternating placeholder type (goblin/ogre)
- * by spawn-list order.
- *
- * @param room     The room to populate; provides enemy spawn points.
- * @param services RNG source.
- * @return Owning vector of newly-created enemies. Empty if the room has no
- *         enemy spawn points.
+ * @param room       The room to populate; provides enemy spawn points.
+ * @param spawnTable The room's authored enemy entries (type/tier/min/max/prob).
+ * @param catalog    Resolves each entry's type/tier to stats.
+ * @param services   RNG source.
+ * @return Owning vector of newly-created enemies.
  */
-std::vector<std::unique_ptr<Enemy>> rollForRoom(const Room& room,
-                                                GameServices& services);
+std::vector<std::unique_ptr<Enemy>> rollForRoom(
+    const Room& room, const std::vector<EnemySpawnConfig>& spawnTable,
+    const EnemyCatalog& catalog, GameServices& services);
 
 }  // namespace enemy_factory
 

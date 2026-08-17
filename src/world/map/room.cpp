@@ -44,33 +44,29 @@ SpawnKind charToSpawnKind(char c) {
 
 }  // namespace
 
-Room::Room(int id)
-    : roomID(id),
-      tiles(WIDTH, std::vector<Tile>(HEIGHT)),
-      visible(WIDTH, std::vector<bool>(HEIGHT, false)),
-      explored(WIDTH, std::vector<bool>(HEIGHT, false)) {}
+Room::Room(int id) : roomID(id), tiles(WIDTH, std::vector<Tile>(HEIGHT)) {}
 
 void Room::clearVisible() {
-  for (auto& col : visible) {
-    std::fill(col.begin(), col.end(), false);
+  for (auto& col : tiles) {
+    for (auto& tile : col) {
+      tile.clearVisible();
+    }
   }
 }
 
 bool Room::isVisible(int x, int y) const {
   if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return false;
-  return visible[x][y];
+  return tiles[x][y].isVisible();
 }
 
 bool Room::isExplored(int x, int y) const {
   if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return false;
-  return explored[x][y];
+  return tiles[x][y].isExplored();
 }
 
 void Room::reveal(int x, int y) {
   if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return;
-  visible[x][y] = true;
-  // Only mark explored if the tile is not Void.
-  if (tiles[x][y].getType() != TileType::Void) explored[x][y] = true;
+  tiles[x][y].reveal();
 }
 
 Room Room::loadFromFile(int roomID, const std::filesystem::path& path) {

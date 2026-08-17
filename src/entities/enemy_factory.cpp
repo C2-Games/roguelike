@@ -1,30 +1,63 @@
 #include "entities/enemy_factory.h"
 
+#include <algorithm>
 #include <random>
 
-#include "core/coordinate.h"
+#include "core/logger.h"
 #include "core/services.h"
 #include "entities/enemy.h"
+#include "entities/enemy_catalog.h"
+#include "world/map/level_config.h"
 #include "world/map/room.h"
 
 namespace enemy_factory {
 
-std::vector<std::unique_ptr<Enemy>> rollForRoom(const Room& room,
-                                                GameServices& services) {
+std::vector<std::unique_ptr<Enemy>> rollForRoom(
+    const Room& room, const std::vector<EnemySpawnConfig>& spawnTable,
+    const EnemyCatalog& catalog, GameServices& services) {
   std::vector<std::unique_ptr<Enemy>> enemies;
 
-  // Each authored spawn point independently has a 50% chance of producing an
-  // enemy. Placeholder odds until per-room spawn tables exist.
-  std::bernoulli_distribution shouldSpawn(0.5);
+  std::vector<Coordinate> shuffledSpawns = room.enemySpawns;
+  std::shuffle(shuffledSpawns.begin(), shuffledSpawns.end(), services.rng);
 
-  // Alternate placeholder types by spawn-list order: goblin, ogre, goblin,
-  // ogre, ... Real per-spawn enemy tables will replace this once the room
-  // config format lands.
-  for (std::size_t i = 0; i < room.enemySpawns.size(); ++i) {
-    if (!shouldSpawn(services.rng)) continue;
-    const Coordinate& pos = room.enemySpawns[i];
-    char symbol = (i % 2 == 0) ? 'G' : 'O';
-    enemies.push_back(std::make_unique<Enemy>(pos.x, pos.y, symbol));
+  std::size_t nextIdx = 0;
+  for (const EnemySpawnConfig& entry : spawnTable) {
+    if (nextIdx >= shuffledSpawns.size()) {
+      LOG_ERR("Room " + std::to_string(room.roomID) +
+              ": spawn table exceeds available spawn points; dropping "
+              "remaining entries from '" +
+              entry.type + "'");
+      break;
+    }
+
+    if (!std::bernoulli_distribution(entry.probDist)(services.rng)) {
+      continue;
+    }
+
+    const EnemyTierAttributes* attrs = catalog.find(entry.type, entry.tier);
+    if (attrs == nullptr) {
+      LOG_ERR("Room " + std::to_string(room.roomID) +
+              ": unknown enemy type/tier '" + entry.type + "'/" +
+              std::to_string(entry.tier) + "; skipping");
+      continue;
+    }
+
+    int lo = entry.min;
+    int hi = entry.max;
+    if (lo > hi) {
+      LOG_ERR("Room " + std::to_string(room.roomID) + ": '" + entry.type +
+              "' has min > max; swapping");
+      std::swap(lo, hi);
+    }
+
+    int count = std::uniform_int_distribution<int>(lo, hi)(services.rng);
+    for (int i = 0; i < count && nextIdx < shuffledSpawns.size();
+         ++i, ++nextIdx) {
+      const Coordinate& pos = shuffledSpawns[nextIdx];
+      enemies.push_back(std::make_unique<Enemy>(
+          pos.x, pos.y, attrs->symbol, attrs->health, attrs->speed,
+          attrs->attackDamage, attrs->fov, attrs->chaseMemoryDuration));
+    }
   }
 
   return enemies;
