@@ -4,7 +4,8 @@
 
 #include "core/game.h"
 
-int main() {
+int main()
+{
   // Enable locale-aware (UTF-8) input/output for ncursesw.
   setlocale(LC_ALL, "");
 

@@ -3,7 +3,8 @@
 
 #include <ncurses.h>
 
-enum class ColorPair : short {
+enum class ColorPair : short
+{
   Default = 0,        ///< Terminal default (used inside the FoV).
   FogUnexplored = 1,  ///< Solid dark grey block over never-seen tiles.
   FogExplored = 2,    ///< Light grey terrain for previously seen tiles.
@@ -23,7 +24,8 @@ enum class ColorPair : short {
  * @param p Named colour pair.
  * @return chtype Attribute chunk suitable for bitwise-OR with a symbol.
  */
-inline chtype colorAttr(ColorPair p) {
+inline chtype colorAttr(ColorPair p)
+{
   return COLOR_PAIR(static_cast<short>(p));
 }
 

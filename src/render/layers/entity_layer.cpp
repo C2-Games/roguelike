@@ -14,19 +14,24 @@ EntityLayer::EntityLayer(
     : RenderStack(h, w, y, x),
       graph_(graph),
       player_(player),
-      projectiles_(projectiles) {}
+      projectiles_(projectiles)
+{}
 
-void EntityLayer::drawEnemies() {
+void EntityLayer::drawEnemies()
+{
   const Room& room = graph_.getCurrentRoom();
 
   // iterate through vector of enemies.
-  for (const auto& enemy : room.enemies()) {
+  for (const auto& enemy : room.enemies())
+  {
     // if alive AND inside the player's current FoV, draw symbol.
     // Dynamic content (enemies) is never shown outside the FoV
-    if (enemy->isAlive()) {
+    if (enemy->isAlive())
+    {
       Coordinate pos = enemy->getPosition();
 
-      if (room.isVisible(pos.x, pos.y)) {
+      if (room.isVisible(pos.x, pos.y))
+      {
         // Hook: OR in colorAttr(ColorPair::EnemyDefault) — or a
         // per-enemy-type pair — once enemy colouring is designed.
         mvwaddch(win_, pos.y, pos.x, enemy->getSymbol());
@@ -35,10 +40,12 @@ void EntityLayer::drawEnemies() {
   };
 };
 
-void EntityLayer::drawProjectiles() {
+void EntityLayer::drawProjectiles()
+{
   const Room& room = graph_.getCurrentRoom();
 
-  for (const auto& projectile : projectiles_) {
+  for (const auto& projectile : projectiles_)
+  {
     if (!projectile->isActive()) continue;
 
     Coordinate pos = projectile->getPosition();
@@ -56,17 +63,20 @@ void EntityLayer::drawProjectiles() {
   };
 };
 
-void EntityLayer::drawPlayer() {
+void EntityLayer::drawPlayer()
+{
   // if alive, draw symbol. Player is always at their own FoV origin so
   // no visibility check is needed here.
-  if (player_.isAlive()) {
+  if (player_.isAlive())
+  {
     Coordinate pos = player_.getPosition();
 
     mvwaddch(win_, pos.y, pos.x, player_.getSymbol());
   };
 };
 
-void EntityLayer::doRender() {
+void EntityLayer::doRender()
+{
   werase(win_);  // need to erase each frame.
 
   // render enemies, then projectiles, then player (top of render).
@@ -75,7 +85,8 @@ void EntityLayer::doRender() {
   this->drawPlayer();
 };
 
-void EntityLayer::onResize(int termHeight, int termWidth) {
+void EntityLayer::onResize(int termHeight, int termWidth)
+{
   UI g = computeUI(termHeight, termWidth);
   reshape(g.winHeight, g.winWidth, g.originY, g.originX);
 };

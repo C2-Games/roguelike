@@ -4,7 +4,8 @@
 #include <fstream>
 #include <string>
 
-class Logger {
+class Logger
+{
  public:
   /**
    * @brief Get the singleton instance of the Logger.

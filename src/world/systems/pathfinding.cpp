@@ -5,9 +5,11 @@
 #include "world/map/room.h"
 #include "world/map/tile.h"
 
-namespace {
+namespace
+{
 
-bool isBlocking(const Room& room, int x, int y) {
+bool isBlocking(const Room& room, int x, int y)
+{
   if (x < 0 || x >= Room::WIDTH || y < 0 || y >= Room::HEIGHT) return true;
   TileType type = room.tiles[x][y].getType();
   return type != TileType::Floor;
@@ -15,14 +17,16 @@ bool isBlocking(const Room& room, int x, int y) {
 
 }  // namespace
 
-GoalMap computeGoalMap(const Room& room, Coordinate goal) {
+GoalMap computeGoalMap(const Room& room, Coordinate goal)
+{
   GoalMap map(Room::WIDTH, std::vector<int>(Room::HEIGHT, kUnreachable));
 
   // Reject out-of-bounds or blocking goal tiles up front. Returning the
   // all-kUnreachable map is a well-defined "no reachable path" result the
   // caller can treat uniformly.
   if (goal.x < 0 || goal.x >= Room::WIDTH || goal.y < 0 ||
-      goal.y >= Room::HEIGHT) {
+      goal.y >= Room::HEIGHT)
+  {
     return map;
   }
   if (isBlocking(room, goal.x, goal.y)) return map;
@@ -35,13 +39,15 @@ GoalMap computeGoalMap(const Room& room, Coordinate goal) {
   static constexpr int kDx[4] = {0, 1, 0, -1};
   static constexpr int kDy[4] = {-1, 0, 1, 0};
 
-  while (!frontier.empty()) {
+  while (!frontier.empty())
+  {
     Coordinate current = frontier.front();
     frontier.pop();
     int nextDist = map[current.x][current.y] + 1;
 
     // Explore 4-connected neighbors of the current tile.
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < 4; ++i)
+    {
       int nx = current.x + kDx[i];
       int ny = current.y + kDy[i];
       if (isBlocking(room, nx, ny)) continue;

@@ -8,7 +8,8 @@
 #include "entities/fov.h"
 
 /** @brief Resolved per-tier stats for one enemy type. */
-struct EnemyTierAttributes {
+struct EnemyTierAttributes
+{
   char symbol;
   int health;
   int attackDamage;
@@ -21,7 +22,8 @@ struct EnemyTierAttributes {
  * @brief Loads every enemy JSON file in a directory into an in-memory lookup
  * of type name -> tier -> resolved attributes.
  */
-class EnemyCatalog {
+class EnemyCatalog
+{
  public:
   /**
    * @brief Load and parse every enemy definition in `dir`.

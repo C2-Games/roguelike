@@ -10,7 +10,8 @@
 
 struct Room;
 
-class GoalMapCache {
+class GoalMapCache
+{
  public:
   /**
    * @brief Fetch (or lazily compute) the goal map rooted at `goal` for

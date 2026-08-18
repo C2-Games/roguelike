@@ -5,9 +5,16 @@
 
 #include "core/colors.h"
 
-enum class WeaponType { Basic, Rapid, Heavy, Sniper };
+enum class WeaponType
+{
+  Basic,
+  Rapid,
+  Heavy,
+  Sniper
+};
 
-struct WeaponAttributes {
+struct WeaponAttributes
+{
   int damage;
   int speed;
   int range;
@@ -15,7 +22,8 @@ struct WeaponAttributes {
   const char* name;
 };
 
-class Weapon {
+class Weapon
+{
  public:
   /**
    * @brief Construct a new Weapon object.

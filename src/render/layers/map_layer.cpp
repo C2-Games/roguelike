@@ -7,13 +7,17 @@
 #include "world/map/room.h"
 
 MapLayer::MapLayer(int h, int w, int y, int x, const Level& graph)
-    : RenderStack(h, w, y, x), graph_(graph) {}
+    : RenderStack(h, w, y, x), graph_(graph)
+{}
 
-void MapLayer::drawMap() {
+void MapLayer::drawMap()
+{
   const Room& room = graph_.getCurrentRoom();
 
-  for (int x = 0; x < Room::WIDTH; ++x) {
-    for (int y = 0; y < Room::HEIGHT; ++y) {
+  for (int x = 0; x < Room::WIDTH; ++x)
+  {
+    for (int y = 0; y < Room::HEIGHT; ++y)
+    {
       // get tile reference & print it.
       const Tile& tile = room.tiles[x][y];
       const int tx = tile.getPosition().x;
@@ -30,12 +34,17 @@ void MapLayer::drawMap() {
       //
       // Hook: door tiles could branch here on tile.getType() == Door and
       // OR in colorAttr(ColorPair::DoorDefault) once the pair is defined.
-      if (room.isVisible(x, y)) {
+      if (room.isVisible(x, y))
+      {
         mvwaddch(win_, ty, tx, tile.getSymbol());
-      } else if (room.isExplored(x, y)) {
+      }
+      else if (room.isExplored(x, y))
+      {
         const char sym = tile.getSymbol();
         mvwaddch(win_, ty, tx, sym | colorAttr(ColorPair::FogExplored));
-      } else {
+      }
+      else
+      {
         // Fog block: ncurses overlay() drops blanks, so we must draw a
         // non-blank glyph. Because the pair has fg == bg, whatever glyph
         // we pick is invisible against its own background and only the
@@ -46,7 +55,8 @@ void MapLayer::drawMap() {
   };
 };
 
-void MapLayer::doRender() {
+void MapLayer::doRender()
+{
   werase(win_);  // need to erase each frame.
 
   // boarder around map.
@@ -56,7 +66,8 @@ void MapLayer::doRender() {
   this->drawMap();
 };
 
-void MapLayer::onResize(int termHeight, int termWidth) {
+void MapLayer::onResize(int termHeight, int termWidth)
+{
   UI g = computeUI(termHeight, termWidth);
   reshape(g.winHeight, g.winWidth, g.originY, g.originX);
 };

@@ -3,7 +3,8 @@
 
 #include "core/coordinate.h"
 
-class Entity {
+class Entity
+{
  public:
   Entity(int x, int y, char symbol, int health, int speed);
 
@@ -66,11 +67,13 @@ class Entity {
    *
    * @param newPos The potential new position to move entitiy.
    */
-  void moveHook(Coordinate newPos) {
+  void moveHook(Coordinate newPos)
+  {
     // when move hook is called, we assume a frame.
     frameCounter_ += 1;
 
-    if (frameCounter_ % speed_ == 0) {
+    if (frameCounter_ % speed_ == 0)
+    {
       frameCounter_ = 0;  // reset counter.
       position_ = newPos;
     };

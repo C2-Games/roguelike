@@ -14,7 +14,8 @@
 #include "world/objects/projectile_context.h"
 #include "world/systems/visibility.h"
 
-namespace {
+namespace
+{
 // Fixed until a real seed-input/new-game flow exists: every launch should
 // reproduce the same room/enemy layout for a given level config.
 constexpr std::mt19937::result_type kDefaultSeed = 80085;
@@ -28,7 +29,8 @@ Game::Game(int width, int height, int fps)
       player_(Room::WIDTH / 2, Room::HEIGHT / 2),
       enemyCatalog_("assets/enemies"),
       roomGraph_("assets/levels/level_1", services_, enemyCatalog_),
-      isRunning_(true) {
+      isRunning_(true)
+{
   // add window overlays.
   // TODO: probably want to create an Enum for layer ordering.
   UI geom = computeUI(termHeight_, termWidth_);
@@ -51,18 +53,21 @@ Game::Game(int width, int height, int fps)
 #endif
 }
 
-void Game::run() {
+void Game::run()
+{
   printw("Roguelike Game Started! Use arrow keys to move. Press Q to quit.\n");
   printw("Press SPACE to begin...\n");
 
   int ch;
-  do {
+  do
+  {
     ch = getch();
   } while (ch != ' ');
 
   const auto frame_duration = getDuration();
 
-  while (isRunning_ && player_.isAlive()) {
+  while (isRunning_ && player_.isAlive())
+  {
     // -------- Frame start --------
     auto start = std::chrono::high_resolution_clock::now();
     handleInput();
@@ -74,7 +79,8 @@ void Game::run() {
     auto elapsed =
         std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
-    if (elapsed < frame_duration) {
+    if (elapsed < frame_duration)
+    {
       std::this_thread::sleep_for(frame_duration - elapsed);
     }
 
@@ -89,11 +95,13 @@ void Game::run() {
   std::cout << "Game Over!\n";
 }
 
-void Game::handleInput() {
+void Game::handleInput()
+{
   int ch = getch();
   Coordinate newPlayerPos = player_.getPosition();
 
-  switch (ch) {
+  switch (ch)
+  {
     case KEY_RESIZE:  // in case of a terminal resize.
       getmaxyx(stdscr, termHeight_, termWidth_);
       renderer_.resizeAll(termHeight_, termWidth_);
@@ -118,7 +126,8 @@ void Game::handleInput() {
       newPlayerPos.x += 1;
       player_.setLastDirection(Coordinate(1, 0));
       break;
-    case ' ': {
+    case ' ':
+    {
       // "fire" a projectile in the player's last-faced direction.
       Coordinate dir = player_.getLastDirection();  // acts as an offset.
       Coordinate spawnPos = player_.getPosition() + dir;
@@ -141,14 +150,17 @@ void Game::handleInput() {
       newPlayerPos.y >= 0 && newPlayerPos.y < Room::HEIGHT &&
       roomGraph_.getCurrentRoom()
           .tiles[newPlayerPos.x][newPlayerPos.y]
-          .isWalkable()) {
+          .isWalkable())
+  {
     // Check for a linked door before applying normal movement.
     if (roomGraph_.getCurrentRoom()
             .tiles[newPlayerPos.x][newPlayerPos.y]
-            .getType() == TileType::Door) {
+            .getType() == TileType::Door)
+    {
       const DoorConnection* conn = roomGraph_.getDoorConnection(
           roomGraph_.getCurrentRoomID(), newPlayerPos);
-      if (conn) {
+      if (conn)
+      {
         transitionRoom(*conn);
         return;
       }
@@ -157,7 +169,8 @@ void Game::handleInput() {
   }
 }
 
-void Game::update() {
+void Game::update()
+{
   // Recompute FoV visibility for the current room before anything else
   // runs this frame.
   visibility::update(roomGraph_.getCurrentRoom(), player_.getPosition(),
@@ -179,7 +192,8 @@ void Game::update() {
                          [&pos](const std::unique_ptr<Enemy>& e) {
                            return e->isAlive() && e->getPosition() == pos;
                          });
-        if (hit == enemies.end()) {
+        if (hit == enemies.end())
+        {
           return false;
         }
         (*hit)->takeDamage(damage);
@@ -187,20 +201,25 @@ void Game::update() {
       }};
 
   // Move enemies toward player.
-  for (auto& enemy : currentRoom.enemies()) {
-    if (enemy->isAlive()) {
+  for (auto& enemy : currentRoom.enemies())
+  {
+    if (enemy->isAlive())
+    {
       enemy->moveTowardPlayer(moveCtx);
 
       // Check collision with player
-      if (enemy->getPosition() == playerPos) {
+      if (enemy->getPosition() == playerPos)
+      {
         player_.takeDamage(enemy->getAttackDamage());
       }
     }
   }
 
   // Advance projectiles, apply hits, and drop any that expired.
-  for (auto& projectile : projectiles_) {
-    if (projectile->isActive()) {
+  for (auto& projectile : projectiles_)
+  {
+    if (projectile->isActive())
+    {
       projectile->update(projCtx);
     }
   }
@@ -218,7 +237,8 @@ void Game::update() {
 
 void Game::render() { renderer_.compose(); };
 
-void Game::transitionRoom(const DoorConnection& conn) {
+void Game::transitionRoom(const DoorConnection& conn)
+{
   roomGraph_.setCurrentRoomID(conn.destRoomID);
 
   // Place the player one tile inward from the destination door so they

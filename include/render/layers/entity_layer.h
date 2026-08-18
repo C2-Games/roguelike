@@ -9,7 +9,8 @@
 #include "world/map/level.h"
 #include "world/objects/projectile.h"
 
-class EntityLayer : public RenderStack {
+class EntityLayer : public RenderStack
+{
  public:
   /**
    * @brief Construct a new Entity Layer.

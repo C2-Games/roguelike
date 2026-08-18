@@ -7,7 +7,8 @@
 
 struct Room;
 
-struct ProjectileContext {
+struct ProjectileContext
+{
   const Room& room;
 
   /** @brief Try to deal `damage` at world-tile `pos`. */

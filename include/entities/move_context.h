@@ -11,7 +11,8 @@ class GoalMapCache;
 struct GameServices;
 struct Room;
 
-struct MoveContext {
+struct MoveContext
+{
   Coordinate playerPos;
   const Room& room;
   GoalMapCache& cache;

@@ -6,16 +6,19 @@
 
 #include "core/services.h"
 
-namespace {
+namespace
+{
 
 // Look up `adjacencyEntry`'s own edge back to `fromID` and return its
 // declared direction.
 Direction findReverseDirection(const std::vector<RoomEdge>& adjacencyEntry,
-                               int fromID) {
+                               int fromID)
+{
   auto it = std::find_if(
       adjacencyEntry.begin(), adjacencyEntry.end(),
       [fromID](const RoomEdge& edge) { return edge.to == fromID; });
-  if (it != adjacencyEntry.end()) {
+  if (it != adjacencyEntry.end())
+  {
     return it->direction;
   }
   throw std::runtime_error("room has no reverse connection back to room " +
@@ -27,7 +30,8 @@ Direction findReverseDirection(const std::vector<RoomEdge>& adjacencyEntry,
 
 Level::Level(const std::filesystem::path& levelDir, GameServices& services,
              const EnemyCatalog& catalog)
-    : services_(services) {
+    : services_(services)
+{
   LevelConfig config = loadLevelConfig(levelDir);
   meta_ = config.meta;
   currentRoomID_ = meta_.startRoomID;
@@ -35,8 +39,10 @@ Level::Level(const std::filesystem::path& levelDir, GameServices& services,
 }
 
 void Level::buildFromConfig(const LevelConfig& config,
-                            const EnemyCatalog& catalog) {
-  for (const auto& [id, roomCfg] : config.rooms) {
+                            const EnemyCatalog& catalog)
+{
+  for (const auto& [id, roomCfg] : config.rooms)
+  {
     auto [it, inserted] = rooms_.insert(
         {id, Room::loadFromFile(
                  id, std::filesystem::path("assets/rooms") / roomCfg.ref)});
@@ -44,9 +50,11 @@ void Level::buildFromConfig(const LevelConfig& config,
     it->second.ensureEnemiesSpawned(roomCfg.enemies, catalog, services_);
   }
 
-  for (const auto& [fromID, edges] : config.adjacency) {
+  for (const auto& [fromID, edges] : config.adjacency)
+  {
     const Room& fromRoom = rooms_.at(fromID);
-    for (const RoomEdge& edge : edges) {
+    for (const RoomEdge& edge : edges)
+    {
       const Room& toRoom = rooms_.at(edge.to);
       Coordinate fromDoor = resolveDoorForDirection(fromRoom, edge.direction);
       Direction reverseDir =
@@ -59,10 +67,14 @@ void Level::buildFromConfig(const LevelConfig& config,
   sealUnlinkedDoors();
 }
 
-void Level::sealUnlinkedDoors() {
-  for (auto& [id, room] : rooms_) {
-    for (const Coordinate& door : room.doorPositions) {
-      if (doorConnections_.find({id, door}) == doorConnections_.end()) {
+void Level::sealUnlinkedDoors()
+{
+  for (auto& [id, room] : rooms_)
+  {
+    for (const Coordinate& door : room.doorPositions)
+    {
+      if (doorConnections_.find({id, door}) == doorConnections_.end())
+      {
         room.tiles[door.x][door.y] = Tile(TileType::Wall, door);
       }
     }
@@ -70,7 +82,8 @@ void Level::sealUnlinkedDoors() {
 }
 
 const DoorConnection* Level::getDoorConnection(int roomID,
-                                               Coordinate doorPos) const {
+                                               Coordinate doorPos) const
+{
   auto it = doorConnections_.find({roomID, doorPos});
   if (it != doorConnections_.end()) return &it->second;
   return nullptr;

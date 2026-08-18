@@ -1,4 +1,9 @@
+# Line endings are pinned in the repo rather than left to each developer's
+# core.autocrlf, since this project is worked on from Windows and macOS/Linux.
 *.sh text eol=lf
-assets/rooms/*.txt text eol=lf
 *.py text eol=lf
+*.cpp text eol=lf
+*.h text eol=lf
+*.hpp text eol=lf
+assets/rooms/*.txt text eol=lf
 .claude/** text eol=lf

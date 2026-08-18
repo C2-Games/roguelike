@@ -5,7 +5,8 @@
 #include "render/render_stack.h"
 #include "world/map/level.h"
 
-class MapLayer : public RenderStack {
+class MapLayer : public RenderStack
+{
  public:
   /**
    * @brief Construct a new Map Layer.
