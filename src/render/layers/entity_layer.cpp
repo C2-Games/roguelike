@@ -5,7 +5,7 @@
 #include <memory>
 
 #include "entities/enemy.h"
-#include "render/ui.h"
+#include "render/window_position.h"
 #include "world/map/room.h"
 
 EntityLayer::EntityLayer(
@@ -87,6 +87,6 @@ void EntityLayer::doRender()
 
 void EntityLayer::onResize(int termHeight, int termWidth)
 {
-  UI g = computeUI(termHeight, termWidth);
+  WindowPosition g = centerWindow(termHeight, termWidth);
   reshape(g.winHeight, g.winWidth, g.originY, g.originX);
 };

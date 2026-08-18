@@ -9,7 +9,7 @@
 
 #include "entities/enemy.h"
 #include "entities/move_context.h"
-#include "render/ui.h"
+#include "render/window_position.h"
 #include "world/objects/projectile.h"
 #include "world/objects/projectile_context.h"
 #include "world/systems/visibility.h"
@@ -32,23 +32,26 @@ Game::Game(int width, int height, int fps)
       isRunning_(true)
 {
   // add window overlays.
-  UI geom = computeUI(termHeight_, termWidth_);
+  WindowPosition geom = centerWindow(termHeight_, termWidth_);
   renderer_.addLayer(
-      1, std::make_unique<MapLayer>(geom.winHeight, geom.winWidth, geom.originY,
-                                    geom.originX, roomGraph_));
-  renderer_.addLayer(2, std::make_unique<EntityLayer>(
-                            geom.winHeight, geom.winWidth, geom.originY,
-                            geom.originX, roomGraph_, player_, projectiles_));
+      RenderLayer::Map,
+      std::make_unique<MapLayer>(geom.winHeight, geom.winWidth, geom.originY,
+                                 geom.originX, roomGraph_));
+  renderer_.addLayer(RenderLayer::Entity,
+                     std::make_unique<EntityLayer>(
+                         geom.winHeight, geom.winWidth, geom.originY,
+                         geom.originX, roomGraph_, player_, projectiles_));
 
   const int hud_margin = 2;
-  renderer_.addLayer(
-      3, std::make_unique<HUDLayer>(termHeight_, termWidth_, hud_margin,
-                                    player_, roomGraph_));
+  renderer_.addLayer(RenderLayer::HUD, std::make_unique<HUDLayer>(
+                                           termHeight_, termWidth_, hud_margin,
+                                           player_, roomGraph_));
 
   // if debug build, add the debug window.
 #ifndef NDEBUG
-  renderer_.addLayer(4, std::make_unique<DebugLayer>(termHeight_, termWidth_,
-                                                     currentFps_, player_));
+  renderer_.addLayer(RenderLayer::Debug,
+                     std::make_unique<DebugLayer>(termHeight_, termWidth_,
+                                                  currentFps_, player_));
 #endif
 }
 
