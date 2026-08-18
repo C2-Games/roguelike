@@ -113,6 +113,7 @@ happened once, with the skill's `cppcheck --std=c++17` against CI's `c++20`.
 | Command | What it does |
 |---|---|
 | `/issues [filter]` | List open GitHub issues to pick from (`gh issue list`, repo resolved via `GH_REPO`) |
+| `/new-issue <description>` | File a new GitHub issue, asking which milestone to assign (or creating one if explicitly told) |
 | `/start-issue <n> [n...]` | Fetch the issue(s), cut a `<type>/<kebab-description>` branch off `main`, record `.claude/.current-issue`, then enter plan mode |
 | `/check` | Full local CI sweep via `scripts/ci-local.sh` — format, cppcheck, clang-tidy, build |
 | `/build [debug\|release]` | `scripts/build-debug.sh` / `scripts/build-release.sh` |
