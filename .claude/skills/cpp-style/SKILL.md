@@ -110,6 +110,10 @@ special-casing needed between old and new code.
 - Prefixing enum members with `k` (`kWall`, `kNorth`) because they're
   "constants" — enum members are an exception to the Constants row; they
   take bare `PascalCase` by design.
+- A `TODO`/`FIXME`/`XXX`/`HACK`/`TBD` comment — pending work goes in a GitHub
+  issue, never in the source. CI rejects these outright. If something is worth
+  remembering, it is worth an issue; if it is not worth an issue, a comment
+  will not save it.
 
 ## Verification
 

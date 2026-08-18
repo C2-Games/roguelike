@@ -10,6 +10,15 @@ cd "$(git rev-parse --show-toplevel)"
 
 section() { printf '\n== %s ==\n' "$1"; }
 
+# Pending work belongs in the issue tracker, not in a comment nobody queries.
+# Runs first: it needs no toolchain, so it fails before anything expensive.
+section "todo-scan"
+todo_paths=(src include scripts .claude ':!*.md' ':!*.txt' ':!scripts/ci-local.sh')
+if git grep -nwE 'TODO|FIXME|XXX|HACK|TBD' -- "${todo_paths[@]}"; then
+  echo "Pending work belongs in a GitHub issue, not a comment. See the paths above." >&2
+  exit 1
+fi
+
 # clang-tidy needs compile_commands.json. Configure once if missing.
 if [[ ! -f build/compile_commands.json ]]; then
   section "cmake configure (with compile_commands)"
