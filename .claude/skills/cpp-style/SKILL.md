@@ -59,45 +59,51 @@ self-explanatory code is noise the next reader has to filter out.
 
 ## Docstrings
 
-Use `///`-style Doxygen docstrings — **only** on class methods and
-constructors. Never add one to a class declaration, struct declaration,
-enum declaration, or a free function.
+Use `/** */`-style Doxygen block docstrings — **only** on class methods
+and constructors. Never add one to a class declaration, struct
+declaration, enum declaration, or a free function.
 
 Shape:
-- Brief line first.
-- `/// @param <name> <description>` — one per parameter, in signature
-  order. Omit the whole block if the method/constructor takes no
-  parameters.
-- `/// @return <description>` — a real description of what's returned,
-  not a bare restatement of the type (avoid e.g. `@return int`). Omit
+- `@brief <description>` line first.
+- `@param <name> <description>` — one per parameter, in signature order.
+  Omit entirely if the method/constructor takes no parameters.
+- `@return <description>` — a real description of what's returned, not
+  a bare restatement of the type (avoid e.g. `@return int`). Omit
   entirely for `void`.
+- Collapse to a single line (`/** @brief <description>. */`) when
+  there's no `@param`/`@return` content. Otherwise use a multi-line
+  block: `@brief` line, a blank `*` line, then the `@param`/`@return`
+  lines.
 
 ```cpp
 class Enemy : public Entity
 {
  public:
-  /// Constructs an enemy at a starting position with combat/behavior
-  /// tuning.
-  /// @param x Starting column position.
-  /// @param y Starting row position.
-  /// @param attackDamage Damage dealt per successful attack.
+  /**
+   * @brief Construct an enemy at a starting position with combat/behavior
+   * tuning.
+   *
+   * @param x Starting column position.
+   * @param y Starting row position.
+   * @param attackDamage Damage dealt per successful attack.
+   */
   Enemy(int x, int y, int attackDamage);
 
-  /// Advances enemy behavior one frame using wall-aware pathfinding.
-  /// @param ctx Per-frame context (player position, current room, goal-map
-  ///   cache, other enemies, RNG source).
+  /**
+   * @brief Advance enemy behavior one frame using wall-aware pathfinding.
+   *
+   * @param ctx Per-frame context (player position, current room, goal-map
+   * cache, other enemies, RNG source).
+   */
   void moveTowardPlayer(const MoveContext& ctx);
 
-  /// Reduces enemy health by a damage amount.
-  /// @param damage Amount of damage to apply.
+  /** @brief Reduce enemy health by a damage amount. */
   void takeDamage(int damage);
 };
 ```
 
-Note this diverges from any existing `/** @brief ... */` block-style
-docstrings already in a codebase — apply `///` going forward on new or
-edited code; don't mass-reformat untouched existing docstrings just to
-match.
+This matches the existing codebase's docstring style already — no
+special-casing needed between old and new code.
 
 ## Editor integration
 
