@@ -75,3 +75,12 @@ Testing/
 
 # mac bs.
 *.DS_Store
+
+# Python bytecode (the .claude hooks are Python)
+__pycache__/
+*.pyc
+
+# Claude Code local state (settings.json, hooks/, commands/ and WORKFLOW.md are committed)
+.claude/settings.local.json
+.claude/.current-issue
+.claude/.pr-body.md
