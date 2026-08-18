@@ -17,7 +17,8 @@
 #include "world/objects/projectile.h"
 #include "world/systems/goal_map_cache.h"
 
-class Game {
+class Game
+{
  public:
   /**
    * @brief Construct a new Game:: Game object.

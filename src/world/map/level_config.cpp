@@ -8,11 +8,14 @@
 
 #include "world/map/room.h"
 
-namespace {
+namespace
+{
 
-nlohmann::json readJson(const std::filesystem::path& path) {
+nlohmann::json readJson(const std::filesystem::path& path)
+{
   std::ifstream in(path);
-  if (!in) {
+  if (!in)
+  {
     throw std::runtime_error("could not open file: " + path.string());
   }
 
@@ -21,7 +24,8 @@ nlohmann::json readJson(const std::filesystem::path& path) {
   return j;
 }
 
-LevelMeta parseLevelMeta(const nlohmann::json& j) {
+LevelMeta parseLevelMeta(const nlohmann::json& j)
+{
   return LevelMeta{
       j.at("id").get<int>(),
       j.at("name").get<std::string>(),
@@ -32,18 +36,24 @@ LevelMeta parseLevelMeta(const nlohmann::json& j) {
   };
 }
 
-LevelMeta loadLevelMeta(const std::filesystem::path& path) {
-  try {
+LevelMeta loadLevelMeta(const std::filesystem::path& path)
+{
+  try
+  {
     return parseLevelMeta(readJson(path));
-  } catch (const std::exception& e) {
+  }
+  catch (const std::exception& e)
+  {
     throw std::runtime_error("malformed level.json at " + path.string() + ": " +
                              e.what());
   }
 }
 
-std::map<int, std::vector<RoomEdge>> parseAdjacency(const nlohmann::json& j) {
+std::map<int, std::vector<RoomEdge>> parseAdjacency(const nlohmann::json& j)
+{
   std::map<int, std::vector<RoomEdge>> adjacency;
-  for (const auto& roomEntry : j.at("rooms")) {
+  for (const auto& roomEntry : j.at("rooms"))
+  {
     int id = roomEntry.at("id").get<int>();
     const auto& connections = roomEntry.at("connections");
     std::vector<RoomEdge> edges;
@@ -62,16 +72,21 @@ std::map<int, std::vector<RoomEdge>> parseAdjacency(const nlohmann::json& j) {
 }
 
 std::map<int, std::vector<RoomEdge>> loadAdjacency(
-    const std::filesystem::path& path) {
-  try {
+    const std::filesystem::path& path)
+{
+  try
+  {
     return parseAdjacency(readJson(path));
-  } catch (const std::exception& e) {
+  }
+  catch (const std::exception& e)
+  {
     throw std::runtime_error("malformed map.json at " + path.string() + ": " +
                              e.what());
   }
 }
 
-EnemySpawnConfig parseEnemySpawnConfig(const nlohmann::json& j) {
+EnemySpawnConfig parseEnemySpawnConfig(const nlohmann::json& j)
+{
   return EnemySpawnConfig{
       j.at("type").get<std::string>(), j.at("tier").get<int>(),
       j.at("min").get<int>(),          j.at("max").get<int>(),
@@ -79,30 +94,38 @@ EnemySpawnConfig parseEnemySpawnConfig(const nlohmann::json& j) {
   };
 }
 
-RoomConfig parseRoomConfig(const nlohmann::json& j) {
+RoomConfig parseRoomConfig(const nlohmann::json& j)
+{
   RoomConfig config;
   config.id = j.at("id").get<int>();
   config.name = j.at("name").get<std::string>();
   config.ref = j.at("ref").get<std::string>();
 
-  if (j.contains("enemies")) {
-    for (const auto& entry : j.at("enemies")) {
+  if (j.contains("enemies"))
+  {
+    for (const auto& entry : j.at("enemies"))
+    {
       config.enemies.push_back(parseEnemySpawnConfig(entry));
     }
   }
   return config;
 }
 
-RoomConfig loadRoomConfig(const std::filesystem::path& path, int expectedId) {
-  try {
+RoomConfig loadRoomConfig(const std::filesystem::path& path, int expectedId)
+{
+  try
+  {
     RoomConfig config = parseRoomConfig(readJson(path));
-    if (config.id != expectedId) {
+    if (config.id != expectedId)
+    {
       throw std::runtime_error("id " + std::to_string(config.id) +
                                " does not match expected id " +
                                std::to_string(expectedId));
     }
     return config;
-  } catch (const std::exception& e) {
+  }
+  catch (const std::exception& e)
+  {
     throw std::runtime_error("malformed room config at " + path.string() +
                              ": " + e.what());
   }
@@ -110,42 +133,54 @@ RoomConfig loadRoomConfig(const std::filesystem::path& path, int expectedId) {
 
 }  // namespace
 
-Direction parseDirection(const std::string& token) {
-  if (token == "N") {
+Direction parseDirection(const std::string& token)
+{
+  if (token == "N")
+  {
     return Direction::North;
   }
-  if (token == "E") {
+  if (token == "E")
+  {
     return Direction::East;
   }
-  if (token == "S") {
+  if (token == "S")
+  {
     return Direction::South;
   }
-  if (token == "W") {
+  if (token == "W")
+  {
     return Direction::West;
   }
   throw std::runtime_error("invalid direction token: '" + token + "'");
 }
 
-Coordinate resolveDoorForDirection(const Room& room, Direction dir) {
-  for (const Coordinate& door : room.doorPositions) {
-    switch (dir) {
+Coordinate resolveDoorForDirection(const Room& room, Direction dir)
+{
+  for (const Coordinate& door : room.doorPositions)
+  {
+    switch (dir)
+    {
       case Direction::North:
-        if (door.y == 0) {
+        if (door.y == 0)
+        {
           return door;
         }
         break;
       case Direction::South:
-        if (door.y == Room::HEIGHT - 1) {
+        if (door.y == Room::HEIGHT - 1)
+        {
           return door;
         }
         break;
       case Direction::West:
-        if (door.x == 0) {
+        if (door.x == 0)
+        {
           return door;
         }
         break;
       case Direction::East:
-        if (door.x == Room::WIDTH - 1) {
+        if (door.x == Room::WIDTH - 1)
+        {
           return door;
         }
         break;
@@ -155,18 +190,21 @@ Coordinate resolveDoorForDirection(const Room& room, Direction dir) {
                            room.name + ") has no door on the requested edge");
 }
 
-LevelConfig loadLevelConfig(const std::filesystem::path& levelDir) {
+LevelConfig loadLevelConfig(const std::filesystem::path& levelDir)
+{
   LevelConfig config;
   config.meta = loadLevelMeta(levelDir / "level.json");
   config.adjacency = loadAdjacency(levelDir / "map.json");
 
-  for (const auto& [id, edges] : config.adjacency) {
+  for (const auto& [id, edges] : config.adjacency)
+  {
     std::filesystem::path roomPath =
         levelDir / ("room_" + std::to_string(id) + ".json");
     config.rooms[id] = loadRoomConfig(roomPath, id);
   }
 
-  if (static_cast<int>(config.adjacency.size()) != config.meta.roomCount) {
+  if (static_cast<int>(config.adjacency.size()) != config.meta.roomCount)
+  {
     throw std::runtime_error(
         "level.json roomCount (" + std::to_string(config.meta.roomCount) +
         ") does not match map.json room count (" +

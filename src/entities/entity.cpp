@@ -5,4 +5,5 @@ Entity::Entity(int x, int y, char symbol, int health, int speed)
       symbol_(symbol),
       health_(health),
       speed_(speed),
-      frameCounter_(0) {}
+      frameCounter_(0)
+{}

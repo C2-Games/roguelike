@@ -1,0 +1,10 @@
+# Commits skipped by `git blame`: these changed formatting or line endings
+# only, never behaviour, so blaming them buries whoever wrote the code.
+#
+# Enable locally, once per clone:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# GitHub's web blame reads this file automatically -- no configuration there.
+
+# feat: reformat all code with Allman brackets, move to C++20, enforce LF endings (#133, #134, #137)
+64a4078d3ee057a1f94dfb4cff90327ea8849063

@@ -6,7 +6,8 @@
 
 struct ProjectileContext;
 
-class Projectile {
+class Projectile
+{
  public:
   /**
    * @brief Construct a new Projectile object.

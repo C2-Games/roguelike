@@ -11,16 +11,24 @@
 struct Room;
 
 /** @brief A compass direction a room's door faces. */
-enum class Direction { North, East, South, West };
+enum class Direction
+{
+  North,
+  East,
+  South,
+  West
+};
 
 /** @brief One outgoing connection from a room, parsed from map.json. */
-struct RoomEdge {
+struct RoomEdge
+{
   Direction direction;
   int to;
 };
 
 /** @brief One enemy spawn-table entry from a room's JSON metadata. */
-struct EnemySpawnConfig {
+struct EnemySpawnConfig
+{
   std::string type;
   int tier;
   int min;
@@ -29,7 +37,8 @@ struct EnemySpawnConfig {
 };
 
 /** @brief One room's metadata, parsed from room_<id>.json. */
-struct RoomConfig {
+struct RoomConfig
+{
   int id;
   std::string name;
   std::string ref;  // filename under assets/rooms/
@@ -37,7 +46,8 @@ struct RoomConfig {
 };
 
 /** @brief Level-wide metadata, parsed from level.json. */
-struct LevelMeta {
+struct LevelMeta
+{
   int id;
   std::string name;
   std::string description;
@@ -47,7 +57,8 @@ struct LevelMeta {
 };
 
 /** @brief Fully parsed contents of a level directory. */
-struct LevelConfig {
+struct LevelConfig
+{
   LevelMeta meta;
   std::map<int, std::vector<RoomEdge>> adjacency;  // from map.json
   std::map<int, RoomConfig> rooms;                 // id -> per-room config

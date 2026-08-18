@@ -2,9 +2,11 @@
 
 DebugLayer::DebugLayer(int h, int w, const double& currentFps,
                        const Player& player)
-    : RenderStack(h, w), currentFps_(currentFps), player_(player) {}
+    : RenderStack(h, w), currentFps_(currentFps), player_(player)
+{}
 
-void DebugLayer::doRender() {
+void DebugLayer::doRender()
+{
   werase(win_);  // need to erase each frame.
 
   Coordinate pos = player_.getPosition();

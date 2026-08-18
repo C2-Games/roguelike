@@ -10,7 +10,8 @@ struct GameServices;
 struct EnemySpawnConfig;
 class EnemyCatalog;
 
-namespace enemy_factory {
+namespace enemy_factory
+{
 
 /**
  * @brief Roll a fresh set of enemies for a room from its spawn table.

@@ -13,22 +13,27 @@ const std::unordered_map<int, WeaponAttributes> Weapon::typeAttributes_ = {
 
 Weapon::Weapon(WeaponType type) : type_(type) {}
 
-int Weapon::getDamage() const {
+int Weapon::getDamage() const
+{
   return typeAttributes_.at(static_cast<int>(type_)).damage;
 }
 
-int Weapon::getSpeed() const {
+int Weapon::getSpeed() const
+{
   return typeAttributes_.at(static_cast<int>(type_)).speed;
 }
 
-int Weapon::getRange() const {
+int Weapon::getRange() const
+{
   return typeAttributes_.at(static_cast<int>(type_)).range;
 }
 
-ColorPair Weapon::getColor() const {
+ColorPair Weapon::getColor() const
+{
   return typeAttributes_.at(static_cast<int>(type_)).color;
 }
 
-const char* Weapon::getName() const {
+const char* Weapon::getName() const
+{
   return typeAttributes_.at(static_cast<int>(type_)).name;
 }

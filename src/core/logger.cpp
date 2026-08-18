@@ -5,7 +5,8 @@
 #include <iomanip>
 #include <sstream>
 
-static std::string timestamp() {
+static std::string timestamp()
+{
   auto now = std::chrono::system_clock::now();
   std::time_t t = std::chrono::system_clock::to_time_t(now);
   std::ostringstream ss;
@@ -15,30 +16,37 @@ static std::string timestamp() {
   return ss.str();
 }
 
-Logger::Logger() {
+Logger::Logger()
+{
   logStream_.open("game.log", std::ios::trunc);
   errStream_.open("error.log", std::ios::app);
 }
 
-Logger::~Logger() {
+Logger::~Logger()
+{
   if (logStream_.is_open()) logStream_.close();
   if (errStream_.is_open()) errStream_.close();
 }
 
-Logger& Logger::get() {
+Logger& Logger::get()
+{
   static Logger instance;
   return instance;
 }
 
-void Logger::log(const std::string& msg) {
-  if (logStream_.is_open()) {
+void Logger::log(const std::string& msg)
+{
+  if (logStream_.is_open())
+  {
     logStream_ << "[" << timestamp() << "] " << msg << "\n";
     logStream_.flush();
   }
 }
 
-void Logger::error(const std::string& msg) {
-  if (errStream_.is_open()) {
+void Logger::error(const std::string& msg)
+{
+  if (errStream_.is_open())
+  {
     errStream_ << "[" << timestamp() << "] " << msg << "\n";
     errStream_.flush();
   }

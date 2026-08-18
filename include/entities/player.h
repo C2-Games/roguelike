@@ -6,7 +6,8 @@
 #include "entities/fov.h"
 #include "world/objects/weapon.h"
 
-class Player : public Entity {
+class Player : public Entity
+{
  public:
   /**
    * @brief Construct a new Player object.

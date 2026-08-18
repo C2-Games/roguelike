@@ -3,11 +3,14 @@
 #include "entities/fov.h"
 #include "world/map/room.h"
 
-namespace visibility {
+namespace visibility
+{
 
-void update(Room& room, Coordinate origin, const FOV& fov) {
+void update(Room& room, Coordinate origin, const FOV& fov)
+{
   room.clearVisible();
-  for (const Coordinate& pos : fov.absoluteFOV(origin)) {
+  for (const Coordinate& pos : fov.absoluteFOV(origin))
+  {
     room.reveal(pos.x, pos.y);
   }
 }

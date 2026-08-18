@@ -5,7 +5,8 @@
 
 #include "world/map/room.h"
 
-struct UI {
+struct UI
+{
   int winHeight, winWidth;
   int originY, originX;
 };
@@ -17,7 +18,8 @@ struct UI {
  * @param termWidth  Current terminal width (columns).
  * @return UI
  */
-inline UI computeUI(int termHeight, int termWidth) {
+inline UI computeUI(int termHeight, int termWidth)
+{
   UI g;
   g.winHeight = std::min(Room::HEIGHT, termHeight);
   g.winWidth = std::min(Room::WIDTH, termWidth);

@@ -3,7 +3,8 @@
 
 #include <ncurses.h>
 
-class RenderStack {
+class RenderStack
+{
  public:
   /**
    * @brief Construct a new Render Stack object.
@@ -18,7 +19,8 @@ class RenderStack {
   RenderStack(int h, int w, int y = 0, int x = 0);
 
   // need to make sure the ncurses::WINDOW is deleted if object is.
-  virtual ~RenderStack() {
+  virtual ~RenderStack()
+  {
     if (win_) delwin(win_);
   };
 
@@ -38,7 +40,8 @@ class RenderStack {
    * @param termHeight New terminal height (rows).
    * @param termWidth New terminal width (columns).
    */
-  virtual void onResize(int termHeight, int termWidth) {
+  virtual void onResize(int termHeight, int termWidth)
+  {
     reshape(termHeight, termWidth, 0, 0);
   }
 

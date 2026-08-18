@@ -3,7 +3,8 @@
 
 #include <random>
 
-struct GameServices {
+struct GameServices
+{
   std::mt19937 rng;
 
   /**

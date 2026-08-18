@@ -12,7 +12,8 @@
 
 class EnemyCatalog;
 
-struct Room {
+struct Room
+{
   static constexpr int WIDTH = 175;
   static constexpr int HEIGHT = 50;
 
@@ -74,10 +75,12 @@ struct Room {
    */
   void reveal(int x, int y);
 
-  std::vector<std::unique_ptr<Enemy>>& enemies() {
+  std::vector<std::unique_ptr<Enemy>>& enemies()
+  {
     return enemyState.enemies();
   }
-  const std::vector<std::unique_ptr<Enemy>>& enemies() const {
+  const std::vector<std::unique_ptr<Enemy>>& enemies() const
+  {
     return enemyState.enemies();
   }
 
@@ -89,8 +92,8 @@ struct Room {
    * @param services   RNG source for the factory roll.
    */
   void ensureEnemiesSpawned(const std::vector<EnemySpawnConfig>& spawnTable,
-                            const EnemyCatalog& catalog,
-                            GameServices& services) {
+                            const EnemyCatalog& catalog, GameServices& services)
+  {
     enemyState.ensureSpawned(*this, spawnTable, catalog, services);
   }
 
