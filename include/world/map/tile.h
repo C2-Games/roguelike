@@ -6,14 +6,23 @@
 
 #include "core/coordinate.h"
 
-enum class TileType { Wall, Floor, Door, Void, Pillar };
+enum class TileType
+{
+  Wall,
+  Floor,
+  Door,
+  Void,
+  Pillar
+};
 
-struct TileAttributes {
+struct TileAttributes
+{
   char symbol;
   bool walkable;
 };
 
-class Tile {
+class Tile
+{
  public:
   /**
    * @brief Tile class represents a single tile on the map, with type, position,

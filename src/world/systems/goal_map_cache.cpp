@@ -5,7 +5,8 @@
 #include "world/map/room.h"
 
 const GoalMap& GoalMapCache::getOrCompute(const Room& room,
-                                          Coordinate goal) const {
+                                          Coordinate goal) const
+{
   auto key = std::make_pair(room.roomID, goal);
   auto it = cache_.find(key);
   if (it != cache_.end()) return it->second;

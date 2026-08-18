@@ -10,12 +10,14 @@
 
 FOV::FOV(std::set<Coordinate> offsets) : offsets(std::move(offsets)) {}
 
-bool FOV::in(Coordinate origin, Coordinate position) const {
+bool FOV::in(Coordinate origin, Coordinate position) const
+{
   Coordinate offset = origin - position;
   return offsets.count(offset) > 0;
 };
 
-std::vector<Coordinate> FOV::absoluteFOV(Coordinate origin) const {
+std::vector<Coordinate> FOV::absoluteFOV(Coordinate origin) const
+{
   // initialize a vector of positions w/ size of number of offsets.
   std::vector<Coordinate> positions;
   positions.reserve(offsets.size());
@@ -28,12 +30,14 @@ std::vector<Coordinate> FOV::absoluteFOV(Coordinate origin) const {
   return positions;
 };
 
-FOV ellipseFOV(int rx, int ry) {
+FOV ellipseFOV(int rx, int ry)
+{
   // need to get all offsets to create an FOV.
   std::set<Coordinate> offsets;
 
   // iterate through -y --> y.
-  for (int dy = -ry; dy <= ry; ++dy) {
+  for (int dy = -ry; dy <= ry; ++dy)
+  {
     // find max x via ellipse eq. (w/ origin 0):
     //    1 = (dx / rx)^2 + (dy / ry)^2
     //    dx = rx * sqrt(1 - (dy / ry)^2)
@@ -42,7 +46,8 @@ FOV ellipseFOV(int rx, int ry) {
     int dx_max = static_cast<int>(rx * std::sqrt(1.0f - y_norm * y_norm));
 
     // iterate through -dx --> dx.
-    for (int dx = -dx_max; dx <= dx_max; ++dx) {
+    for (int dx = -dx_max; dx <= dx_max; ++dx)
+    {
       offsets.insert(Coordinate(dx, dy));
     };
   }

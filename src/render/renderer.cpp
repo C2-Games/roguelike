@@ -2,16 +2,20 @@
 
 #include <ncurses.h>
 
-void Renderer::addLayer(int z, std::unique_ptr<RenderStack> layer) {
+void Renderer::addLayer(int z, std::unique_ptr<RenderStack> layer)
+{
   layers_[z] = std::move(layer);
 };
 
-void Renderer::compose() {
+void Renderer::compose()
+{
   erase();  // erase stdscr first.
 
   // iterate through the "layers_", update them, render, and then layer them.
-  for (auto& [z, layer] : layers_) {
-    if (layer->isEnabled()) {
+  for (auto& [z, layer] : layers_)
+  {
+    if (layer->isEnabled())
+    {
       layer->doUpdate();
       layer->doRender();
 
@@ -24,8 +28,10 @@ void Renderer::compose() {
   refresh();
 };
 
-void Renderer::resizeAll(int termHeight, int termWidth) {
-  for (auto& [z, layer] : layers_) {
+void Renderer::resizeAll(int termHeight, int termWidth)
+{
+  for (auto& [z, layer] : layers_)
+  {
     layer->onResize(termHeight, termWidth);
   };
 };

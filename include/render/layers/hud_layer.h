@@ -5,7 +5,8 @@
 #include "render/render_stack.h"
 #include "world/map/level.h"
 
-class HUDLayer : public RenderStack {
+class HUDLayer : public RenderStack
+{
  public:
   /**
    * @brief Construct a new HUD Layer.

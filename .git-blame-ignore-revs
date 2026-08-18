@@ -1,0 +1,11 @@
+# Commits skipped by `git blame`: these changed formatting or line endings
+# only, never behaviour, so blaming them buries whoever wrote the code.
+#
+# Enable locally, once per clone:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# GitHub's web blame reads this file automatically -- no configuration there.
+#
+# List the SHA as it exists on `main`, not the branch SHA: this repo
+# squash-merges, so the commit that lands on main is a new object and a branch
+# SHA recorded here would never match.

@@ -7,16 +7,19 @@
 #include <stdexcept>
 #include <string>
 
-namespace {
+namespace
+{
 
-std::string trim(std::string s) {
+std::string trim(std::string s)
+{
   auto notSpace = [](unsigned char c) { return !std::isspace(c); };
   s.erase(s.begin(), std::find_if(s.begin(), s.end(), notSpace));
   s.erase(std::find_if(s.rbegin(), s.rend(), notSpace).base(), s.end());
   return s;
 }
 
-TileType charToRoomTile(char c) {
+TileType charToRoomTile(char c)
+{
   if (c == '#') return TileType::Wall;
   if (c == '.') return TileType::Floor;
   if (c == 'o') return TileType::Pillar;
@@ -29,10 +32,17 @@ TileType charToRoomTile(char c) {
   throw std::runtime_error(oss.str());
 }
 
-enum class SpawnKind { None, Enemy, LootOrItem };
+enum class SpawnKind
+{
+  None,
+  Enemy,
+  LootOrItem
+};
 
-SpawnKind charToSpawnKind(char c) {
-  switch (c) {
+SpawnKind charToSpawnKind(char c)
+{
+  switch (c)
+  {
     case 'E':
       return SpawnKind::Enemy;
     case 'L':
@@ -46,32 +56,40 @@ SpawnKind charToSpawnKind(char c) {
 
 Room::Room(int id) : roomID(id), tiles(WIDTH, std::vector<Tile>(HEIGHT)) {}
 
-void Room::clearVisible() {
-  for (auto& col : tiles) {
-    for (auto& tile : col) {
+void Room::clearVisible()
+{
+  for (auto& col : tiles)
+  {
+    for (auto& tile : col)
+    {
       tile.clearVisible();
     }
   }
 }
 
-bool Room::isVisible(int x, int y) const {
+bool Room::isVisible(int x, int y) const
+{
   if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return false;
   return tiles[x][y].isVisible();
 }
 
-bool Room::isExplored(int x, int y) const {
+bool Room::isExplored(int x, int y) const
+{
   if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return false;
   return tiles[x][y].isExplored();
 }
 
-void Room::reveal(int x, int y) {
+void Room::reveal(int x, int y)
+{
   if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT) return;
   tiles[x][y].reveal();
 }
 
-Room Room::loadFromFile(int roomID, const std::filesystem::path& path) {
+Room Room::loadFromFile(int roomID, const std::filesystem::path& path)
+{
   std::ifstream in(path);
-  if (!in) {
+  if (!in)
+  {
     throw std::runtime_error("Could not open room file: " + path.string());
   }
 
@@ -83,13 +101,16 @@ Room Room::loadFromFile(int roomID, const std::filesystem::path& path) {
   // the header visually.
   std::string line;
   std::streampos gridStart = in.tellg();
-  while (std::getline(in, line)) {
+  while (std::getline(in, line))
+  {
     std::string trimmed = trim(line);
-    if (trimmed.empty()) {
+    if (trimmed.empty())
+    {
       gridStart = in.tellg();
       continue;
     }
-    if (trimmed[0] != '@') {
+    if (trimmed[0] != '@')
+    {
       // Rewind — this line belongs to the grid.
       in.clear();
       in.seekg(gridStart);
@@ -98,14 +119,16 @@ Room Room::loadFromFile(int roomID, const std::filesystem::path& path) {
 
     // Parse "@key: value".
     auto colon = trimmed.find(':');
-    if (colon == std::string::npos) {
+    if (colon == std::string::npos)
+    {
       throw std::runtime_error("Malformed header (no colon) in " +
                                path.string() + ": " + trimmed);
     }
     std::string key = trim(trimmed.substr(1, colon - 1));
     std::string value = trim(trimmed.substr(colon + 1));
 
-    if (key == "name") {
+    if (key == "name")
+    {
       room.name = value;
     }
     // Other keys (levels, author, ...) are parsed by the library layer or
@@ -120,42 +143,50 @@ Room Room::loadFromFile(int roomID, const std::filesystem::path& path) {
   std::map<char, Coordinate> labelledDoors;
 
   int y = 0;
-  while (std::getline(in, line)) {
+  while (std::getline(in, line))
+  {
     // Strip trailing CR so CRLF-terminated files (common on Windows editors)
     // parse the same as LF.
     if (!line.empty() && line.back() == '\r') line.pop_back();
 
-    if (y >= HEIGHT) {
+    if (y >= HEIGHT)
+    {
       throw std::runtime_error("Too many grid rows in " + path.string() +
                                " (expected " + std::to_string(HEIGHT) + ")");
     }
     // Pad short lines with spaces (Void) but reject over-long lines to catch
     // authoring mistakes.
-    if (static_cast<int>(line.size()) > WIDTH) {
+    if (static_cast<int>(line.size()) > WIDTH)
+    {
       throw std::runtime_error(
           "Row " + std::to_string(y) + " in " + path.string() +
           " is too wide: " + std::to_string(line.size()) + " chars (expected " +
           std::to_string(WIDTH) + ")");
     }
-    if (static_cast<int>(line.size()) < WIDTH) {
+    if (static_cast<int>(line.size()) < WIDTH)
+    {
       line.append(WIDTH - line.size(), ' ');
     }
 
-    for (int x = 0; x < WIDTH; ++x) {
+    for (int x = 0; x < WIDTH; ++x)
+    {
       char c = line[x];
       TileType type = charToRoomTile(c);
       room.tiles[x][y] = Tile(type, Coordinate(x, y));
-      if (type == TileType::Door) {
+      if (type == TileType::Door)
+      {
         // Digits have no case; the label is just the digit itself.
         char label = c;
         auto [it, inserted] = labelledDoors.emplace(label, Coordinate{x, y});
-        if (!inserted) {
+        if (!inserted)
+        {
           throw std::runtime_error("Duplicate door label '" +
                                    std::string(1, label) + "' in " +
                                    path.string());
         }
       }
-      switch (charToSpawnKind(c)) {
+      switch (charToSpawnKind(c))
+      {
         case SpawnKind::Enemy:
           room.enemySpawns.push_back(Coordinate(x, y));
           break;
@@ -170,14 +201,16 @@ Room Room::loadFromFile(int roomID, const std::filesystem::path& path) {
     ++y;
   }
 
-  if (y != HEIGHT) {
+  if (y != HEIGHT)
+  {
     throw std::runtime_error("Not enough grid rows in " + path.string() +
                              ": got " + std::to_string(y) + ", expected " +
                              std::to_string(HEIGHT));
   }
 
   // std::map iterates in key order, so doors land in numeric sequence.
-  for (const auto& [label, coord] : labelledDoors) {
+  for (const auto& [label, coord] : labelledDoors)
+  {
     (void)label;
     room.doorPositions.push_back(coord);
   }

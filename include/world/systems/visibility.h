@@ -6,7 +6,8 @@
 class FOV;
 struct Room;
 
-namespace visibility {
+namespace visibility
+{
 
 /**
  * @brief Recompute per-tile visibility for `room` from `origin`.

@@ -9,7 +9,8 @@
 
 struct MoveContext;
 
-class Enemy : public Entity {
+class Enemy : public Entity
+{
  public:
   /**
    * @brief Construct a new Enemy object.

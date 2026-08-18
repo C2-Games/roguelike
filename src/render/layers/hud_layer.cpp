@@ -10,19 +10,23 @@
 
 HUDLayer::HUDLayer(int h, int w, int margin, const Player& player,
                    const Level& graph)
-    : RenderStack(h, w), player_(player), graph_(graph), margin_(margin) {}
+    : RenderStack(h, w), player_(player), graph_(graph), margin_(margin)
+{}
 
-void HUDLayer::drawPlayerHealthBar(int row, int col) {
+void HUDLayer::drawPlayerHealthBar(int row, int col)
+{
   mvwprintw(win_, row, col, "HP:%d/%d", player_.getHealth(),
             player_.getMaxHealth());
 };
 
-void HUDLayer::drawRoomID(int row, int col) {
+void HUDLayer::drawRoomID(int row, int col)
+{
   mvwprintw(win_, row, col, "Room:%d/%d", graph_.getCurrentRoomID() + 1,
             graph_.getRoomCount());
 };
 
-void HUDLayer::drawWeaponStats(int row, int col) {
+void HUDLayer::drawWeaponStats(int row, int col)
+{
   const Weapon& weapon = player_.getWeapon();
 
   wattron(win_, colorAttr(weapon.getColor()));
@@ -31,7 +35,8 @@ void HUDLayer::drawWeaponStats(int row, int col) {
   wattroff(win_, colorAttr(weapon.getColor()));
 };
 
-void HUDLayer::doRender() {
+void HUDLayer::doRender()
+{
   werase(win_);  // need to erase each frame.
 
   // fixed HUD band above the map's top border, with a blank gap row

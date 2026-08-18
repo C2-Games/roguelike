@@ -4,7 +4,8 @@
 #include "entities/player.h"
 #include "render/render_stack.h"
 
-class DebugLayer : public RenderStack {
+class DebugLayer : public RenderStack
+{
  public:
   /**
    * @brief Construct a new Debug Layer.

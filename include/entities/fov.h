@@ -6,7 +6,8 @@
 
 #include "core/coordinate.h"
 
-class FOV {
+class FOV
+{
  public:
   std::set<Coordinate> offsets;
 

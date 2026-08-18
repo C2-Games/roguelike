@@ -2,7 +2,8 @@
 
 #include <ncurses.h>
 
-namespace {
+namespace
+{
 
 // Extended 16-colour palette index 8 is "bright black" — dark grey on
 // essentially every modern terminal.
@@ -10,13 +11,15 @@ constexpr short kGreyDark = 8;
 
 // Small helper so pair registration reads naturally with the enum-class
 // values
-void registerPair(ColorPair id, short fg, short bg) {
+void registerPair(ColorPair id, short fg, short bg)
+{
   init_pair(static_cast<short>(id), fg, bg);
 }
 
 }  // namespace
 
-void initColors() {
+void initColors()
+{
   if (!has_colors()) return;
 
   start_color();

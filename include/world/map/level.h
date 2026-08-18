@@ -13,12 +13,14 @@
 struct GameServices;
 class EnemyCatalog;
 
-struct DoorConnection {
+struct DoorConnection
+{
   int destRoomID;
   Coordinate destDoorPos;
 };
 
-class Level {
+class Level
+{
  public:
   /**
    * @brief Load a level directory (level.json, map.json, and every room's
@@ -62,7 +64,8 @@ class Level {
   const Room& getRoom(int roomID) const { return rooms_.at(roomID); }
 
   /** @brief The authored enemy spawn table for a room, by ID. */
-  const std::vector<EnemySpawnConfig>& getRoomEnemyConfig(int roomID) const {
+  const std::vector<EnemySpawnConfig>& getRoomEnemyConfig(int roomID) const
+  {
     return roomEnemyConfig_.at(roomID);
   }
 

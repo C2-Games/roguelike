@@ -15,7 +15,8 @@ class EnemyCatalog;
  * @brief A room's enemy state: whether it has been rolled yet, and the live
  * enemies currently in it.
  */
-class RoomEnemyState {
+class RoomEnemyState
+{
  public:
   RoomEnemyState() = default;
 
@@ -33,7 +34,8 @@ class RoomEnemyState {
                      const EnemyCatalog& catalog, GameServices& services);
 
   std::vector<std::unique_ptr<Enemy>>& enemies() { return enemies_; }
-  const std::vector<std::unique_ptr<Enemy>>& enemies() const {
+  const std::vector<std::unique_ptr<Enemy>>& enemies() const
+  {
     return enemies_;
   }
 

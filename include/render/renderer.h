@@ -6,7 +6,8 @@
 
 #include "render/render_stack.h"
 
-class Renderer {
+class Renderer
+{
  public:
   /**
    * @brief Add a rendering layer at a given an index (z-order).
