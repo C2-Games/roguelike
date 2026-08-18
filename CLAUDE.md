@@ -20,7 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    bugfixes. As a backstop, a `Stop` hook (`.claude/hooks/doc_drift.py`) lists any workflow-defining
    file that changed while this one did not, once per distinct set of changes.
 
-Commands: `/issues`, `/start-issue`, `/check`, `/build`, `/run`, `/pr`. The `cpp-style` skill
+Commands: `/issues`, `/new-issue`, `/start-issue`, `/check`, `/build`, `/run`, `/pr`. The `cpp-style` skill
 (`.claude/skills/cpp-style/SKILL.md`) carries the conventions no linter can check — naming, comment
 voice, and where a Doxygen docstring is allowed to go — and applies to all C++ work here.
 
