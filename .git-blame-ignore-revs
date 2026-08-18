@@ -9,3 +9,6 @@
 # List the SHA as it exists on `main`, not the branch SHA: this repo
 # squash-merges, so the commit that lands on main is a new object and a branch
 # SHA recorded here would never match.
+
+# refactor: Adopt Allman braces, C++20, and LF line endings (#138)
+35347d9d55b24ec6306eeff1c71a805aee2ccc85

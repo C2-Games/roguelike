@@ -14,7 +14,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    every plan, and `/pr` will not prepare a PR over a failing sweep.
 3. **Never `git commit` or `git push`.** Both are denied in `.claude/settings.json`; publishing is
    the user's call. `/pr` prepares the title and body and hands the commands back.
-4. **This file is maintained with the code, not after it.** Every plan states whether the change
+4. **No `TODO`/`FIXME` comments.** Pending work goes in a GitHub issue, never in the source. CI
+   rejects `TODO`, `FIXME`, `XXX`, `HACK` and `TBD` in tracked sources; `/check` catches it first.
+5. **This file is maintained with the code, not after it.** Every plan states whether the change
    earns an update here — yes for a new subsystem, a file-layout change, ownership moving between
    types, a changed convention, or a placeholder becoming real; no for renames, small refactors and
    bugfixes. As a backstop, a `Stop` hook (`.claude/hooks/doc_drift.py`) lists any workflow-defining

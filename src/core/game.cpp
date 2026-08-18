@@ -32,7 +32,6 @@ Game::Game(int width, int height, int fps)
       isRunning_(true)
 {
   // add window overlays.
-  // TODO: probably want to create an Enum for layer ordering.
   UI geom = computeUI(termHeight_, termWidth_);
   renderer_.addLayer(
       1, std::make_unique<MapLayer>(geom.winHeight, geom.winWidth, geom.originY,

@@ -74,6 +74,33 @@ Note it hashes CLAUDE.md directly rather than looking for it in `git status`. A 
 can exclude CLAUDE.md — this repo's Windows developer has exactly that — and an ignored file never
 appears in git output, which would make the prompt impossible to answer by editing the file.
 
+## 5. Pending work lives in the tracker, not in the source
+
+A `TODO` comment records work where nobody queries it: no owner, no label, no way to close it. It
+then outlives the work. Rule 1 already says every change traces to an issue; a `TODO` is how that
+gets quietly bypassed.
+
+**Enforcement:** a `todo-scan` section in `scripts/ci-local.sh` (run by `/check`) and a matching
+`todo-scan` job in `.github/workflows/ci.yml`, which `build` depends on. Both reject `TODO`,
+`FIXME`, `XXX`, `HACK` and `TBD` in tracked sources under `src/`, `include/`, `scripts/` and
+`.claude/`.
+
+Three details, each of which was necessary rather than decorative:
+
+- **The check is wrapped in `if`.** `git grep` exits 0 on a match and 1 when clean — inverted
+  relative to every other check, and a bare call aborts `ci-local.sh` under `set -e` on a *clean*
+  tree.
+- **`scripts/ci-local.sh` excludes itself.** Its own pattern contains the words it searches for, and
+  `scripts/` is inside the search path, so without `':!scripts/ci-local.sh'` the check can never
+  pass. `ci.yml` needs no such exclusion — it sits outside the scanned paths.
+- **Markdown and `.txt` are excluded.** These docs have to be able to describe the rule without
+  failing it, and `assets/rooms/*.txt` are ASCII room grids.
+
+A linked `TODO(#123)` is not an exception: it still rots when the issue closes, and an unambiguous
+rule needs no judgement in review.
+
+---
+
 ---
 
 ## Style: what the tools check, and what the skill checks

@@ -103,6 +103,24 @@ jobs:
         run: |
           find src -name "*.cpp" -print0 | xargs -0 clang-tidy -p build
 
+  todo-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reject TODO/FIXME comments
+        run: |
+          # Pending work belongs in the issue tracker, not a comment nobody
+          # queries. -w matches whole words (TODOLIST is not a hit); git grep
+          # searches tracked files only, so build/_deps needs no exclusion.
+          # scripts/ci-local.sh excludes itself because it contains the pattern;
+          # this file does not need to, living outside the scanned paths.
+          # Keep the pattern and pathspec in sync with scripts/ci-local.sh.
+          if git grep -nwE 'TODO|FIXME|XXX|HACK|TBD' -- src include scripts .claude ':!*.md' ':!*.txt' ':!scripts/ci-local.sh'; then
+            echo "::error::Pending work belongs in a GitHub issue, not a comment."
+            exit 1
+          fi
+
   # step 2: build binaries (MacOS (silicon) & linux -- FUCK WINDOWS).
   build:
     needs:
@@ -110,6 +128,7 @@ jobs:
       - cppcheck-checks
       - codeql-checks
       - tidy-linting
+      - todo-scan
 
     strategy:
       fail-fast: false
