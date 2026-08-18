@@ -12,16 +12,6 @@ section() { printf '\n== %s ==\n' "$1"; }
 
 # Pending work belongs in the issue tracker, not in a comment nobody queries.
 # Runs first: it needs no toolchain, so it fails before anything expensive.
-#
-# The `if` inverts the exit sense -- git grep exits 0 on a match and 1 when
-# clean, the opposite of every other check here, and a bare call would abort
-# this script under `set -e` on a *clean* tree.
-#
-# -w matches whole words (TODOLIST is not a hit). git grep, not grep -r, so
-# only tracked files are searched and build/_deps third-party code needs no
-# exclusion. This file excludes itself: the pattern below contains the very
-# words it searches for, and scripts/ is inside the search path.
-# Keep the pattern and pathspec in sync with .github/workflows/ci.yml.
 section "todo-scan"
 todo_paths=(src include scripts .claude ':!*.md' ':!*.txt' ':!scripts/ci-local.sh')
 if git grep -nwE 'TODO|FIXME|XXX|HACK|TBD' -- "${todo_paths[@]}"; then
