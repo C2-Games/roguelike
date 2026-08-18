@@ -19,21 +19,25 @@ Deliberately not gated: paths outside the repo, and `.claude/**` (otherwise this
 could never be repaired). Known gap: the gate covers `Edit`/`Write`, not shell redirection through
 `Bash`.
 
-## 2. Format and static analysis are checked at write time, not at PR time
+## 2. Format and static analysis run once per change, at `/check`
 
-`.github/workflows/ci.yml` only gates on `pull_request` to `main`, so CI failures otherwise surface
-long after the fact.
+`.github/workflows/ci.yml` only gates on `pull_request` to `main`, so a CI failure otherwise
+surfaces long after the fact. `/check` is the local mirror that catches it first.
 
-**Enforcement:** `.claude/hooks/format_check.py` runs as a `PostToolUse` hook on every `.cpp`,
-`.h`, or `.hpp` file written under `src/` or `include/`:
+**Enforcement:** `/check` is the final step of every plan, and `/pr` (step 3) refuses to prepare a
+PR over a failing sweep. It runs in two parts:
 
-- **clang-format** is applied *in place* (`-i -style=file`). Formatting has one correct answer, so
-  it is fixed rather than reported.
-- **cppcheck** runs with the exact flags from `scripts/ci-local.sh`; findings come back as blocking
-  feedback to fix before moving on.
+- **clang-format** is applied *in place* (`-i -style=file`) over `src/` and `include/`. Formatting
+  has one correct answer, so it is fixed rather than reported. This must precede the sweep:
+  `scripts/ci-local.sh` verifies formatting with `--dry-run --Werror` under `set -euo pipefail`, so
+  an unformatted file would abort the run before cppcheck, clang-tidy or the build execute.
+- **`scripts/ci-local.sh`** then runs the full sweep — format check, cppcheck, clang-tidy, build —
+  mirroring `ci.yml` except for CodeQL.
 
-clang-tidy and the build are **not** in this hook — clang-tidy needs `build/compile_commands.json`
-and takes seconds per file. Both are covered by `/check`, which must pass before a PR.
+Nothing is checked while you write. There is deliberately **no `PostToolUse` hook**: the tools
+themselves are cheap (~0.11s each), but on Windows every invocation pays a WSL spawn of over a
+second, and per-file cppcheck sees less than a whole-tree run does. `format_check.py` did this job
+until issue #119 and is recoverable from git history if write-time checking is ever wanted back.
 
 ## 3. Claude never commits or pushes
 
@@ -59,7 +63,6 @@ definition of the checks per layer, and no more:
 
 | Layer | Definition |
 |---|---|
-| Per write | `.claude/hooks/format_check.py` (batched into one shell spawn) |
 | Pre-PR | `scripts/ci-local.sh`, via `/check` |
 | On the PR | `.github/workflows/ci.yml` — the authority |
 
@@ -108,8 +111,9 @@ either way and propagating the exit status. `--where` prints which environment w
 
 Two portability rules that have already bitten:
 
-- Each `wsl.exe` spawn costs over a second, so hooks batch all their shell work into a **single**
-  invocation. The naive per-tool version took 6.7s per edit; batching brought it to ~0.4s.
+- Each `wsl.exe` spawn costs over a second, so batch shell work into a **single** invocation
+  rather than one per tool. This is why `/check` is two commands rather than five, and part of why
+  per-write checking was dropped (see rule 2).
 - `script(1)` takes different arguments on GNU (`script -qc CMD /dev/null`) and BSD/macOS
   (`script -q /dev/null CMD`). `/run` detects the flavour rather than assuming.
 

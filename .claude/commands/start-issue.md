@@ -52,7 +52,9 @@ denies those edits outright. Run this first, every time.
 
    The plan should name the specific files and symbols to change, follow the conventions in
    `CLAUDE.md` (trailing-underscore privates, `#ifndef` guards, forward declarations), and
-   end with `/check` as its final step. Present it with `ExitPlanMode` for approval.
+   **must end with `/check`**. Nothing is formatted or analysed while you write — there is no
+   write-time hook — so a plan without `/check` ships unverified code. Present it with
+   `ExitPlanMode` for approval.
 
    If the issues are several small independent renames on one branch, one plan covering all
    of them is fine — say which issue each step closes.

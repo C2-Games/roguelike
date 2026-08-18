@@ -23,8 +23,12 @@ find src include -type f \( -name '*.cpp' -o -name '*.h' -o -name '*.hpp' \) \
   -print0 | xargs -0 clang-format --dry-run --Werror -style=file
 
 section "cppcheck"
+# checkersReport/normalCheckLevelMaxBranches are information-severity output that
+# cppcheck >= 2.19 emits under --enable=all; --error-exitcode=1 counts them as
+# failures. Keep these flags in sync with .github/workflows/ci.yml.
 cppcheck --enable=all --std=c++20 --error-exitcode=1 \
   --suppress=missingIncludeSystem --suppress=unusedFunction \
+  --suppress=checkersReport --suppress=normalCheckLevelMaxBranches \
   -I include src/ include/
 
 section "clang-tidy"

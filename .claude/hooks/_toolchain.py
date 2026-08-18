@@ -9,7 +9,7 @@ This repo is worked on from two very different environments:
     to ask. We decide on whether the *tools* resolve, and re-exec through
     `wsl.exe` when they do not.
 
-Everything that needs a shell goes through `toolchain_argv()`, so both the hooks
+Everything that needs a shell goes through `toolchain_argv()`, so the issue gate
 and the slash commands make that decision exactly once and identically.
 """
 
@@ -19,7 +19,7 @@ import shutil
 import subprocess
 import sys
 
-# Hooks must never hang the session waiting on a toolchain.
+# Nothing here may hang the session waiting on a toolchain.
 TOOL_TIMEOUT_SECONDS = 45
 
 
@@ -82,36 +82,6 @@ def toolchain_argv(script, cwd=None):
         return None, None, "no C++ toolchain on PATH and wsl.exe not found"
     inner = "cd {} && {}".format(shlex.quote(to_wsl_path(cwd)), script)
     return [wsl, "-e", "bash", "-c", inner], None, None
-
-
-def run_script(script, cwd=None):
-    """Run a shell script in `cwd`, capturing output.
-
-    Returns (code, stdout, stderr); code 127 means no shell could be reached.
-    Every WSL spawn costs well over a second, so callers should batch their work
-    into a single script rather than shelling out per tool.
-    """
-    argv, run_cwd, error = toolchain_argv(script, cwd)
-    if error:
-        return 127, "", error
-
-    try:
-        done = subprocess.run(
-            argv,
-            cwd=run_cwd,
-            capture_output=True,
-            text=True,
-            errors="replace",
-            timeout=TOOL_TIMEOUT_SECONDS,
-        )
-    except (OSError, subprocess.SubprocessError) as exc:
-        return 127, "", str(exc)
-    # WSL interop can emit NUL bytes into the stream; strip them.
-    return (
-        done.returncode,
-        (done.stdout or "").replace("\0", ""),
-        (done.stderr or "").replace("\0", ""),
-    )
 
 
 def git_branch():

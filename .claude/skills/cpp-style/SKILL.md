@@ -1,6 +1,6 @@
 ---
 name: cpp-style
-description: This repo's C++ conventions — Google + Allman braces, naming, comment voice, and Doxygen docstring placement. Use whenever writing, editing, reviewing, or refactoring any C++ (.cpp/.h/.hpp) here, including new functions, classes, or files, and for small snippets or single-function edits. Also use when asked to "clean up", "format", "lint", or "make this more idiomatic". Apply by default without being asked. Covers the rules no linter enforces; clang-format/cppcheck/clang-tidy are run for you by the write hook and /check, so do not invoke them yourself.
+description: This repo's C++ conventions — Google + Allman braces, naming, comment voice, and Doxygen docstring placement. Use whenever writing, editing, reviewing, or refactoring any C++ (.cpp/.h/.hpp) here, including new functions, classes, or files, and for small snippets or single-function edits. Also use when asked to "clean up", "format", "lint", or "make this more idiomatic". Apply by default without being asked. Covers the rules no linter enforces; clang-format/cppcheck/clang-tidy all run at /check, so do not invoke them yourself.
 ---
 
 # C++ style guide
@@ -12,8 +12,8 @@ and new code in the same file is its own kind of mess.
 
 This skill covers the conventions a linter *cannot* express — naming,
 comment voice, docstring placement. Formatting and static analysis are
-already enforced mechanically (see **Verification** at the bottom); don't
-re-run them by hand.
+handled by `/check` (see **Verification** at the bottom); don't run those
+tools by hand.
 
 ## Formatting
 
@@ -114,15 +114,19 @@ special-casing needed between old and new code.
 ## Verification
 
 Do not shell out to `clang-format`, `cppcheck`, or `clang-tidy` yourself
-— this repo already runs them for you, and an extra invocation costs a
-WSL spawn (>1s) on Windows for no added coverage:
+— `/check` runs all of them, and an extra invocation costs a WSL spawn
+(>1s) on Windows for no added coverage:
 
 | When | What runs | Where |
 |---|---|---|
-| Every write to `src/`/`include/` | clang-format `-i`, then cppcheck | `.claude/hooks/format_check.py` (PostToolUse) |
-| Before a PR | format check, cppcheck, clang-tidy, build | `/check` → `scripts/ci-local.sh` |
+| Final step of every change | clang-format `-i`, then cppcheck, clang-tidy, build | `/check` → `scripts/ci-local.sh` |
 | On the PR | the same four, on Linux + macOS | `.github/workflows/ci.yml` |
 
-The hook fixes formatting in place and hands cppcheck findings back as
-blocking feedback — address those. Anything needing `compile_commands.json`
-(clang-tidy) surfaces at `/check`, which must pass before a PR.
+Nothing runs while you write — there is no write-time hook, so code stays
+unformatted and unanalysed until `/check`. It applies formatting in place
+and reports the rest; fix what it reports. `/pr` will not prepare a PR
+over a failing sweep.
+
+Write to this style as you go anyway. `/check` can fix whitespace and
+brace placement, but it cannot fix a docstring on the wrong declaration
+or a comment that restates the code.

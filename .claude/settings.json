@@ -43,20 +43,6 @@
         ]
       }
     ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/format_check.py\" || python \"$CLAUDE_PROJECT_DIR/.claude/hooks/format_check.py\"",
-            "timeout": 60,
-            "statusMessage": "clang-format + cppcheck...",
-            "shell": "bash"
-          }
-        ]
-      }
-    ],
     "SessionStart": [
       {
         "hooks": [
