@@ -1,6 +1,6 @@
 ---
 name: cpp-style
-description: Enforces a specific C++ code style for C++ projects — Google-based clang-format (with Allman braces), cppcheck/clang-tidy static analysis, existing-codebase naming conventions, and comment/docstring discipline. Use this skill whenever writing, editing, reviewing, or refactoring any C++ code (.cpp/.h/.hpp files) for this user, including new functions, classes, or files — even for small snippets or single-function edits. Also use it when the user asks to "clean up," "format," "lint," or "make this more idiomatic" for any C++ file. Do not wait for the user to explicitly mention style guidelines; apply these rules by default to all C++ output.
+description: This repo's C++ conventions — Google + Allman braces, naming, comment voice, and Doxygen docstring placement. Use whenever writing, editing, reviewing, or refactoring any C++ (.cpp/.h/.hpp) here, including new functions, classes, or files, and for small snippets or single-function edits. Also use when asked to "clean up", "format", "lint", or "make this more idiomatic". Apply by default without being asked. Covers the rules no linter enforces; clang-format/cppcheck/clang-tidy are run for you by the write hook and /check, so do not invoke them yourself.
 ---
 
 # C++ style guide
@@ -10,28 +10,18 @@ maintain. Apply every rule below to all C++ code you write or edit for
 this user, not just when asked to "clean up" — inconsistency between old
 and new code in the same file is its own kind of mess.
 
+This skill covers the conventions a linter *cannot* express — naming,
+comment voice, docstring placement. Formatting and static analysis are
+already enforced mechanically (see **Verification** at the bottom); don't
+re-run them by hand.
+
 ## Formatting
 
-Base style is Google (`BasedOnStyle: Google` in `.clang-format`), except
-braces always go on their own line (`BreakBeforeBraces: Allman`) —
-functions, classes, namespaces, and `if`/`for`/`while` all open a new
-line for `{`. Run `scripts/format.sh` (or `scripts/format.sh --check`
-for a dry-run) against a project: it uses the project's own
-`.clang-format` if one exists, otherwise copies in this skill's
-`assets/.clang-format`.
-
-## Static analysis
-
-Run `scripts/check.sh [src-dir] [include-dir]`. It runs `cppcheck
---enable=all` unconditionally, then `clang-tidy` (checks: `bugprone-*,
-performance-*, readability-*`, with
-`-readability-magic-numbers`/`-readability-identifier-length` disabled)
-if it can find a `compile_commands.json` under `build/`,
-`.build/debug/`, `.build/release/`, or the current directory — clang-tidy
-needs that file to know how the project is actually compiled. It uses
-the project's own `.clang-tidy` if present, otherwise copies in this
-skill's `assets/.clang-tidy`. Fix everything both tools flag rather than
-leaving it for the user to catch.
+Base style is Google (`BasedOnStyle: Google`), except braces always go on
+their own line (`BreakBeforeBraces: Allman`) — functions, classes,
+namespaces, and `if`/`for`/`while` all open a new line for `{`. The
+repo's own `.clang-format` at the root is the single source of truth;
+this skill does not carry a copy to drift out of sync with it.
 
 ## Naming
 
@@ -105,14 +95,6 @@ class Enemy : public Entity
 This matches the existing codebase's docstring style already — no
 special-casing needed between old and new code.
 
-## Editor integration
-
-`references/.vscode/settings.json` wires VS Code's C/C++ extension to
-format-on-save using the project's own `.clang-format`
-(`C_Cpp.clang_format_style: "file"`). It's a reference to drop into a
-project's `.vscode/settings.json` when the user is working in VS Code —
-not copied automatically.
-
 ## Common mistakes
 
 - Attached braces (`if (x) {`) — this style always breaks before `{`.
@@ -129,9 +111,18 @@ not copied automatically.
   "constants" — enum members are an exception to the Constants row; they
   take bare `PascalCase` by design.
 
-## After writing code
+## Verification
 
-If `clang-format`, `cppcheck`, and `clang-tidy` are available in the
-environment, run `scripts/format.sh --check` and `scripts/check.sh`
-against any file you've written or edited before considering the task
-done. Fix anything they flag.
+Do not shell out to `clang-format`, `cppcheck`, or `clang-tidy` yourself
+— this repo already runs them for you, and an extra invocation costs a
+WSL spawn (>1s) on Windows for no added coverage:
+
+| When | What runs | Where |
+|---|---|---|
+| Every write to `src/`/`include/` | clang-format `-i`, then cppcheck | `.claude/hooks/format_check.py` (PostToolUse) |
+| Before a PR | format check, cppcheck, clang-tidy, build | `/check` → `scripts/ci-local.sh` |
+| On the PR | the same four, on Linux + macOS | `.github/workflows/ci.yml` |
+
+The hook fixes formatting in place and hands cppcheck findings back as
+blocking feedback — address those. Anything needing `compile_commands.json`
+(clang-tidy) surfaces at `/check`, which must pass before a PR.

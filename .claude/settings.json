@@ -17,11 +17,8 @@
     "allow": [
       "Bash(python3 .claude/hooks/toolchain_run.py:*)",
       "Bash(python .claude/hooks/toolchain_run.py:*)",
-      "Bash(.claude/skills/cpp-style/scripts/check.sh*)",
       "Bash(bash scripts/*)",
       "Bash(cmake *)",
-      "Bash(wsl.exe *)",
-      "PowerShell(wsl.exe *)",
       "Bash(git status*)",
       "Bash(git diff*)",
       "Bash(git log*)",

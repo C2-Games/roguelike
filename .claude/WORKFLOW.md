@@ -43,6 +43,32 @@ and body and hands the push/create commands back to you.
 
 ---
 
+## Style: what the tools check, and what the skill checks
+
+Rule 2 covers everything a linter can decide. The rest — naming, comment voice, where a docstring
+is allowed to go — lives in the `cpp-style` skill (`.claude/skills/cpp-style/SKILL.md`), which
+auto-triggers on any `.cpp`/`.h`/`.hpp` work.
+
+The split is deliberate: `clang-format` cannot tell you that docstrings go on methods and
+constructors but never on a struct, enum, or free function; that comments are lowercase and
+end in a period; that enum members take bare `PascalCase` with no `k` prefix; or that existing
+camelCase methods must not be "corrected" to Google's PascalCase. Those are the skill's job.
+
+The skill deliberately carries **no scripts and no config copies**. There is one executable
+definition of the checks per layer, and no more:
+
+| Layer | Definition |
+|---|---|
+| Per write | `.claude/hooks/format_check.py` (batched into one shell spawn) |
+| Pre-PR | `scripts/ci-local.sh`, via `/check` |
+| On the PR | `.github/workflows/ci.yml` — the authority |
+
+`scripts/ci-local.sh` is the local mirror of `ci.yml` and is meant to be run by a human, with or
+without Claude. Adding a fourth copy inside the skill is how the flags drift apart — that already
+happened once, with the skill's `cppcheck --std=c++17` against CI's `c++20`.
+
+---
+
 ## Lifecycle
 
 ```
