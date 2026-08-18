@@ -49,6 +49,7 @@ jobs:
             --suppress=unusedFunction \
             --suppress=checkersReport \
             --suppress=normalCheckLevelMaxBranches \
+            --suppress=unmatchedSuppression \
             -I include \
             src/ include/
 

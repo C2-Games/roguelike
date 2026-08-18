@@ -54,6 +54,19 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/doc_drift.py\" || python \"$CLAUDE_PROJECT_DIR/.claude/hooks/doc_drift.py\"",
+            "timeout": 20,
+            "statusMessage": "Checking CLAUDE.md drift...",
+            "shell": "bash"
+          }
+        ]
+      }
     ]
   }
 }

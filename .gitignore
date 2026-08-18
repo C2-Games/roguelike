@@ -80,7 +80,13 @@ Testing/
 __pycache__/
 *.pyc
 
+# CLAUDE.md is project documentation, not personal instructions -- a global gitignore
+# (core.excludesFile) excludes it by default, so un-ignore it here. Personal overrides
+# belong in .claude/settings.local.json, which stays ignored below.
+!CLAUDE.md
+
 # Claude Code local state (settings.json, hooks/, commands/ and WORKFLOW.md are committed)
 .claude/settings.local.json
 .claude/.current-issue
 .claude/.pr-body.md
+.claude/.doc-drift-ack

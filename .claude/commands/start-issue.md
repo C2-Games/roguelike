@@ -56,6 +56,13 @@ denies those edits outright. Run this first, every time.
    write-time hook — so a plan without `/check` ships unverified code. Present it with
    `ExitPlanMode` for approval.
 
+   **Include a `CLAUDE.md` step when the change earns one.** It is the map a future session
+   reads before touching code, so it is updated as part of the work, not retrofitted after.
+   Update it for: a new subsystem or file-layout change, ownership moving between types, a
+   changed convention, or a placeholder becoming a real implementation. Skip it for renames,
+   small refactors, and bugfixes — it is a map, not a changelog, and `git log` already records
+   what changed. State either way in the plan so the reviewer can disagree.
+
    If the issues are several small independent renames on one branch, one plan covering all
    of them is fine — say which issue each step closes.
 

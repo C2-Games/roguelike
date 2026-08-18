@@ -47,6 +47,35 @@ and body and hands the push/create commands back to you.
 
 ---
 
+## 4. CLAUDE.md is checked against reality
+
+CLAUDE.md makes claims that go stale silently: which hooks are wired, which commands exist, how
+formatting is enforced. Each claim has a file behind it.
+
+The primary mechanism is the **plan**: `/start-issue` requires every plan to say whether the change
+earns a CLAUDE.md update, so documentation is written with the code rather than bolted on. Update it
+for a new subsystem, a file-layout change, ownership moving between types, a changed convention, or
+a placeholder becoming real. Skip it for renames, small refactors and bugfixes — it is a map, not a
+changelog.
+
+**Backstop:** `.claude/hooks/doc_drift.py` runs as a `Stop` hook for when that is forgotten. It
+compares the branch's changed files against a watch list (`.claude/settings.json`, `.claude/commands/`, `.claude/hooks/`,
+`.claude/skills/`, `scripts/`, `.github/workflows/`, `CMakeLists.txt`, `.clang-format`,
+`.clang-tidy`) and, when any of those changed but CLAUDE.md did not, blocks the stop with the list.
+
+A hook cannot judge whether the docs are actually wrong — that needs reading both sides — so it
+supplies the signal and leaves the call to the model. It fires once per distinct set of changes,
+recorded in `.claude/.doc-drift-ack` (gitignored), so answering it either way does not loop.
+
+It runs on `Stop`, not `PostToolUse`, for the reason in rule 2: once per turn, not once per write.
+It shells out to nothing but `git`, so it costs no WSL spawn.
+
+Note it hashes CLAUDE.md directly rather than looking for it in `git status`. A global gitignore
+can exclude CLAUDE.md — this repo's Windows developer has exactly that — and an ignored file never
+appears in git output, which would make the prompt impossible to answer by editing the file.
+
+---
+
 ## Style: what the tools check, and what the skill checks
 
 Rule 2 covers everything a linter can decide. The rest — naming, comment voice, where a docstring
@@ -75,7 +104,8 @@ happened once, with the skill's `cppcheck --std=c++17` against CI's `c++20`.
 ## Lifecycle
 
 ```
-/issues  ->  /start-issue N  ->  plan (approve)  ->  edit (hooks run per write)  ->  /check  ->  /pr  ->  you push
+/issues  ->  /start-issue N  ->  plan (you approve)  ->  Claude edits + updates CLAUDE.md
+         ->  /check  ->  you review  ->  /pr  ->  you commit + push
 ```
 
 ## Common commands

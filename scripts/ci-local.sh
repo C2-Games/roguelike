@@ -24,11 +24,16 @@ find src include -type f \( -name '*.cpp' -o -name '*.h' -o -name '*.hpp' \) \
 
 section "cppcheck"
 # checkersReport/normalCheckLevelMaxBranches are information-severity output that
-# cppcheck >= 2.19 emits under --enable=all; --error-exitcode=1 counts them as
-# failures. Keep these flags in sync with .github/workflows/ci.yml.
+# newer cppcheck emits under --enable=all; --error-exitcode=1 counts them as
+# failures. The versions differ by environment -- CI runs 2.13, local installs
+# are newer -- and a suppression the running version never emits is itself
+# reported as unmatchedSuppression, so that must be suppressed too or this fails
+# on whichever version you are not testing.
+# Keep these flags in sync with .github/workflows/ci.yml.
 cppcheck --enable=all --std=c++20 --error-exitcode=1 \
   --suppress=missingIncludeSystem --suppress=unusedFunction \
   --suppress=checkersReport --suppress=normalCheckLevelMaxBranches \
+  --suppress=unmatchedSuppression \
   -I include src/ include/
 
 section "clang-tidy"
