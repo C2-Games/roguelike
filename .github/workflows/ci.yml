@@ -47,6 +47,9 @@ jobs:
             --error-exitcode=1 \
             --suppress=missingIncludeSystem \
             --suppress=unusedFunction \
+            --suppress=checkersReport \
+            --suppress=normalCheckLevelMaxBranches \
+            --suppress=unmatchedSuppression \
             -I include \
             src/ include/
 
