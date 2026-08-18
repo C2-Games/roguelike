@@ -5,8 +5,8 @@
 #include <iterator>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
-
-#include "world/map/room.h"
+#include <utility>
+#include <vector>
 
 namespace
 {
@@ -49,34 +49,43 @@ LevelMeta loadLevelMeta(const std::filesystem::path& path)
   }
 }
 
-std::map<int, std::vector<RoomEdge>> parseAdjacency(const nlohmann::json& j)
+struct MapData
 {
-  std::map<int, std::vector<RoomEdge>> adjacency;
-  for (const auto& roomEntry : j.at("rooms"))
-  {
-    int id = roomEntry.at("id").get<int>();
-    const auto& connections = roomEntry.at("connections");
-    std::vector<RoomEdge> edges;
-    edges.reserve(connections.size());
-    std::transform(
-        connections.begin(), connections.end(), std::back_inserter(edges),
-        [](const nlohmann::json& conn) {
-          return RoomEdge{
-              parseDirection(conn.at("direction").get<std::string>()),
-              conn.at("to").get<int>(),
-          };
-        });
-    adjacency[id] = std::move(edges);
-  }
-  return adjacency;
+  std::vector<int> roomIDs;
+  std::vector<RoomAdjacency> adjacency;
+};
+
+MapData parseMap(const nlohmann::json& j)
+{
+  MapData data;
+
+  const auto& rooms = j.at("rooms");
+  data.roomIDs.reserve(rooms.size());
+  std::transform(rooms.begin(), rooms.end(), std::back_inserter(data.roomIDs),
+                 [](const nlohmann::json& id) { return id.get<int>(); });
+
+  const auto& edges = j.at("edges");
+  data.adjacency.reserve(edges.size());
+  std::transform(edges.begin(), edges.end(), std::back_inserter(data.adjacency),
+                 [](const nlohmann::json& edge) {
+                   const auto& from = edge.at("from");
+                   const auto& to = edge.at("to");
+                   return RoomAdjacency{
+                       from.at("room").get<int>(),
+                       from.at("door").get<DoorNumber>(),
+                       to.at("room").get<int>(),
+                       to.at("door").get<DoorNumber>(),
+                   };
+                 });
+
+  return data;
 }
 
-std::map<int, std::vector<RoomEdge>> loadAdjacency(
-    const std::filesystem::path& path)
+MapData loadMap(const std::filesystem::path& path)
 {
   try
   {
-    return parseAdjacency(readJson(path));
+    return parseMap(readJson(path));
   }
   catch (const std::exception& e)
   {
@@ -133,82 +142,41 @@ RoomConfig loadRoomConfig(const std::filesystem::path& path, int expectedId)
 
 }  // namespace
 
-Direction parseDirection(const std::string& token)
-{
-  if (token == "N")
-  {
-    return Direction::North;
-  }
-  if (token == "E")
-  {
-    return Direction::East;
-  }
-  if (token == "S")
-  {
-    return Direction::South;
-  }
-  if (token == "W")
-  {
-    return Direction::West;
-  }
-  throw std::runtime_error("invalid direction token: '" + token + "'");
-}
-
-Coordinate resolveDoorForDirection(const Room& room, Direction dir)
-{
-  for (const Coordinate& door : room.doorPositions)
-  {
-    switch (dir)
-    {
-      case Direction::North:
-        if (door.y == 0)
-        {
-          return door;
-        }
-        break;
-      case Direction::South:
-        if (door.y == Room::HEIGHT - 1)
-        {
-          return door;
-        }
-        break;
-      case Direction::West:
-        if (door.x == 0)
-        {
-          return door;
-        }
-        break;
-      case Direction::East:
-        if (door.x == Room::WIDTH - 1)
-        {
-          return door;
-        }
-        break;
-    }
-  }
-  throw std::runtime_error("room " + std::to_string(room.roomID) + " (" +
-                           room.name + ") has no door on the requested edge");
-}
-
 LevelConfig loadLevelConfig(const std::filesystem::path& levelDir)
 {
   LevelConfig config;
   config.meta = loadLevelMeta(levelDir / "level.json");
-  config.adjacency = loadAdjacency(levelDir / "map.json");
 
-  for (const auto& [id, edges] : config.adjacency)
+  MapData map = loadMap(levelDir / "map.json");
+  config.adjacency = std::move(map.adjacency);
+
+  for (int id : map.roomIDs)
   {
     std::filesystem::path roomPath =
         levelDir / ("room_" + std::to_string(id) + ".json");
     config.rooms[id] = loadRoomConfig(roomPath, id);
   }
 
-  if (static_cast<int>(config.adjacency.size()) != config.meta.roomCount)
+  if (static_cast<int>(map.roomIDs.size()) != config.meta.roomCount)
   {
     throw std::runtime_error(
         "level.json roomCount (" + std::to_string(config.meta.roomCount) +
         ") does not match map.json room count (" +
-        std::to_string(config.adjacency.size()) + ") in " + levelDir.string());
+        std::to_string(map.roomIDs.size()) + ") in " + levelDir.string());
+  }
+
+  auto requireKnownRoom = [&config, &levelDir](int roomID) {
+    if (config.rooms.find(roomID) == config.rooms.end())
+    {
+      throw std::runtime_error(
+          "map.json edge references room " + std::to_string(roomID) +
+          ", which is not in its room list, in " + levelDir.string());
+    }
+  };
+  for (const RoomAdjacency& edge : config.adjacency)
+  {
+    requireKnownRoom(edge.fromRoom);
+    requireKnownRoom(edge.toRoom);
   }
 
   return config;

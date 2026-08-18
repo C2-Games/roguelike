@@ -6,24 +6,17 @@
 #include <string>
 #include <vector>
 
-#include "core/coordinate.h"
+// Door number based on the order of doors in the room's template file
+using DoorNumber = int;
 
-struct Room;
-
-/** @brief A compass direction a room's door faces. */
-enum class Direction
+// one door-to-door link between two rooms, currently bidirectional
+// (fromRoom->toRoom and toRoom->fromRoom)
+struct RoomAdjacency
 {
-  North,
-  East,
-  South,
-  West
-};
-
-/** @brief One outgoing connection from a room, parsed from map.json. */
-struct RoomEdge
-{
-  Direction direction;
-  int to;
+  int fromRoom;
+  DoorNumber fromDoor;
+  int toRoom;
+  DoorNumber toDoor;
 };
 
 /** @brief One enemy spawn-table entry from a room's JSON metadata. */
@@ -60,8 +53,8 @@ struct LevelMeta
 struct LevelConfig
 {
   LevelMeta meta;
-  std::map<int, std::vector<RoomEdge>> adjacency;  // from map.json
-  std::map<int, RoomConfig> rooms;                 // id -> per-room config
+  std::vector<RoomAdjacency> adjacency;  // from map.json
+  std::map<int, RoomConfig> rooms;       // id -> per-room config
 };
 
 /**
@@ -73,20 +66,5 @@ struct LevelConfig
  *         cross-reference mismatch (id mismatches, room-count mismatches).
  */
 LevelConfig loadLevelConfig(const std::filesystem::path& levelDir);
-
-/**
- * @brief Parse a direction token ("N"/"E"/"S"/"W") from map.json.
- *
- * @throws std::runtime_error if the token isn't one of N/E/S/W.
- */
-Direction parseDirection(const std::string& token);
-
-/**
- * @brief Find the door on `room`'s edge matching `dir` (north at y=0, south
- * at y=HEIGHT-1, west at x=0, east at x=WIDTH-1).
- *
- * @throws std::runtime_error if `room` has no door on that edge.
- */
-Coordinate resolveDoorForDirection(const Room& room, Direction dir);
 
 #endif

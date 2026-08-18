@@ -1,32 +1,8 @@
 #include "world/map/level.h"
 
-#include <algorithm>
-#include <stdexcept>
 #include <utility>
 
 #include "core/services.h"
-
-namespace
-{
-
-// Look up `adjacencyEntry`'s own edge back to `fromID` and return its
-// declared direction.
-Direction findReverseDirection(const std::vector<RoomEdge>& adjacencyEntry,
-                               int fromID)
-{
-  auto it = std::find_if(
-      adjacencyEntry.begin(), adjacencyEntry.end(),
-      [fromID](const RoomEdge& edge) { return edge.to == fromID; });
-  if (it != adjacencyEntry.end())
-  {
-    return it->direction;
-  }
-  throw std::runtime_error("room has no reverse connection back to room " +
-                           std::to_string(fromID) +
-                           " — map.json's adjacency is not symmetric");
-}
-
-}  // namespace
 
 Level::Level(const std::filesystem::path& levelDir, GameServices& services,
              const EnemyCatalog& catalog)
@@ -46,22 +22,17 @@ void Level::buildFromConfig(const LevelConfig& config,
     auto [it, inserted] = rooms_.insert(
         {id, Room::loadFromFile(
                  id, std::filesystem::path("assets/rooms") / roomCfg.ref)});
-    roomEnemyConfig_[id] = roomCfg.enemies;
     it->second.ensureEnemiesSpawned(roomCfg.enemies, catalog, services_);
   }
 
-  for (const auto& [fromID, edges] : config.adjacency)
+  // each edge is authored once and wired both ways, so the graph cannot be
+  // asymmetric by construction.
+  for (const RoomAdjacency& edge : config.adjacency)
   {
-    const Room& fromRoom = rooms_.at(fromID);
-    for (const RoomEdge& edge : edges)
-    {
-      const Room& toRoom = rooms_.at(edge.to);
-      Coordinate fromDoor = resolveDoorForDirection(fromRoom, edge.direction);
-      Direction reverseDir =
-          findReverseDirection(config.adjacency.at(edge.to), fromID);
-      Coordinate toDoor = resolveDoorForDirection(toRoom, reverseDir);
-      doorConnections_[{fromID, fromDoor}] = {edge.to, toDoor};
-    }
+    Coordinate fromDoor = rooms_.at(edge.fromRoom).doorAt(edge.fromDoor);
+    Coordinate toDoor = rooms_.at(edge.toRoom).doorAt(edge.toDoor);
+    doorConnections_[{edge.fromRoom, fromDoor}] = {edge.toRoom, toDoor};
+    doorConnections_[{edge.toRoom, toDoor}] = {edge.fromRoom, fromDoor};
   }
 
   sealUnlinkedDoors();
@@ -71,8 +42,9 @@ void Level::sealUnlinkedDoors()
 {
   for (auto& [id, room] : rooms_)
   {
-    for (const Coordinate& door : room.doorPositions)
+    for (const auto& doorEntry : room.doors)
     {
+      const Coordinate& door = doorEntry.second;
       if (doorConnections_.find({id, door}) == doorConnections_.end())
       {
         room.tiles[door.x][door.y] = Tile(TileType::Wall, door);

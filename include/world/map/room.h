@@ -2,6 +2,7 @@
 #define ROOM_H
 
 #include <filesystem>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -20,7 +21,10 @@ struct Room
   int roomID;
   std::string name;
   std::vector<std::vector<Tile>> tiles;
-  std::vector<Coordinate> doorPositions;
+
+  // The doors map is keyed by the door's authored label (DoorNumber)
+  // and contains the grid position of that door tile.
+  std::map<DoorNumber, Coordinate> doors;
 
   std::vector<Coordinate> enemySpawns;
   std::vector<Coordinate> lootSpawns;
@@ -43,6 +47,15 @@ struct Room
    * @return A fully populated Room ready to be added to a RoomGraph.
    */
   static Room loadFromFile(int roomID, const std::filesystem::path& path);
+
+  /**
+   * @brief Look up the grid position of one of this room's doors.
+   *
+   * @param number The door's authored label from the room's .txt grid.
+   * @return The door tile's coordinate.
+   * @throws std::runtime_error if this room has no door with that label.
+   */
+  Coordinate doorAt(DoorNumber number) const;
 
   /** @brief Reset every cell in the visible grid to false. */
   void clearVisible();

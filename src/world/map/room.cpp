@@ -138,9 +138,6 @@ Room Room::loadFromFile(int roomID, const std::filesystem::path& path)
   }
 
   // --- Parse grid ---
-  // Collect door positions keyed by label so we can insert them into
-  // doorPositions in numeric order regardless of scan order.
-  std::map<char, Coordinate> labelledDoors;
 
   int y = 0;
   while (std::getline(in, line))
@@ -175,14 +172,12 @@ Room Room::loadFromFile(int roomID, const std::filesystem::path& path)
       room.tiles[x][y] = Tile(type, Coordinate(x, y));
       if (type == TileType::Door)
       {
-        // Digits have no case; the label is just the digit itself.
-        char label = c;
-        auto [it, inserted] = labelledDoors.emplace(label, Coordinate{x, y});
+        DoorNumber label = c - '0';
+        auto [it, inserted] = room.doors.emplace(label, Coordinate{x, y});
         if (!inserted)
         {
           throw std::runtime_error("Duplicate door label '" +
-                                   std::string(1, label) + "' in " +
-                                   path.string());
+                                   std::string(1, c) + "' in " + path.string());
         }
       }
       switch (charToSpawnKind(c))
@@ -208,12 +203,16 @@ Room Room::loadFromFile(int roomID, const std::filesystem::path& path)
                              std::to_string(HEIGHT));
   }
 
-  // std::map iterates in key order, so doors land in numeric sequence.
-  for (const auto& [label, coord] : labelledDoors)
-  {
-    (void)label;
-    room.doorPositions.push_back(coord);
-  }
-
   return room;
+}
+
+Coordinate Room::doorAt(DoorNumber number) const
+{
+  auto it = doors.find(number);
+  if (it == doors.end())
+  {
+    throw std::runtime_error("room " + std::to_string(roomID) + " (" + name +
+                             ") has no door " + std::to_string(number));
+  }
+  return it->second;
 }
