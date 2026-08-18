@@ -5,6 +5,10 @@
 #   git config blame.ignoreRevsFile .git-blame-ignore-revs
 #
 # GitHub's web blame reads this file automatically -- no configuration there.
+#
+# NOTE: list the SHA as it exists on `main`, not the branch SHA. This repo
+# squash-merges, so the commit that lands on main is a new object and a branch
+# SHA recorded here would never match. Add the entry after the merge.
 
-# feat: reformat all code with Allman brackets, move to C++20, enforce LF endings (#133, #134, #137)
-64a4078d3ee057a1f94dfb4cff90327ea8849063
+# TODO(#133): add the squash-merge SHA of the Allman/C++20/LF reformat once it
+# lands on main -- `git log --oneline -1 main` after merging.
