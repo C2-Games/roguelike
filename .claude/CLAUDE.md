@@ -15,8 +15,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    write — there is no write-time hook. `/check` applies `clang-format -i` over `src/`/`include/`,
    then runs `scripts/ci-local.sh` (cppcheck, clang-tidy, build), then — when `src/` or `include/`
    actually changed on the branch — dispatches the `reviewer` agent for a read-only
-   structure/efficiency/isolation pass. It is the required final step of every plan, and `/pr`
-   will not prepare a PR over a failing sweep. A single-file, purely documentation/comment or
+   structure/efficiency/isolation pass. It is the required final step of every plan. A single-file, purely documentation/comment or
    one-line fix may skip formal plan mode; anything touching `src/`/`include/` behavior, spanning
    multiple files, or otherwise non-trivial still requires a plan before editing.
 3. **Never `git commit` or `git push`.** Both are denied in `.claude/settings.json`; publishing is

@@ -138,7 +138,7 @@ ones run sequentially. See rule 2 and `/start-issue` for the review pass and pla
 | `/check` | Full local CI sweep via `scripts/ci-local.sh` — format, cppcheck, clang-tidy, build — then a `reviewer`-agent pass over `src/`/`include/` changes |
 | `/build [debug\|release]` | `scripts/build-debug.sh` / `scripts/build-release.sh` |
 | `/run` | Build debug, run from the repo root, report `game.log` and `error.log` |
-| `/pr` | Verify issue + `/check`, write `.claude/.pr-body.md`, print the push/create commands for you |
+| `/pr` | Verify issue + branch, write `.claude/.pr-body.md`, print the push/create commands for you |
 
 ## Two environments — never hard-code one
 

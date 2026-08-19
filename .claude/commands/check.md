@@ -67,4 +67,5 @@ mode (`EnterPlanMode`) to plan the fixes (the rule-2 small-change exemption stil
 finding is genuinely single-file), implement them — `implementer` agent for anything beyond a
 trivial fix — then run `/check` from step 1 again. Repeat plan → implement → `/check` until a
 review pass reports nothing significant. That is the only way `/check` succeeds once
-`src/`/`include/` changed; a review with open findings blocks `/pr` the same as a failing sweep.
+`src/`/`include/` changed; `/pr` does not verify this itself, so running it before the loop
+finishes clean ships unverified code — the discipline is yours to hold, same as a failing sweep.

@@ -54,6 +54,8 @@ WATCHED = (
     "CMakeLists.txt",          # build & dependency notes
     ".clang-format",           # lint/format section
     ".clang-tidy",
+    "src/",                    # Architecture section -- see reviewer.md
+    "include/",
 )
 
 

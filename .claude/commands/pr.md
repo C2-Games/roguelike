@@ -31,13 +31,13 @@ description: Prepare a PR body and hand the push/create commands back to the use
 6. **Print the handoff** and stop:
 
    ```
-   ! git add <the files from step 4>
+   ! git add <the files from step 3>
    ! git commit -m "<type>: <Sentence-case description>"
    ! git push -u origin <branch>
    ! gh pr create --title "<title>" --body-file .claude/.pr-body.md
    ```
 
-   Include the `add`/`commit` lines whenever step 4 showed uncommitted work — omitting them is
+   Include the `add`/`commit` lines whenever step 3 showed uncommitted work — omitting them is
    how a push ends up shipping the previous commit. Draft a real commit message; do not leave a
    placeholder. Tell the user to run these with the `!` prefix so they execute in their session.
 
