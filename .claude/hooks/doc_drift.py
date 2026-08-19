@@ -35,7 +35,11 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _toolchain import project_dir  # noqa: E402
 
 ACK_NAME = os.path.join(".claude", ".doc-drift-ack")
-DOC = "CLAUDE.md"
+# Literal forward-slash string, not os.path.join: changed_files() below builds its paths
+# from `git diff`/`git status`, which always emit forward slashes even on Windows, and
+# `DOC in paths` (see main()) needs to match that exactly. os.path.join would silently
+# break the match on Windows and re-prompt on every CLAUDE.md edit.
+DOC = ".claude/CLAUDE.md"
 
 # Each entry backs a specific claim in CLAUDE.md. Adding a path here without a
 # corresponding claim just produces noise.
@@ -44,6 +48,7 @@ WATCHED = (
     ".claude/commands/",       # the command list
     ".claude/hooks/",          # hook behaviour
     ".claude/skills/",         # the cpp-style pointer
+    ".claude/agents/",         # the implementer/reviewer agents
     "scripts/",                # build & local CI sections
     ".github/workflows/",      # the CI section
     "CMakeLists.txt",          # build & dependency notes

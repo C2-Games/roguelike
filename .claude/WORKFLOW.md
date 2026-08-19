@@ -1,6 +1,6 @@
 # Working in this repo
 
-Three rules hold here, and all three are enforced mechanically rather than by convention.
+Four rules hold here, and all four are enforced mechanically rather than by convention.
 
 ## 1. No change without a GitHub issue
 
@@ -15,9 +15,17 @@ refuses any edit made while on `main`, and refuses a record that was written for
 Run `/start-issue <number> [more...]` to open the gate. One branch may carry several issues — that
 is normal here; record them all.
 
+**Direct prompts, not just `/start-issue`.** A change requested directly, with no issue on
+record, gets the same draft-and-confirm treatment `/new-issue` gives a user-typed command:
+Claude matches a template, drafts a title/body, fetches milestones, and waits for explicit
+approval before creating the issue and branch and proceeding — never a silent auto-create.
+
 Deliberately not gated: paths outside the repo, and `.claude/**` (otherwise this configuration
-could never be repaired). Known gap: the gate covers `Edit`/`Write`, not shell redirection through
-`Bash`.
+could never be repaired). `.claude/CLAUDE.md` lives inside that exemption — a change to it alone
+does not need a recorded issue, unlike root `CLAUDE.md` did before the move; root `CLAUDE.md` is
+now just a one-line `@.claude/CLAUDE.md` stub, kept there because Claude Code auto-loads project
+instructions from repo root, not from `.claude/`. Known gap: the gate covers `Edit`/`Write`, not
+shell redirection through `Bash`.
 
 ## 2. Format and static analysis run once per change, at `/check`
 
@@ -25,7 +33,7 @@ could never be repaired). Known gap: the gate covers `Edit`/`Write`, not shell r
 surfaces long after the fact. `/check` is the local mirror that catches it first.
 
 **Enforcement:** `/check` is the final step of every plan, and `/pr` (step 3) refuses to prepare a
-PR over a failing sweep. It runs in two parts:
+PR over a failing sweep. It runs in three parts:
 
 - **clang-format** is applied *in place* (`-i -style=file`) over `src/` and `include/`. Formatting
   has one correct answer, so it is fixed rather than reported. This must precede the sweep:
@@ -33,6 +41,15 @@ PR over a failing sweep. It runs in two parts:
   an unformatted file would abort the run before cppcheck, clang-tidy or the build execute.
 - **`scripts/ci-local.sh`** then runs the full sweep — format check, cppcheck, clang-tidy, build —
   mirroring `ci.yml` except for CodeQL.
+- **The `reviewer` agent** (`.claude/agents/reviewer.md`) then runs a read-only pass over the
+  branch's `src/`/`include/` diff — structure, efficiency, long-term validity, isolation of
+  objects & behavior — once the sweep above has passed. Skipped when the diff touches neither
+  directory. It reports findings; it does not edit.
+
+**Plan mode has a narrow exemption.** A single-file edit that is purely documentation/comment
+text, or a genuine one-line fix, may skip formal plan mode — state the change in a sentence and
+proceed. Anything touching `src/`/`include/` behavior, spanning multiple files, or otherwise
+non-trivial still goes through the full plan-mode flow in `/start-issue`.
 
 Nothing is checked while you write. There is deliberately **no `PostToolUse` hook**: the tools
 themselves are cheap (~0.11s each), but on Windows every invocation pays a WSL spawn of over a
@@ -60,8 +77,8 @@ changelog.
 
 **Backstop:** `.claude/hooks/doc_drift.py` runs as a `Stop` hook for when that is forgotten. It
 compares the branch's changed files against a watch list (`.claude/settings.json`, `.claude/commands/`, `.claude/hooks/`,
-`.claude/skills/`, `scripts/`, `.github/workflows/`, `CMakeLists.txt`, `.clang-format`,
-`.clang-tidy`) and, when any of those changed but CLAUDE.md did not, blocks the stop with the list.
+`.claude/skills/`, `.claude/agents/`, `scripts/`, `.github/workflows/`, `CMakeLists.txt`, `.clang-format`,
+`.clang-tidy`) and, when any of those changed but `.claude/CLAUDE.md` did not, blocks the stop with the list.
 
 A hook cannot judge whether the docs are actually wrong — that needs reading both sides — so it
 supplies the signal and leaves the call to the model. It fires once per distinct set of changes,
@@ -70,36 +87,10 @@ recorded in `.claude/.doc-drift-ack` (gitignored), so answering it either way do
 It runs on `Stop`, not `PostToolUse`, for the reason in rule 2: once per turn, not once per write.
 It shells out to nothing but `git`, so it costs no WSL spawn.
 
-Note it hashes CLAUDE.md directly rather than looking for it in `git status`. A global gitignore
-can exclude CLAUDE.md — this repo's Windows developer has exactly that — and an ignored file never
-appears in git output, which would make the prompt impossible to answer by editing the file.
-
-## 5. Pending work lives in the tracker, not in the source
-
-A `TODO` comment records work where nobody queries it: no owner, no label, no way to close it. It
-then outlives the work. Rule 1 already says every change traces to an issue; a `TODO` is how that
-gets quietly bypassed.
-
-**Enforcement:** a `todo-scan` section in `scripts/ci-local.sh` (run by `/check`) and a matching
-`todo-scan` job in `.github/workflows/ci.yml`, which `build` depends on. Both reject `TODO`,
-`FIXME`, `XXX`, `HACK` and `TBD` in tracked sources under `src/`, `include/`, `scripts/` and
-`.claude/`.
-
-Three details, each of which was necessary rather than decorative:
-
-- **The check is wrapped in `if`.** `git grep` exits 0 on a match and 1 when clean — inverted
-  relative to every other check, and a bare call aborts `ci-local.sh` under `set -e` on a *clean*
-  tree.
-- **`scripts/ci-local.sh` excludes itself.** Its own pattern contains the words it searches for, and
-  `scripts/` is inside the search path, so without `':!scripts/ci-local.sh'` the check can never
-  pass. `ci.yml` needs no such exclusion — it sits outside the scanned paths.
-- **Markdown and `.txt` are excluded.** These docs have to be able to describe the rule without
-  failing it, and `assets/rooms/*.txt` are ASCII room grids.
-
-A linked `TODO(#123)` is not an exception: it still rots when the issue closes, and an unambiguous
-rule needs no judgement in review.
-
----
+Note it hashes `.claude/CLAUDE.md` directly rather than looking for it in `git status`. A global
+gitignore can exclude a file named `CLAUDE.md` at any depth — this repo's Windows developer has
+exactly that — and an ignored file never appears in git output, which would make the prompt
+impossible to answer by editing the file.
 
 ---
 
@@ -131,18 +122,21 @@ happened once, with the skill's `cppcheck --std=c++17` against CI's `c++20`.
 ## Lifecycle
 
 ```
-/issues  ->  /start-issue N  ->  plan (you approve)  ->  Claude edits + updates CLAUDE.md
-         ->  /check  ->  you review  ->  /pr  ->  you commit + push
+/issues  ->  /start-issue N  ->  plan (you approve)  ->  implementer agent(s) edit + update CLAUDE.md
+         ->  /check (format, sweep, review)  ->  you review  ->  /pr  ->  you commit + push
 ```
+
+Independent plan tasks are dispatched to `.claude/agents/implementer.md` in parallel; dependent
+ones run sequentially. See rule 2 and `/start-issue` for the review pass and plan-mode exemption.
 
 ## Common commands
 
 | Command | What it does |
 |---|---|
 | `/issues [filter]` | List open GitHub issues to pick from (`gh issue list`, repo resolved via `GH_REPO`) |
-| `/new-issue <description>` | File a new GitHub issue, asking which milestone to assign (or creating one if explicitly told) |
-| `/start-issue <n> [n...]` | Fetch the issue(s), cut a `<type>/<kebab-description>` branch off `main`, record `.claude/.current-issue`, then enter plan mode |
-| `/check` | Full local CI sweep via `scripts/ci-local.sh` — format, cppcheck, clang-tidy, build |
+| `/new-issue <description>` | File a new GitHub issue, asking which milestone to assign (or creating one if explicitly told) — also how Claude handles a direct prompt with no issue on record |
+| `/start-issue <n> [n...]` | Fetch the issue(s), cut a `<type>/<kebab-description>` branch off `main` (kebab-description ≤4 words, ideally <3), record `.claude/.current-issue`, then enter plan mode |
+| `/check` | Full local CI sweep via `scripts/ci-local.sh` — format, cppcheck, clang-tidy, build — then a `reviewer`-agent pass over `src/`/`include/` changes |
 | `/build [debug\|release]` | `scripts/build-debug.sh` / `scripts/build-release.sh` |
 | `/run` | Build debug, run from the repo root, report `game.log` and `error.log` |
 | `/pr` | Verify issue + `/check`, write `.claude/.pr-body.md`, print the push/create commands for you |

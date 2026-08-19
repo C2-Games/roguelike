@@ -12,6 +12,12 @@ yourself.
 This command only files the issue — it does not open the edit gate. Run `/start-issue <n>`
 afterward to start coding against it.
 
+This same draft-and-confirm flow also triggers without the user typing `/new-issue`: when a
+change is requested directly, with no issue on record yet and no `/start-issue` run, Claude
+follows these exact steps — match template, draft title/body, fetch milestones, confirm with the
+user via `AskUserQuestion`, then create — before proceeding. Confirmation is required either way;
+nothing here becomes more automatic.
+
 ## Steps
 
 1. **Determine type and draft.** Match `$ARGUMENTS` to the closest issue template:

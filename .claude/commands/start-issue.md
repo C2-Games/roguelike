@@ -34,6 +34,10 @@ denies those edits outright. Run this first, every time.
 
    Use `feat/`, never `feature/` — both exist in history but `feat/` is what recent work uses.
 
+   Keep the `<kebab-description>` short: at most 4 words, ideally fewer than 3. This holds even
+   when the issue title is longer — pick the shortest phrase that still identifies the change,
+   don't mechanically truncate the title.
+
 4. **Create the branch** from an up-to-date `main`:
    `git fetch origin && git switch -c <branch> origin/main`
    If the branch already exists, `git switch <branch>` instead.
@@ -50,11 +54,27 @@ denies those edits outright. Run this first, every time.
    produce an implementation plan before writing anything. Do not start editing straight
    from the issue text: the issues here are terse and often understate which files move.
 
+   **Exception — small changes skip formal plan mode.** A single-file edit that is purely
+   documentation/comment text, or a genuine one-line fix, does not need `EnterPlanMode`: state
+   the change in one sentence and proceed directly. Keep the bar genuinely small and
+   single-file — anything touching `src/`/`include/` *behavior*, spanning multiple files, or
+   otherwise non-trivial still requires the full flow below.
+
+   **Ask before finalizing.** Ask clarifying implementation questions rather than guessing.
+   Design and architecture decisions are the developer's to drive — they may hand you intent at
+   the pseudo-code level — and the plan's job is to implement that precisely, not to invent
+   architecture unprompted. Plans in this repo are made collaboratively, not unilaterally.
+
    The plan should name the specific files and symbols to change, follow the conventions in
    `CLAUDE.md` (trailing-underscore privates, `#ifndef` guards, forward declarations), and
    **must end with `/check`**. Nothing is formatted or analysed while you write — there is no
    write-time hook — so a plan without `/check` ships unverified code. Present it with
    `ExitPlanMode` for approval.
+
+   **Break the plan into isolated tasks**, noting which are independent of each other. Once
+   approved (`ExitPlanMode`), dispatch independent tasks in parallel to the `implementer` agent
+   (`.claude/agents/implementer.md`) — multiple `Agent` tool calls in a single message when the
+   tasks are truly independent. Dependent tasks run sequentially, one after another.
 
    **Include a `CLAUDE.md` step when the change earns one.** It is the map a future session
    reads before touching code, so it is updated as part of the work, not retrofitted after.
@@ -65,5 +85,9 @@ denies those edits outright. Run this first, every time.
 
    If the issues are several small independent renames on one branch, one plan covering all
    of them is fine — say which issue each step closes.
+
+   **If implementation surfaces something that would change the approved plan** — not a small
+   in-scope detail, but a real departure from what was approved — stop and explain the hurdle
+   clearly, then ask the developer how to proceed. Do not improvise past it.
 
 Do not commit or push — those are denied by `.claude/settings.json` and are the user's to run.

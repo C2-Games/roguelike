@@ -14,6 +14,8 @@ description: Prepare a PR body and hand the push/create commands back to the use
    and that it is not `main`.
 
 3. **Run `/check`.** Do not prepare a PR over a failing sweep. If it fails, report and stop.
+   `/check` also dispatches a read-only `reviewer` agent pass whenever the branch's diff touches
+   `src/`/`include/`, so a failing review counts as a failing sweep here too.
 
 4. **Show what would ship.** `git status --short` and `git diff --stat origin/main...HEAD`.
 
