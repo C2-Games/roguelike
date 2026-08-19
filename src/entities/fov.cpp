@@ -12,7 +12,8 @@ FOV::FOV(std::set<Coordinate> offsets) : offsets(std::move(offsets)) {}
 
 bool FOV::in(Coordinate origin, Coordinate position) const
 {
-  Coordinate offset = origin - position;
+  // must mirror absoluteFOV, which builds positions as origin + offset.
+  Coordinate offset = position - origin;
   return offsets.count(offset) > 0;
 };
 
