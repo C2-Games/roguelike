@@ -1,10 +1,9 @@
 ---
-description: Run the full local CI sweep (format, cppcheck, clang-tidy, build)
+description: Run the full local CI sweep (format, cppcheck, clang-tidy, build, review)
 ---
 
 This is the **only** place formatting and static analysis happen. There is no write-time hook —
-nothing has been checked until this runs, so it is the final step of every plan and `/pr` refuses
-to prepare a PR over a failing sweep.
+nothing has been checked until this runs, so it is the final step of every plan.
 
 ## 1. Apply formatting
 
@@ -44,3 +43,29 @@ If it reports a missing tool, install the toolchain for the platform:
 |---|---|
 | Debian/Ubuntu/WSL | `sudo apt install clang-format clang-tidy cppcheck cmake libncurses-dev` |
 | macOS | `brew install clang-format llvm cppcheck cmake ncurses` |
+
+## 3. Review pass
+
+Only once step 2 has passed — reviewing code that doesn't build or format cleanly yet isn't
+useful. Check whether the branch actually touches source:
+
+```bash
+git diff origin/main...HEAD -- src/ include/
+git status --porcelain -- src/ include/
+```
+
+If both are empty, skip this step with a one-line note — a docs/config/scripts-only change has
+nothing for a code reviewer to look at.
+
+If either is non-empty, dispatch the `reviewer` agent (`.claude/agents/reviewer.md`) — a
+read-only pass over the diff for structure, efficiency, long-term validity, and isolation of
+objects and behavior. Present its findings to the user directly as part of the `/check` output.
+
+**Findings are not optional follow-up.** If the reviewer reports nothing significant, `/check`
+has passed — proceed to `/pr`. If it reports findings, `/check` has *not* passed: re-enter plan
+mode (`EnterPlanMode`) to plan the fixes (the rule-2 small-change exemption still applies if a
+finding is genuinely single-file), implement them — `implementer` agent for anything beyond a
+trivial fix — then run `/check` from step 1 again. Repeat plan → implement → `/check` until a
+review pass reports nothing significant. That is the only way `/check` succeeds once
+`src/`/`include/` changed; `/pr` does not verify this itself, so running it before the loop
+finishes clean ships unverified code — the discipline is yours to hold, same as a failing sweep.

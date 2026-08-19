@@ -31,7 +31,7 @@ this skill does not carry a copy to drift out of sync with it.
 | Enum members | `PascalCase`, no `k` prefix | `Wall`, `Floor`, `North`, `FogUnexplored` |
 | Methods, free functions | `camelCase` | `moveTowardPlayer`, `colorAttr`, `initColors` |
 | Member variables | trailing-underscore `camelCase_` | `attackDamage_`, `chaseTurnsRemaining_` |
-| Constants | `kPascalCase` | `kCap` |
+| Constants | `ALL_CAPS` | `HEIGHT` |
 | Files | `snake_case` | `goal_map_cache.h` |
 
 This matches the existing codebase, not strict upstream Google
@@ -111,9 +111,8 @@ special-casing needed between old and new code.
   "constants" — enum members are an exception to the Constants row; they
   take bare `PascalCase` by design.
 - A `TODO`/`FIXME`/`XXX`/`HACK`/`TBD` comment — pending work goes in a GitHub
-  issue, never in the source. CI rejects these outright. If something is worth
-  remembering, it is worth an issue; if it is not worth an issue, a comment
-  will not save it.
+  issue, never in the source. If something is worth remembering, it is worth
+  an issue; if it is not worth an issue, a comment will not save it.
 
 ## Verification
 
