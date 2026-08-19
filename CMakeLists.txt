@@ -44,7 +44,6 @@ set(SOURCES
     src/world/map/level_config.cpp
     src/world/systems/pathfinding.cpp
     src/world/systems/goal_map_cache.cpp
-    src/world/systems/visibility.cpp
     src/world/objects/weapon.cpp
     src/world/objects/projectile.cpp
     src/render/renderer.cpp

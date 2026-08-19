@@ -7,6 +7,8 @@
 #include <stdexcept>
 #include <string>
 
+#include "entities/fov.h"
+
 namespace
 {
 
@@ -55,6 +57,15 @@ SpawnKind charToSpawnKind(char c)
 }  // namespace
 
 Room::Room(int id) : roomID(id), tiles(WIDTH, std::vector<Tile>(HEIGHT)) {}
+
+void Room::updateVisibility(Coordinate origin, const FOV& fov)
+{
+  clearVisible();
+  for (const Coordinate& pos : fov.absoluteFOV(origin))
+  {
+    reveal(pos.x, pos.y);
+  }
+}
 
 void Room::clearVisible()
 {
