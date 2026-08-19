@@ -11,8 +11,13 @@ struct WindowPosition
   int originY, originX;
 };
 
-// centers a room-sized window in the terminal, clamping to the terminal when
-// it is smaller than a room so the window never runs off-screen.
+/**
+ * @brief Compute the centered, terminal-clamped map window UI geometry.
+ *
+ * @param termHeight Current terminal height (rows).
+ * @param termWidth  Current terminal width (columns).
+ * @return WindowPosition
+ */
 inline WindowPosition centerWindow(int termHeight, int termWidth)
 {
   WindowPosition g;
