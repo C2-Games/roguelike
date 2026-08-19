@@ -3,7 +3,7 @@
 #include <ncurses.h>
 
 #include "core/colors.h"
-#include "render/ui.h"
+#include "render/window_position.h"
 #include "world/map/room.h"
 
 MapLayer::MapLayer(int h, int w, int y, int x, const Level& graph)
@@ -68,6 +68,6 @@ void MapLayer::doRender()
 
 void MapLayer::onResize(int termHeight, int termWidth)
 {
-  UI g = computeUI(termHeight, termWidth);
+  WindowPosition g = centerWindow(termHeight, termWidth);
   reshape(g.winHeight, g.winWidth, g.originY, g.originX);
 };

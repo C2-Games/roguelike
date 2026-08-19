@@ -6,6 +6,16 @@
 
 #include "render/render_stack.h"
 
+// composition order, lowest first. the values are the z-order itself, so
+// changing one reorders the screen.
+enum class RenderLayer
+{
+  Map = 1,
+  Entity = 2,
+  HUD = 3,
+  Debug = 4
+};
+
 class Renderer
 {
  public:
@@ -15,7 +25,7 @@ class Renderer
    * @param z Z-order index.
    * @param layer RenderStack layer to add.
    */
-  void addLayer(int z, std::unique_ptr<RenderStack> layer);
+  void addLayer(RenderLayer z, std::unique_ptr<RenderStack> layer);
 
   /** @brief Composite all enabled layers onto stdscr and flush to terminal. */
   void compose();
@@ -29,7 +39,7 @@ class Renderer
   void resizeAll(int termHeight, int termWidth);
 
  private:
-  std::map<int, std::unique_ptr<RenderStack>> layers_;
+  std::map<RenderLayer, std::unique_ptr<RenderStack>> layers_;
 };
 
 #endif

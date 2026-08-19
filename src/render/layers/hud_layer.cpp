@@ -5,7 +5,7 @@
 #include <algorithm>
 
 #include "core/colors.h"
-#include "render/ui.h"
+#include "render/window_position.h"
 #include "world/objects/weapon.h"
 
 HUDLayer::HUDLayer(int h, int w, int margin, const Player& player,
@@ -41,7 +41,7 @@ void HUDLayer::doRender()
 
   // fixed HUD band above the map's top border, with a blank gap row
   // separating the HUD text from the border itself.
-  UI geom = computeUI(height_, width_);
+  WindowPosition geom = centerWindow(height_, width_);
   int bandRow = std::max(0, geom.originY - margin_);
 
   // room number, in middle (subtract 4 to center better -- 4 chars in 'Room').

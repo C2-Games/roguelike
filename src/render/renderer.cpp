@@ -2,7 +2,7 @@
 
 #include <ncurses.h>
 
-void Renderer::addLayer(int z, std::unique_ptr<RenderStack> layer)
+void Renderer::addLayer(RenderLayer z, std::unique_ptr<RenderStack> layer)
 {
   layers_[z] = std::move(layer);
 };

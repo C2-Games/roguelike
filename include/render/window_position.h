@@ -1,11 +1,11 @@
-#ifndef UI_H
-#define UI_H
+#ifndef WINDOW_POSITION_H
+#define WINDOW_POSITION_H
 
 #include <algorithm>
 
 #include "world/map/room.h"
 
-struct UI
+struct WindowPosition
 {
   int winHeight, winWidth;
   int originY, originX;
@@ -16,11 +16,11 @@ struct UI
  *
  * @param termHeight Current terminal height (rows).
  * @param termWidth  Current terminal width (columns).
- * @return UI
+ * @return WindowPosition
  */
-inline UI computeUI(int termHeight, int termWidth)
+inline WindowPosition centerWindow(int termHeight, int termWidth)
 {
-  UI g;
+  WindowPosition g;
   g.winHeight = std::min(Room::HEIGHT, termHeight);
   g.winWidth = std::min(Room::WIDTH, termWidth);
   g.originY = std::max(0, (termHeight - Room::HEIGHT) / 2);
