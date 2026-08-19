@@ -32,8 +32,7 @@ shell redirection through `Bash`.
 `.github/workflows/ci.yml` only gates on `pull_request` to `main`, so a CI failure otherwise
 surfaces long after the fact. `/check` is the local mirror that catches it first.
 
-**Enforcement:** `/check` is the final step of every plan, and `/pr` (step 3) refuses to prepare a
-PR over a failing sweep. It runs in three parts:
+**Enforcement:** `/check` is the final step of every plan. It runs in three parts:
 
 - **clang-format** is applied *in place* (`-i -style=file`) over `src/` and `include/`. Formatting
   has one correct answer, so it is fixed rather than reported. This must precede the sweep:

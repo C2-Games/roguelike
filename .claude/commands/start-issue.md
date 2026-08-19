@@ -34,7 +34,7 @@ denies those edits outright. Run this first, every time.
 
    Use `feat/`, never `feature/` — both exist in history but `feat/` is what recent work uses.
 
-   Keep the `<kebab-description>` short: at most 4 words, ideally fewer than 3. This holds even
+   Keep the `<kebab-description>` short: at most 4 words, ideally 2-3. This holds even
    when the issue title is longer — pick the shortest phrase that still identifies the change,
    don't mechanically truncate the title.
 

@@ -3,8 +3,7 @@ description: Run the full local CI sweep (format, cppcheck, clang-tidy, build, r
 ---
 
 This is the **only** place formatting and static analysis happen. There is no write-time hook —
-nothing has been checked until this runs, so it is the final step of every plan and `/pr` refuses
-to prepare a PR over a failing sweep.
+nothing has been checked until this runs, so it is the final step of every plan.
 
 ## 1. Apply formatting
 

@@ -19,10 +19,7 @@ pieces, and your slice names the specific files and symbols to change.
 
 ## C++ conventions
 
-Before editing any `.cpp`/`.h`/`.hpp` file, invoke the `cpp-style` skill and follow it: naming
-(trailing-underscore members, `PascalCase` types/enum members, `camelCase` methods), Allman
-braces, lowercase period-terminated comments, and Doxygen `/** @brief */` placement (methods and
-constructors only — never on structs, enums, or free functions). Never write `TODO`, `FIXME`,
+Before editing any `.cpp`/`.h`/`.hpp` file, invoke the `cpp-style` skill and follow it. Never write `TODO`, `FIXME`,
 `XXX`, `HACK`, or `TBD` comments — pending work goes in a GitHub issue instead; if work is
 genuinely left over, say so in your final report.
 

@@ -30,8 +30,7 @@ Read `.claude/CLAUDE.md` first — its Architecture and Conventions sections des
 codebase's actual shape, and your review is against that, not against generic C++ best practice.
 In particular:
 
-- **Structure**: does a change respect the existing module boundaries (`entities/`, `world/map/`,
-  `world/systems/`, `render/`, `core/`)? Plain OOP, no ECS — don't push toward one. Is a
+- **Structure**: does a change respect the existing module boundaries? Plain OOP, no ECS — don't push toward one. Is a
   responsibility landing on the type that should own it, or has it leaked into `Game` or another
   unrelated class?
 - **Isolation of objects and behavior**: are unit boundaries clean? Is coupling reasonable — does
@@ -43,8 +42,7 @@ In particular:
 - **Long-term validity**: will this change rot as the codebase grows — hardcoded assumptions,
   missing extension points where the surrounding code clearly anticipates more cases (e.g. the
   enemy/level JSON loaders), lifetime or ownership issues around `unique_ptr` and raw/reference
-  usage, per-frame context structs (`MoveContext`, `ProjectileContext`) used instead of new
-  globals or statics.
+  usage, per-frame context structs used instead of new globals or statics.
 - Convention fit: trailing-underscore privates, `#ifndef` guards, forward-declaration-heavy
   headers, `getX()`/`isX()` accessors — flag a real convention violation, not a style nit already
   caught earlier in `/check`.
