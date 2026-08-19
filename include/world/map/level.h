@@ -4,7 +4,6 @@
 #include <filesystem>
 #include <map>
 #include <utility>
-#include <vector>
 
 #include "core/coordinate.h"
 #include "world/map/level_config.h"
@@ -18,6 +17,8 @@ struct DoorConnection
   int destRoomID;
   Coordinate destDoorPos;
 };
+
+using LevelMap = std::map<std::pair<int, Coordinate>, DoorConnection>;
 
 class Level
 {
@@ -63,28 +64,20 @@ class Level
   /** @brief Const access to any room by ID. */
   const Room& getRoom(int roomID) const { return rooms_.at(roomID); }
 
-  /** @brief The authored enemy spawn table for a room, by ID. */
-  const std::vector<EnemySpawnConfig>& getRoomEnemyConfig(int roomID) const
-  {
-    return roomEnemyConfig_.at(roomID);
-  }
-
  private:
   LevelMeta meta_;
   int currentRoomID_;
   GameServices& services_;
   std::map<int, Room> rooms_;
-  std::map<std::pair<int, Coordinate>, DoorConnection> doorConnections_;
-  std::map<int, std::vector<EnemySpawnConfig>> roomEnemyConfig_;
+  LevelMap doorConnections_;
 
-  /** @brief Populate rooms_, roomEnemyConfig_, and doorConnections_ from a
-   *  parsed LevelConfig, spawn each room's enemies, and seal any of its
-   *  doors left unlinked by this level's adjacency back to Wall tiles.
-   *  Called from the constructor; not intended to be re-run. */
+  /** @brief Populate rooms_ and doorConnections_ from a parsed LevelConfig,
+   *  spawn each room's enemies, and seal any of its doors left unlinked by
+   *  this level's adjacency back to Wall tiles.
+   */
   void buildFromConfig(const LevelConfig& config, const EnemyCatalog& catalog);
 
-  /** @brief Convert every door tile with no entry in doorConnections_ back
-   *  to a Wall tile. */
+  /** @brief convert unlinked doors to Wall tiles */
   void sealUnlinkedDoors();
 };
 
