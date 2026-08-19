@@ -12,7 +12,6 @@
 #include "render/ui.h"
 #include "world/objects/projectile.h"
 #include "world/objects/projectile_context.h"
-#include "world/systems/visibility.h"
 
 namespace
 {
@@ -28,22 +27,22 @@ Game::Game(int width, int height, int fps)
       services_(kDefaultSeed),
       player_(Room::WIDTH / 2, Room::HEIGHT / 2),
       enemyCatalog_("assets/enemies"),
-      roomGraph_("assets/levels/level_1", services_, enemyCatalog_),
+      level_("assets/levels/level_1", services_, enemyCatalog_),
       isRunning_(true)
 {
   // add window overlays.
   UI geom = computeUI(termHeight_, termWidth_);
   renderer_.addLayer(
       1, std::make_unique<MapLayer>(geom.winHeight, geom.winWidth, geom.originY,
-                                    geom.originX, roomGraph_));
+                                    geom.originX, level_));
   renderer_.addLayer(2, std::make_unique<EntityLayer>(
                             geom.winHeight, geom.winWidth, geom.originY,
-                            geom.originX, roomGraph_, player_, projectiles_));
+                            geom.originX, level_, player_, projectiles_));
 
   const int hud_margin = 2;
   renderer_.addLayer(
       3, std::make_unique<HUDLayer>(termHeight_, termWidth_, hud_margin,
-                                    player_, roomGraph_));
+                                    player_, level_));
 
   // if debug build, add the debug window.
 #ifndef NDEBUG
@@ -147,20 +146,20 @@ void Game::handleInput()
   }
   if (newPlayerPos.x >= 0 && newPlayerPos.x < Room::WIDTH &&
       newPlayerPos.y >= 0 && newPlayerPos.y < Room::HEIGHT &&
-      roomGraph_.getCurrentRoom()
+      level_.getCurrentRoom()
           .tiles[newPlayerPos.x][newPlayerPos.y]
           .isWalkable())
   {
     // Check for a linked door before applying normal movement.
-    if (roomGraph_.getCurrentRoom()
+    if (level_.getCurrentRoom()
             .tiles[newPlayerPos.x][newPlayerPos.y]
             .getType() == TileType::Door)
     {
-      const DoorConnection* conn = roomGraph_.getDoorConnection(
-          roomGraph_.getCurrentRoomID(), newPlayerPos);
+      const DoorConnection* conn =
+          level_.getDoorConnection(level_.getCurrentRoomID(), newPlayerPos);
       if (conn)
       {
-        transitionRoom(*conn);
+        player_.moveTo(level_.transitionRoom(*conn));
         return;
       }
     }
@@ -170,13 +169,22 @@ void Game::handleInput()
 
 void Game::update()
 {
-  // Recompute FoV visibility for the current room before anything else
-  // runs this frame.
-  visibility::update(roomGraph_.getCurrentRoom(), player_.getPosition(),
-                     player_.getFOV());
+  // Recompute FoV visibility for the current room before anything else runs
+  // this frame, but only when it can have changed.
+  if (playerMoved())
+  {
+    level_.getCurrentRoom().updateVisibility(player_.getPosition(),
+                                             player_.getFOV());
+    lastVisibilityPos_ = player_.getPosition();
+    lastVisibilityRoomID_ = level_.getCurrentRoomID();
+  }
 
   const Coordinate playerPos = player_.getPosition();
-  Room& currentRoom = roomGraph_.getCurrentRoom();
+  Room& currentRoom = level_.getCurrentRoom();
+
+  // Reap before the movement pass so every enemy iterated below is alive.
+  // Must precede MoveContext, which holds a reference into this vector.
+  RoomEnemyState::reap(currentRoom.enemies());
 
   // Build the per-frame contexts once and reuse across every enemy/projectile.
   MoveContext moveCtx{playerPos, currentRoom, goalMapCache_,
@@ -202,15 +210,12 @@ void Game::update()
   // Move enemies toward player.
   for (auto& enemy : currentRoom.enemies())
   {
-    if (enemy->isAlive())
-    {
-      enemy->moveTowardPlayer(moveCtx);
+    enemy->moveTowardPlayer(moveCtx);
 
-      // Check collision with player
-      if (enemy->getPosition() == playerPos)
-      {
-        player_.takeDamage(enemy->getAttackDamage());
-      }
+    // Check collision with player
+    if (enemy->getPosition() == playerPos)
+    {
+      player_.takeDamage(enemy->getAttackDamage());
     }
   }
 
@@ -227,31 +232,13 @@ void Game::update()
                                       return !p->isActive();
                                     }),
                      projectiles_.end());
+}
 
-  // Reap dead enemies at end-of-frame. Safe here because all per-frame
-  // iterations over `enemies` (movement, player-collision, projectile
-  // hit-tests) have completed above.
-  RoomEnemyState::reap(currentRoom.enemies());
+bool Game::playerMoved() const
+{
+  // room id as well as position
+  return player_.getPosition() != lastVisibilityPos_ ||
+         level_.getCurrentRoomID() != lastVisibilityRoomID_;
 }
 
 void Game::render() { renderer_.compose(); };
-
-void Game::transitionRoom(const DoorConnection& conn)
-{
-  roomGraph_.setCurrentRoomID(conn.destRoomID);
-
-  // Place the player one tile inward from the destination door so they
-  // don't immediately re-trigger the door on the next input.
-  Coordinate dest = conn.destDoorPos;
-  Coordinate inward = dest;
-  if (dest.x == 0)
-    inward.x = 1;
-  else if (dest.x == Room::WIDTH - 1)
-    inward.x = Room::WIDTH - 2;
-  else if (dest.y == 0)
-    inward.y = 1;
-  else if (dest.y == Room::HEIGHT - 1)
-    inward.y = Room::HEIGHT - 2;
-
-  player_.moveTo(inward);
-}

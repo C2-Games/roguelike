@@ -12,6 +12,7 @@
 #include "world/map/tile.h"
 
 class EnemyCatalog;
+class FOV;
 
 struct Room
 {
@@ -56,6 +57,14 @@ struct Room
    * @throws std::runtime_error if this room has no door with that label.
    */
   Coordinate doorAt(DoorNumber number) const;
+
+  /**
+   * @brief Recompute this room's per-tile visibility from a viewer position.
+   *
+   * @param origin World position of the viewer (typically the player).
+   * @param fov Precomputed FoV mask defining which offsets are lit.
+   */
+  void updateVisibility(Coordinate origin, const FOV& fov);
 
   /** @brief Reset every cell in the visible grid to false. */
   void clearVisible();

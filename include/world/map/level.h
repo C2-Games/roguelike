@@ -52,6 +52,15 @@ class Level
   /** @brief Set the current-room cursor (called on door transitions). */
   void setCurrentRoomID(int id) { currentRoomID_ = id; }
 
+  /**
+   * @brief Enter the room on the far side of `conn`.
+   *
+   * @param conn Door connection describing the destination.
+   * @return The tile one step inward from the destination door, so whoever
+   * walked through does not immediately re-trigger it.
+   */
+  Coordinate transitionRoom(const DoorConnection& conn);
+
   /** @brief Const access to the current room. */
   const Room& getCurrentRoom() const { return rooms_.at(currentRoomID_); }
 

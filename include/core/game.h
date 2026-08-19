@@ -40,12 +40,17 @@ class Game
   GameServices services_;
   Player player_;
   EnemyCatalog enemyCatalog_;
-  Level roomGraph_;
+  Level level_;
   GoalMapCache goalMapCache_;
   std::vector<std::unique_ptr<Projectile>> projectiles_;
 
   bool isRunning_;
   Renderer renderer_;
+
+  // player state as of the last visibility recompute. seeded out of range so
+  // the first frame always recomputes
+  Coordinate lastVisibilityPos_ = Coordinate(-1, -1);
+  int lastVisibilityRoomID_ = -1;
 
   /**
    * @brief Get the frame duraction in milliseconds.
@@ -64,17 +69,18 @@ class Game
   void update();
 
   /**
+   * @brief Whether the player has moved or changed rooms since visibility was
+   * last recomputed.
+   *
+   * @return True when the field of view is stale and needs recomputing.
+   */
+  bool playerMoved() const;
+
+  /**
    * @brief Renders the game state. Draws the player, enemies, and UI elements
    * on the screen.
    */
   void render();
-
-  /**
-   * @brief Transition the player to a connected room via a door.
-   *
-   * @param conn The door connection describing the destination.
-   */
-  void transitionRoom(const DoorConnection& conn);
 };
 
 #endif
