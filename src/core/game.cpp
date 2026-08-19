@@ -32,17 +32,18 @@ Game::Game(int width, int height, int fps)
 {
   // add window overlays.
   WindowPosition geom = centerWindow(termHeight_, termWidth_);
-  renderer_.addLayer(
-      1, std::make_unique<MapLayer>(geom.winHeight, geom.winWidth, geom.originY,
-                                    geom.originX, level_));
-  renderer_.addLayer(2, std::make_unique<EntityLayer>(
-                            geom.winHeight, geom.winWidth, geom.originY,
-                            geom.originX, level_, player_, projectiles_));
+  renderer_.addLayer(RenderLayer::Map, std::make_unique<MapLayer>(
+                                           geom.winHeight, geom.winWidth,
+                                           geom.originY, geom.originX, level_));
+  renderer_.addLayer(RenderLayer::Entity,
+                     std::make_unique<EntityLayer>(
+                         geom.winHeight, geom.winWidth, geom.originY,
+                         geom.originX, level_, player_, projectiles_));
 
   const int hud_margin = 2;
-  renderer_.addLayer(
-      3, std::make_unique<HUDLayer>(termHeight_, termWidth_, hud_margin,
-                                    player_, level_));
+  renderer_.addLayer(RenderLayer::HUD,
+                     std::make_unique<HUDLayer>(termHeight_, termWidth_,
+                                                hud_margin, player_, level_));
 
   // if debug build, add the debug window.
 #ifndef NDEBUG
