@@ -47,7 +47,7 @@ void initColors()
   registerPair(ColorPair::HealthCritical, COLOR_RED, COLOR_BLACK);
   registerPair(ColorPair::BarEmpty, kGreyDark, COLOR_BLACK);
 
-  //Shield bar: blue fill, dim grey for the portion already lost so the
-  // bar's full width stays readable.
+  // Shield bar: blue fill, dim grey for the portion already lost so the
+  //  bar's full width stays readable.
   registerPair(ColorPair::Shield, COLOR_BLUE, COLOR_BLACK);
 }

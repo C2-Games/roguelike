@@ -33,7 +33,7 @@ void HUDLayer::drawBar(int row, int col, int filled, int total, ColorPair fill,
                        std::optional<ColorPair> empty)
 {
   // block glyphs are not plain chars, so this needs the cchar_t path rather
-  // than mvwaddch. 
+  // than mvwaddch.
   wchar_t filledGlyph[] = {kFilledCell, L'\0'};
   cchar_t filledCell;
   setcchar(&filledCell, filledGlyph, A_NORMAL, static_cast<short>(fill),
