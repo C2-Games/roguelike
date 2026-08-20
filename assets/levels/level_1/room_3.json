@@ -3,9 +3,9 @@
   "name": "Chamber of Shadows",
   "ref": "chambered.txt",
   "enemies": [
-    { "name": "goblin", "class": "base", "tier": 2, "min": 2, "max": 8, "prob_dist": 0.9 }
+    { "name": "goblin", "class": "base", "tier": 2, "range": [2, 8] }
   ],
   "loot": [
-    { "name": "health_pack", "class": "health", "tier": 2, "min": 1, "max": 2 }
+    { "name": "health_pack", "class": "health", "tier": 2, "range": [1, 2] }
   ]
 }
