@@ -5,12 +5,13 @@
 #include <map>
 #include <string>
 
+#include "entities/entity_symbol.h"
 #include "entities/fov.h"
 
 /** @brief Resolved per-tier stats for one named enemy. */
 struct EnemyTierAttributes
 {
-  char symbol;
+  EntitySymbol symbol;
   int health;
   int attackDamage;
   FOV fov;

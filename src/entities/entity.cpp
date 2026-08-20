@@ -1,9 +1,13 @@
 #include "entities/entity.h"
 
-Entity::Entity(int x, int y, char symbol, int health, int speed)
-    : position_(x, y),
-      symbol_(symbol),
+#include <utility>
+
+Entity::Entity(Coordinate position, EntitySymbol symbol, int health, int speed,
+               FOV fov)
+    : position_(position),
+      symbol_(std::move(symbol)),
       health_(health),
       speed_(speed),
-      frameCounter_(0)
+      frameCounter_(0),
+      fov_(std::move(fov))
 {}
