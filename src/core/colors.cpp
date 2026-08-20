@@ -39,4 +39,15 @@ void initColors()
   registerPair(ColorPair::WeaponRapid, COLOR_YELLOW, COLOR_BLACK);
   registerPair(ColorPair::WeaponHeavy, COLOR_RED, COLOR_BLACK);
   registerPair(ColorPair::WeaponSniper, COLOR_MAGENTA, COLOR_BLACK);
+
+  // Health bar: one fill colour per threshold band, plus a dim grey for the
+  // portion already lost so the bar's full width stays readable.
+  registerPair(ColorPair::HealthGood, COLOR_GREEN, COLOR_BLACK);
+  registerPair(ColorPair::HealthWarn, COLOR_YELLOW, COLOR_BLACK);
+  registerPair(ColorPair::HealthCritical, COLOR_RED, COLOR_BLACK);
+  registerPair(ColorPair::BarEmpty, kGreyDark, COLOR_BLACK);
+
+  //Shield bar: blue fill, dim grey for the portion already lost so the
+  // bar's full width stays readable.
+  registerPair(ColorPair::Shield, COLOR_BLUE, COLOR_BLACK);
 }

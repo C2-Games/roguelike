@@ -16,6 +16,12 @@ enum class ColorPair : short
   WeaponRapid = 6,   ///< Rapid Dart color.
   WeaponHeavy = 7,   ///< Heavy Slug color.
   WeaponSniper = 8,  ///< Sniper Round color.
+
+  HealthGood = 9,       ///< Health bar fill above the warning threshold.
+  HealthWarn = 10,      ///< Health bar fill at or below 50 health.
+  HealthCritical = 11,  ///< Health bar fill at or below 20 health.
+  BarEmpty = 12,        ///< Unfilled remainder of any bar.
+  Shield = 13,          ///< Reserved for the shield overlay bar.
 };
 
 /**
