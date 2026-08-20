@@ -34,11 +34,6 @@ std::vector<std::unique_ptr<Enemy>> rollForRoom(
       break;
     }
 
-    if (!std::bernoulli_distribution(entry.probDist)(services.rng))
-    {
-      continue;
-    }
-
     const EnemyTierAttributes* attrs = catalog.find(entry.name, entry.tier);
     if (attrs == nullptr)
     {
@@ -48,16 +43,15 @@ std::vector<std::unique_ptr<Enemy>> rollForRoom(
       continue;
     }
 
-    int lo = entry.min;
-    int hi = entry.max;
-    if (lo > hi)
+    int lower = entry.range[0];
+    int upper = entry.range[1];
+    if (lower > upper)
     {
       LOG_ERR("Room " + std::to_string(room.roomID) + ": '" + entry.name +
-              "' has min > max; swapping");
-      std::swap(lo, hi);
+              "' has an inverted range; swapping");
+      std::swap(lower, upper);
     }
-
-    int count = std::uniform_int_distribution<int>(lo, hi)(services.rng);
+    int count = std::uniform_int_distribution<int>(lower, upper)(services.rng);
     for (int i = 0; i < count && nextIdx < shuffledSpawns.size();
          ++i, ++nextIdx)
     {
