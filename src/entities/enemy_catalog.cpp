@@ -34,9 +34,8 @@ EnemyTierAttributes parseTierAttributes(const EntitySymbol& symbol,
   };
 }
 
-// Walks the nested symbol array (rows of cells) authored in enemy JSON into
-// an EntitySymbol grid. An empty cell string collapses to '\0', signalling a
-// blank cell to the renderer.
+// walks the nested symbol array (rows of cells) authored in enemy JSON into
+// an EntitySymbol grid.
 EntitySymbol parseSymbol(const nlohmann::json& symbolJson)
 {
   EntitySymbol symbol;
