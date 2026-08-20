@@ -3,7 +3,7 @@
 #include <utility>
 
 Entity::Entity(Coordinate position, EntitySymbol symbol, int health, int speed,
-               FOV fov)
+               std::unique_ptr<FOV> fov)
     : position_(position),
       symbol_(std::move(symbol)),
       health_(health),

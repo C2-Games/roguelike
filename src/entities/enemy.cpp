@@ -111,8 +111,8 @@ Coordinate pickWanderTile(const Enemy* self, Coordinate pos, const Room& room,
 
 }  // namespace
 
-Enemy::Enemy(Coordinate position, EntitySymbol symbol, int health, int speed,
-             int attackDamage, FOV fov, int chaseMemoryDuration)
+Enemy::Enemy(Coordinate position, std::unique_ptr<FOV> fov, EntitySymbol symbol,
+             int health, int speed, int attackDamage, int chaseMemoryDuration)
     : Entity(position, std::move(symbol), health, speed, std::move(fov)),
       attackDamage_(attackDamage),
       chaseMemoryDuration_(chaseMemoryDuration),
@@ -124,7 +124,7 @@ void Enemy::moveTowardPlayer(const FrameState& frame, const GoalMapCache& cache,
                              GameServices& services)
 {
   const Coordinate playerPos = frame.player.getPosition();
-  const bool inFoV = fov_.in(position_, playerPos);
+  const bool inFoV = fov_->in(position_, playerPos);
 
   // Memory refresh runs every frame so the enemy locks on the moment the
   // player enters its FoV, regardless of speed throttling.
