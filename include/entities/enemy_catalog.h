@@ -38,8 +38,6 @@ class EnemyCatalog
    * @brief Look up a name/tier combination.
    *
    * @param name Enemy name as authored in its config (e.g. "goblin").
-   * Names are unique across the catalog; an enemy's class is not part of
-   * the key.
    * @param tier Tier number (e.g. 1 for "tier_1").
    * @return Pointer to the resolved attributes, or nullptr if not found.
    */
