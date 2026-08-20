@@ -56,7 +56,8 @@ class HUDLayer : public RenderStack
  private:
   /**
    * @brief Draw one horizontal bar of block glyphs. The filled cells take
-   * `fill`; the remainder is drawn dim so the bar's full width stays visible.
+   * `fill`; the remainder is drawn dim when an empty colour is supplied, so
+   * the bar's full width stays visible.
    *
    * @param row Absolute row to draw at.
    * @param col Absolute column the bar starts at.
@@ -64,8 +65,7 @@ class HUDLayer : public RenderStack
    * @param total Total cells in the bar.
    * @param fill Colour pair for the filled portion.
    * @param empty Colour pair for the unfilled remainder, or nullopt to leave
-   * those cells untouched — which is what an overlay bar drawn on top of
-   * another one wants.
+   * those cells untouched
    */
   void drawBar(int row, int col, int filled, int total, ColorPair fill,
                std::optional<ColorPair> empty);
