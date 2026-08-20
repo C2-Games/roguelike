@@ -3,7 +3,6 @@
 
 #include "core/coordinate.h"
 #include "entities/entity.h"
-#include "entities/fov.h"
 #include "world/objects/weapon.h"
 
 class Player : public Entity
@@ -12,17 +11,12 @@ class Player : public Entity
   /**
    * @brief Construct a new Player object.
    *
-   * @param x Starting column position of player.
-   * @param y Starting row position of player.
+   * @param position Starting position of player.
    * @param health Starting health of player.
    * @param speed Frames per move. For example, speed = 2, means a player can
    * move per every 2 frames/renders. By default, equal to 1.
-   * @param sightRx Horizontal FoV radius (columns). By default, 16.
-   * @param sightRy Vertical FoV radius (rows). By default, 10. Vertical is
-   * smaller because a row of terminal cells is taller than a column is wide.
    */
-  Player(int x, int y, int health = 100, int speed = 1, int sightRx = 16,
-         int sightRy = 10);
+  explicit Player(Coordinate position, int health = 100, int speed = 1);
 
   /**
    * @brief Get the initial max health of player.
@@ -37,13 +31,6 @@ class Player : public Entity
    * @param damage Amount of damage to apply.
    */
   void takeDamage(int damage) override;
-
-  /**
-   * @brief Get the player's current field-of-view mask.
-   *
-   * @return const FOV& Offset set centred on the player.
-   */
-  const FOV& getFOV() const { return fov_; }
 
   /**
    * @brief Rebuild the player's cached FoV mask from new radii.
@@ -76,7 +63,6 @@ class Player : public Entity
 
  private:
   int maxHealth_;
-  FOV fov_;
   Coordinate lastDirection_ = Coordinate(1, 0);
   Weapon weapon_;
 };

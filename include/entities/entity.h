@@ -2,11 +2,14 @@
 #define ENTITY_H
 
 #include "core/coordinate.h"
+#include "entities/entity_symbol.h"
+#include "entities/fov.h"
 
 class Entity
 {
  public:
-  Entity(int x, int y, char symbol, int health, int speed);
+  Entity(Coordinate position, EntitySymbol symbol, int health, int speed,
+         FOV fov);
 
   virtual ~Entity() = default;
 
@@ -20,9 +23,9 @@ class Entity
   /**
    * @brief Get the entities symbol.
    *
-   * @return const char
+   * @return const EntitySymbol&
    */
-  char getSymbol() const { return symbol_; };
+  const EntitySymbol& getSymbol() const { return symbol_; };
 
   /**
    * @brief Get the entity position.
@@ -37,6 +40,13 @@ class Entity
    * @return const int [frames / move]
    */
   int getSpeed() const { return speed_; };
+
+  /**
+   * @brief Get the entity's field-of-view mask.
+   *
+   * @return const FOV&
+   */
+  const FOV& getFOV() const { return fov_; }
 
   /**
    * @brief Entity is alive.
@@ -57,10 +67,11 @@ class Entity
 
  protected:
   Coordinate position_;
-  char symbol_;
+  EntitySymbol symbol_;
   int health_;
   int speed_;
   int frameCounter_;
+  FOV fov_;
 
   /**
    * @brief Move hook that moves player to new position based on their speed.

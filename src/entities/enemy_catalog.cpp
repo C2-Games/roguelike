@@ -3,6 +3,7 @@
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
+#include <utility>
 
 namespace
 {
@@ -19,7 +20,7 @@ int parseTierKey(const std::string& key)
   return std::stoi(key.substr(prefix.size()));
 }
 
-EnemyTierAttributes parseTierAttributes(char symbol,
+EnemyTierAttributes parseTierAttributes(const EntitySymbol& symbol,
                                         const nlohmann::json& attrs)
 {
   const auto& fovArr = attrs.at("fov");
@@ -31,6 +32,24 @@ EnemyTierAttributes parseTierAttributes(char symbol,
       attrs.at("chase").get<int>(),
       attrs.at("speed").get<int>(),
   };
+}
+
+// walks the nested symbol array (rows of cells) authored in enemy JSON into
+// an EntitySymbol grid.
+EntitySymbol parseSymbol(const nlohmann::json& symbolJson)
+{
+  EntitySymbol symbol;
+  for (const auto& row : symbolJson)
+  {
+    std::vector<char> parsedRow;
+    for (const auto& cell : row)
+    {
+      const std::string cellStr = cell.get<std::string>();
+      parsedRow.push_back(cellStr.empty() ? '\0' : cellStr.at(0));
+    }
+    symbol.push_back(std::move(parsedRow));
+  }
+  return symbol;
 }
 
 }  // namespace
@@ -74,8 +93,7 @@ void EnemyCatalog::loadFile(const std::filesystem::path& path)
     file >> enemyJson;
 
     const std::string name = enemyJson.at("name").get<std::string>();
-    const char symbol =
-        enemyJson.at("symbol").at(0).at(0).get<std::string>().at(0);
+    const EntitySymbol symbol = parseSymbol(enemyJson.at("symbol"));
 
     std::map<int, EnemyTierAttributes> tiers;
     for (const auto& [tierKey, attrs] : enemyJson.at("attributes").items())

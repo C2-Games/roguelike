@@ -24,7 +24,7 @@ Game::Game(int width, int height, int fps)
       termHeight_(height),
       fps_(fps),
       services_(kDefaultSeed),
-      player_(Room::WIDTH / 2, Room::HEIGHT / 2),
+      player_(Coordinate(Room::WIDTH / 2, Room::HEIGHT / 2)),
       enemyCatalog_("assets/enemies"),
       level_("assets/levels/level_1", services_, enemyCatalog_),
       isRunning_(true)

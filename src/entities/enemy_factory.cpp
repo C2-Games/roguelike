@@ -63,8 +63,8 @@ std::vector<std::unique_ptr<Enemy>> rollForRoom(
     {
       const Coordinate& pos = shuffledSpawns[nextIdx];
       enemies.push_back(std::make_unique<Enemy>(
-          pos.x, pos.y, attrs->symbol, attrs->health, attrs->speed,
-          attrs->attackDamage, attrs->fov, attrs->chaseMemoryDuration));
+          pos, attrs->symbol, attrs->health, attrs->speed, attrs->attackDamage,
+          attrs->fov, attrs->chaseMemoryDuration));
     }
   }
 

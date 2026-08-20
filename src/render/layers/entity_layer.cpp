@@ -2,11 +2,37 @@
 
 #include <ncurses.h>
 
+#include <cstddef>
 #include <memory>
 
 #include "entities/enemy.h"
 #include "render/window_position.h"
 #include "world/map/room.h"
+
+namespace
+{
+
+// draws each non-empty cell of `symbol` at `origin + (col, row)`.
+void drawSymbol(WINDOW* win, const EntitySymbol& symbol, Coordinate origin,
+                const Room* room)
+{
+  for (std::size_t row = 0; row < symbol.size(); ++row)
+  {
+    for (std::size_t col = 0; col < symbol[row].size(); ++col)
+    {
+      const char cell = symbol[row][col];
+      if (cell == '\0') continue;
+
+      const int x = origin.x + static_cast<int>(col);
+      const int y = origin.y + static_cast<int>(row);
+      if (room != nullptr && !room->isVisible(x, y)) continue;
+
+      mvwaddch(win, y, x, cell);
+    }
+  }
+}
+
+}  // namespace
 
 EntityLayer::EntityLayer(
     int h, int w, int y, int x, const Level& graph, const Player& player,
@@ -24,18 +50,13 @@ void EntityLayer::drawEnemies()
   // iterate through vector of enemies.
   for (const auto& enemy : room.enemies())
   {
-    // if alive AND inside the player's current FoV, draw symbol.
-    // Dynamic content (enemies) is never shown outside the FoV
+    // if alive, draw the symbol cells that are inside the player's current
+    // FoV. Dynamic content (enemies) is never shown outside the FoV.
     if (enemy->isAlive())
     {
-      Coordinate pos = enemy->getPosition();
-
-      if (room.isVisible(pos.x, pos.y))
-      {
-        // Hook: OR in colorAttr(ColorPair::EnemyDefault) — or a
-        // per-enemy pair — once enemy colouring is designed.
-        mvwaddch(win_, pos.y, pos.x, enemy->getSymbol());
-      }
+      // Hook: OR in colorAttr(ColorPair::EnemyDefault) — or a
+      // per-enemy pair — once enemy colouring is designed.
+      drawSymbol(win_, enemy->getSymbol(), enemy->getPosition(), &room);
     };
   };
 };
@@ -69,9 +90,7 @@ void EntityLayer::drawPlayer()
   // no visibility check is needed here.
   if (player_.isAlive())
   {
-    Coordinate pos = player_.getPosition();
-
-    mvwaddch(win_, pos.y, pos.x, player_.getSymbol());
+    drawSymbol(win_, player_.getSymbol(), player_.getPosition(), nullptr);
   };
 };
 
