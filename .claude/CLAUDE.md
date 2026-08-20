@@ -10,16 +10,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    may carry several issues — record them all. If a change is requested directly, without
    `/start-issue` having been run, draft the issue the same way `/new-issue` does — matching
    template, title, and milestone — show it, and wait for explicit approval before creating the
-   issue and branch and proceeding.
+   issue and branch and proceeding. For parallel issues, `/start-issue` can isolate work in a git
+   worktree (`.claude/worktrees/<branch>`) instead of switching the current checkout — see the
+   Lifecycle diagram in WORKFLOW.md.
 2. **Format and static analysis run once per change, at `/check`.** Nothing is checked while you
    write — there is no write-time hook. `/check` applies `clang-format -i` over `src/`/`include/`,
-   then runs `scripts/ci-local.sh` (cppcheck, clang-tidy, build), then — when `src/` or `include/`
-   actually changed on the branch — dispatches the `reviewer` agent for a read-only
-   structure/efficiency/isolation pass. It is the required final step of every plan. A single-file, purely documentation/comment or
+   then runs `scripts/ci-local.sh` (cppcheck, clang-tidy, build) in the background, since the first
+   run can take minutes, then — when `src/` or `include/` actually changed on the branch —
+   dispatches the `reviewer` agent for a read-only structure/efficiency/isolation pass (grounded in
+   the originating issue and the `cpp-style` skill, run asynchronously), then stamps
+   `.claude/.last-check` with a hash of `src/`/`include/` that `/pr` verifies before drafting a
+   body. It is the required final step of every plan. A single-file, purely documentation/comment or
    one-line fix may skip formal plan mode; anything touching `src/`/`include/` behavior, spanning
    multiple files, or otherwise non-trivial still requires a plan before editing.
 3. **Never `git commit` or `git push`.** Both are denied in `.claude/settings.json`; publishing is
-   the user's call. `/pr` prepares the title and body and hands the commands back.
+   the user's call. `/pr` prepares the title and body and hands the commands back (after
+   confirming `/check` is current, and keeping bodies short — no decision narration).
 4. **This file is maintained with the code, not after it.** Every plan states whether the change
    earns an update here — yes for a new subsystem, a file-layout change, ownership moving between
    types, a changed convention, or a placeholder becoming real; no for renames, small refactors and
@@ -31,8 +37,8 @@ skill (`.claude/skills/cpp-style/SKILL.md`) carries the conventions no linter ca
 comment voice, and where a Doxygen docstring is allowed to go — and applies to all C++ work here.
 Two project agents back implementation and review: `.claude/agents/implementer.md` executes one
 isolated plan task at a time (dispatched in parallel when tasks are independent), and
-`.claude/agents/reviewer.md` gives `/check` a read-only structure/efficiency/isolation pass over
-`src/`/`include/` changes.
+`.claude/agents/reviewer.md` gives `/check` a read-only structure/efficiency/isolation/style pass
+over `src/`/`include/` changes, grounded in the originating issue.
 
 @.claude/WORKFLOW.md
 
