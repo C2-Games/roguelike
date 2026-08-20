@@ -1,6 +1,6 @@
 ---
 name: cpp-style
-description: This repo's C++ conventions — Google + Allman braces, naming, comment voice, and Doxygen docstring placement. Use whenever writing, editing, reviewing, or refactoring any C++ (.cpp/.h/.hpp) here, including new functions, classes, or files, and for small snippets or single-function edits. Also use when asked to "clean up", "format", "lint", or "make this more idiomatic". Apply by default without being asked. Covers the rules no linter enforces; clang-format/cppcheck/clang-tidy all run at /check, so do not invoke them yourself.
+description: C++ conventions — Google + Allman braces, naming, commenting, and Doxygen docstring placement. Use whenever writing, editing, reviewing, or refactoring any C++ (.cpp/.h/.hpp) here, including new functions, classes, or files, and for small snippets or single-function edits. Also use when asked to "clean up", "format", "lint", or "make this more idiomatic". Apply by default without being asked. Covers the rules no linter enforces; clang-format/cppcheck/clang-tidy all run at /check, so do not invoke them yourself.
 ---
 
 # C++ style guide
@@ -11,7 +11,7 @@ this user, not just when asked to "clean up" — inconsistency between old
 and new code in the same file is its own kind of mess.
 
 This skill covers the conventions a linter *cannot* express — naming,
-comment voice, docstring placement. Formatting and static analysis are
+commenting, docstring placement. Formatting and static analysis are
 handled by `/check` (see **Verification** at the bottom); don't run those
 tools by hand.
 
@@ -23,6 +23,20 @@ namespaces, and `if`/`for`/`while` all open a new line for `{`. The
 repo's own `.clang-format` at the root is the single source of truth;
 this skill does not carry a copy to drift out of sync with it.
 
+**Example:**
+```cpp
+// bad: attached brace.
+if (isAlive()) {
+  takeDamage(1);
+}
+
+// good: allman — the brace always starts its own line.
+if (isAlive())
+{
+  takeDamage(1);
+}
+```
+
 ## Naming
 
 | Element | Convention | Example |
@@ -31,7 +45,7 @@ this skill does not carry a copy to drift out of sync with it.
 | Enum members | `PascalCase`, no `k` prefix | `Wall`, `Floor`, `North`, `FogUnexplored` |
 | Methods, free functions | `camelCase` | `moveTowardPlayer`, `colorAttr`, `initColors` |
 | Member variables | trailing-underscore `camelCase_` | `attackDamage_`, `chaseTurnsRemaining_` |
-| Constants | `ALL_CAPS` | `HEIGHT` |
+| Constants | `ALL_CAPS`, no `k` prefix | `HEIGHT` |
 | Files | `snake_case` | `goal_map_cache.h` |
 | Locals | named for what they hold or do | `tiers`, `attributes`, `candidates` |
 
@@ -45,6 +59,33 @@ what it holds or what it locates, so the dereference downstream reads as
 prose. `auto tiers = catalog_.find(name);` says what `tiers->second` will
 be; `auto it = catalog_.find(name);` says nothing at all.
 
+
+**Example:**
+```cpp
+// bad: PascalCase method, k-prefixed constant, no trailing underscore.
+class enemy_unit
+{
+ public:
+  static const int kMaxHealth = 100;
+  void MoveTowardPlayer();
+
+ private:
+  int AttackDamage;
+};
+
+// good: matches every row of the table above.
+class EnemyUnit
+{
+ public:
+  static const int MAX_HEALTH = 100;
+  void moveTowardPlayer();
+
+ private:
+  int attackDamage_;
+};
+```
+
+
 ## Comments
 
 Every comment ends in a period, and comment text is lowercase throughout
@@ -52,13 +93,38 @@ Every comment ends in a period, and comment text is lowercase throughout
 low relative to code. Use comments to explain *why* something is done a
 particular way, not to restate what well-named identifiers and
 straightforward operations already make obvious. A comment on
-self-explanatory code is noise the next reader has to filter out.
+self-explanatory code is noise the next reader has to filter out. Do not
+add long comments. Do not mention other commits, issues, PRs, or the
+current task — describe the code as it stands, not the change that
+produced it; that context won't mean anything once the change is old
+news.
+
+**Example:**
+```cpp
+// bad: restates what the code already says, wrong casing/period.
+// Increment health by heal amount
+health_ += healAmount;
+
+// good: the code is already clear, so skip the comment entirely.
+health_ += healAmount;
+
+// bad: narrates the current change and points at a tracker instead of
+// describing the code as it stands.
+// this refactor clamps health instead of asserting; see PR #482.
+health_ = std::min(health_ + healAmount, maxHealth_);
+
+// good: explains why the code is written this way, with nothing tying it
+// to the change that introduced it.
+// clamped rather than asserted: overheal from stacked buffs is expected
+// in the late game and should just cap out silently.
+health_ = std::min(health_ + healAmount, maxHealth_);
+```
 
 ## Docstrings
 
 Use `/** */`-style Doxygen block docstrings — **only** on class methods
 and constructors. Never add one to a class declaration, struct
-declaration, enum declaration, or a free function.
+declaration, or an enum declaration.
 
 Shape:
 - `@brief <description>` line first.
@@ -67,10 +133,12 @@ Shape:
 - `@return <description>` — a real description of what's returned, not
   a bare restatement of the type (avoid e.g. `@return int`). Omit
   entirely for `void`.
-- Collapse to a single line (`/** @brief <description>. */`) when
-  there's no `@param`/`@return` content. Otherwise use a multi-line
-  block: `@brief` line, a blank `*` line, then the `@param`/`@return`
-  lines.
+- Collapse to a single line (`/** @brief <description>. */`) only when
+  the method takes no parameters *and* returns `void` — i.e. there's
+  genuinely no `@param`/`@return` content to add. A method with even one
+  parameter, or a non-`void` return, always gets the multi-line block:
+  `@brief` line, a blank `*` line, then the `@param`/`@return` lines.
+- **DO NOT ADD ADDITIONAL NOTES**. For example adding a note between the `@brief` & the `@return` or `@param`.
 
 ```cpp
 class Enemy : public Entity
@@ -96,8 +164,30 @@ class Enemy : public Entity
   void moveTowardPlayer(const FrameState& frame, GoalMapCache& cache,
                         GameServices& services);
 
-  /** @brief Reduce enemy health by a damage amount. */
+  /**
+   * @brief Check whether the player is close enough to trigger a chase.
+   *
+   * @param frame Per-frame world state, used for the player's position.
+   * @return True if the player is within this enemy's chase radius.
+   */
+  bool isWithinChaseRadius(const FrameState& frame) const;
+
+  /**
+   * @brief Report whether the enemy still has health remaining.
+   *
+   * @return True if the enemy has not yet been reduced to zero health.
+   */
+  bool isAlive() const;
+
+  /**
+   * @brief Reduce enemy health by a damage amount.
+   *
+   * @param damage Amount of damage to apply.
+   */
   void takeDamage(int damage);
+
+  /** @brief Reset the enemy back to its starting position and full health. */
+  void resetToSpawn();
 };
 ```
 
@@ -111,14 +201,19 @@ special-casing needed between old and new code.
   method/constructor-only.
 - `@return int` / `@return bool` — restates the signature; describe what
   the value *means* instead.
+- Collapsing to a single-line `/** @brief ... */` when the method
+  actually takes a parameter or returns non-`void` — the one-liner is
+  only for zero-parameter, `void` methods; anything else needs the
+  multi-line block.
 - Uppercase or non-period-terminated comments (`// Reset the counter`
   instead of `// resets the counter after a room transition.`).
+- A comment or docstring that narrates the current change ("this refactor...", "as
+  part of...") or points at a commit/issue/PR — describe the code as it
+  is, not how or why it changed.
 - Renaming existing camelCase methods to PascalCase to match "real"
   Google style — this codebase's naming is camelCase methods by design;
   match it, don't "fix" it.
-- Prefixing enum members with `k` (`kWall`, `kNorth`) because they're
-  "constants" — enum members are an exception to the Constants row; they
-  take bare `PascalCase` by design.
+- Prefixing enum members or constants with `k` (`kWall`, `kNorth`, `kConstant`).
 - A `TODO`/`FIXME`/`XXX`/`HACK`/`TBD` comment — pending work goes in a GitHub
   issue, never in the source. If something is worth remembering, it is worth
   an issue; if it is not worth an issue, a comment will not save it.

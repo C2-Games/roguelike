@@ -25,6 +25,10 @@ paste diffs.
 reimplement its checks — it already runs clang-format, cppcheck, clang-tidy and the build against a
 `build/` tree with `compile_commands.json`.
 
+Run it in the background — the first pass configures CMake and can take several minutes, past a
+foreground call's default timeout. Use `run_in_background: true` on the `Bash` call, wait for its
+completion notification (don't poll with `sleep`), then read the output.
+
 ```bash
 python3 .claude/hooks/toolchain_run.py 'bash scripts/ci-local.sh'
 ```
@@ -36,6 +40,12 @@ Mac/Linux developer. Use `--where` to see which environment was picked.
 Success is the literal line `== ALL CHECKS PASSED ==`. Anything less is a failure — report the
 failing section and fix it. The first run configures CMake and may take a few minutes; later runs
 reuse `build/`.
+
+Once `== ALL CHECKS PASSED ==`, stamp it so `/pr` can confirm freshness later:
+
+```bash
+python3 .claude/hooks/toolchain_run.py 'find src include -type f \( -name "*.cpp" -o -name "*.h" -o -name "*.hpp" \) -print0 | sort -z | xargs -0 sha256sum | sha256sum | cut -d" " -f1 > .claude/.last-check'
+```
 
 If it reports a missing tool, install the toolchain for the platform:
 
@@ -57,9 +67,11 @@ git status --porcelain -- src/ include/
 If both are empty, skip this step with a one-line note — a docs/config/scripts-only change has
 nothing for a code reviewer to look at.
 
-If either is non-empty, dispatch the `reviewer` agent (`.claude/agents/reviewer.md`) — a
-read-only pass over the diff for structure, efficiency, long-term validity, and isolation of
-objects and behavior. Present its findings to the user directly as part of the `/check` output.
+If either is non-empty, dispatch the `reviewer` agent (`.claude/agents/reviewer.md`) via the
+`Agent` tool — it runs in the background; wait for its completion notification rather than
+blocking the turn or polling. It gives a read-only pass over the diff for structure, efficiency,
+long-term validity, and isolation of objects and behavior. Present its findings to the user
+directly as part of the `/check` output.
 
 **Findings are not optional follow-up.** If the reviewer reports nothing significant, `/check`
 has passed — proceed to `/pr`. If it reports findings, `/check` has *not* passed: re-enter plan

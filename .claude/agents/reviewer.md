@@ -26,9 +26,12 @@ CMake files) — those are out of scope for this pass.
 
 ## What to look for
 
-Read `.claude/CLAUDE.md` first — its Architecture and Conventions sections describe this
-codebase's actual shape, and your review is against that, not against generic C++ best practice.
-In particular:
+Ground the review in two things before reading the diff: `.claude/CLAUDE.md`'s Architecture and
+Conventions sections (this codebase's actual shape), and the originating issue(s) — read
+`.claude/.current-issue` for the issue number(s), then `gh issue view <n>` for each, to see what
+this change was actually asked to accomplish. (If neither file nor `gh` is available, review
+against CLAUDE.md alone rather than blocking.) Judge the diff's structure and scope against both,
+not against generic C++ best practice or a scope you'd personally prefer. In particular:
 
 - **Structure**: does a change respect the existing module boundaries? Plain OOP, no ECS — don't push toward one. Is a
   responsibility landing on the type that should own it, or has it leaked into `Game` or another
@@ -46,6 +49,11 @@ In particular:
 - Convention fit: trailing-underscore privates, `#ifndef` guards, forward-declaration-heavy
   headers, `getX()`/`isX()` accessors — flag a real convention violation, not a style nit already
   caught earlier in `/check`.
+- **Style conventions the linter can't check**: consult `.claude/skills/cpp-style/SKILL.md` —
+  Doxygen docstrings only on methods/constructors (never class/struct/enum/free-function), comment
+  voice (lowercase, period-terminated, explains *why* not *what*), no `TODO`/`FIXME`/`XXX`/`HACK`/
+  `TBD`, no `k`-prefix on enum members or constants. `clang-tidy` doesn't catch any of these, so
+  this pass is the only place they're verified.
 
 Do not re-flag formatting, brace style, include guards' exact spelling, or anything
 clang-format/cppcheck/clang-tidy would already catch — that already ran and passed before you were
