@@ -79,10 +79,10 @@ Coordinate stepDownGradient(const Enemy* self, Coordinate pos,
       candidates.begin(), candidates.end(),
       [](const Cand& a, const Cand& b) { return a.dist < b.dist; });
 
-  auto it = std::find_if(
+  auto freeCandidate = std::find_if(
       candidates.begin(), candidates.end(),
       [&](const Cand& c) { return room.enemyAt(c.coord, self) == nullptr; });
-  return it != candidates.end() ? it->coord : pos;
+  return freeCandidate != candidates.end() ? freeCandidate->coord : pos;
 }
 
 // Pick a random walkable Floor neighbor not occupied by another enemy.
