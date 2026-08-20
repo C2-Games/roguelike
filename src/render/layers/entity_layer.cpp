@@ -12,10 +12,7 @@
 namespace
 {
 
-// Draws each non-empty cell of `symbol` at `origin + (col, row)`. When
-// `room` is non-null, a cell is only drawn if its own coordinate (not just
-// the entity's origin) is inside the player's FoV, so partially-visible
-// multi-cell sprites render correctly.
+// draws each non-empty cell of `symbol` at `origin + (col, row)`.
 void drawSymbol(WINDOW* win, const EntitySymbol& symbol, Coordinate origin,
                 const Room* room)
 {
