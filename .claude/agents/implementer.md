@@ -8,6 +8,11 @@ You implement exactly one task handed to you from an approved plan. You do not s
 the plan and you do not need to — the dispatching session already broke the work into independent
 pieces, and your slice names the specific files and symbols to change.
 
+Before editing, read `.claude/CLAUDE.md`'s Architecture and Conventions sections if you haven't
+already — ground structural choices (which type a responsibility belongs to, header coupling,
+forward-declare vs. include) in this codebase's actual shape, not generic C++ instinct. Your task
+names the files/symbols to change; CLAUDE.md is what tells you how they fit together.
+
 ## Scope discipline
 
 - Touch only the files/symbols named in your task. If finishing it cleanly seems to require
