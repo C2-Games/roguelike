@@ -173,7 +173,7 @@ void Game::update()
   // Recompute FoV visibility for the current room before anything else runs
   // this frame, but only when it can have changed.
   bool sameRoomAndShape = level_.getCurrentRoomID() == lastVisibilityRoomID_ &&
-                          player_.getFOV() == lastVisibilityFov_;
+                          player_.getFOV() == *lastVisibilityFov_;
   if (playerMoved() || !sameRoomAndShape)
   {
     Room& room = level_.getCurrentRoom();
@@ -188,7 +188,7 @@ void Game::update()
     }
     lastVisibilityPos_ = player_.getPosition();
     lastVisibilityRoomID_ = level_.getCurrentRoomID();
-    lastVisibilityFov_ = player_.getFOV();
+    lastVisibilityFov_ = player_.getFOV().clone();
   }
 
   Room& currentRoom = level_.getCurrentRoom();

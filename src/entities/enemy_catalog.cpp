@@ -5,6 +5,8 @@
 #include <stdexcept>
 #include <utility>
 
+#include "entities/ellipse_fov.h"
+
 namespace
 {
 
@@ -28,7 +30,8 @@ EnemyTierAttributes parseTierAttributes(const EntitySymbol& symbol,
       symbol,
       attrs.at("health").get<int>(),
       attrs.at("damage").at("amount").get<int>(),
-      ellipseFOV(fovArr.at(0).get<int>(), fovArr.at(1).get<int>()),
+      std::make_unique<EllipseFOV>(fovArr.at(0).get<int>(),
+                                   fovArr.at(1).get<int>()),
       attrs.at("chase").get<int>(),
       attrs.at("speed").get<int>(),
   };

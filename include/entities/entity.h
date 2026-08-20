@@ -1,6 +1,8 @@
 #ifndef ENTITY_H
 #define ENTITY_H
 
+#include <memory>
+
 #include "core/coordinate.h"
 #include "entities/entity_symbol.h"
 #include "entities/fov.h"
@@ -9,7 +11,7 @@ class Entity
 {
  public:
   Entity(Coordinate position, EntitySymbol symbol, int health, int speed,
-         FOV fov);
+         std::unique_ptr<FOV> fov);
 
   virtual ~Entity() = default;
 
@@ -46,7 +48,7 @@ class Entity
    *
    * @return const FOV&
    */
-  const FOV& getFOV() const { return fov_; }
+  const FOV& getFOV() const { return *fov_; }
 
   /**
    * @brief Entity is alive.
@@ -71,7 +73,7 @@ class Entity
   int health_;
   int speed_;
   int frameCounter_;
-  FOV fov_;
+  std::unique_ptr<FOV> fov_;
 
   /**
    * @brief Move hook that moves player to new position based on their speed.

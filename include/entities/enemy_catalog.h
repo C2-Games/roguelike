@@ -3,6 +3,7 @@
 
 #include <filesystem>
 #include <map>
+#include <memory>
 #include <string>
 
 #include "entities/entity_symbol.h"
@@ -14,7 +15,7 @@ struct EnemyTierAttributes
   EntitySymbol symbol;
   int health;
   int attackDamage;
-  FOV fov;
+  std::unique_ptr<FOV> fov;
   int chaseMemoryDuration;
   int speed;
 };

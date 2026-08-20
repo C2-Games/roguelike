@@ -2,6 +2,7 @@
 #define FOV_H
 
 #include <map>
+#include <memory>
 #include <set>
 #include <vector>
 
@@ -10,17 +11,7 @@
 class FOV
 {
  public:
-  std::set<Coordinate> offsets;
-
-  /**
-   * @brief Construct a new FOV.
-   *
-   * @param offsets Set of offset positions (from origin) that defines the
-   * FOV.
-   * @param rx Radius in columns used to construct offsets.
-   * @param ry Radius in rows used to construct offsets.
-   */
-  explicit FOV(std::set<Coordinate> offsets, int rx, int ry);
+  virtual ~FOV();
 
   /**
    * @brief Determine if a position is in an origin's FOV.
@@ -51,27 +42,41 @@ class FOV
   const std::vector<Coordinate>* leavingOffsets(Coordinate dir) const;
 
   /**
-   * @brief Equality by construction radii.
+   * @brief Create an independent copy of this FOV.
+   *
+   * @return std::unique_ptr<FOV> A new owned FOV of the same concrete kind.
+   */
+  virtual std::unique_ptr<FOV> clone() const = 0;
+
+  /**
+   * @brief Equality by concrete shape.
    *
    * @param other The FOV to compare against.
-   * @return bool True if both FOVs were constructed with the same radii.
+   * @return bool True if both FOVs are the same concrete kind and shape.
    */
-  bool operator==(const FOV& other) const;
+  bool operator==(const FOV& other) const { return equals(other); }
+
+ protected:
+  /**
+   * @brief Construct a new FOV from a precomputed offset set, common to every
+   * concrete shape.
+   *
+   * @param offsets Set of offset positions (from origin) that defines the
+   * FOV.
+   */
+  explicit FOV(std::set<Coordinate> offsets);
+
+  /**
+   * @brief Base equality check: same concrete kind.
+   *
+   * @param other The FOV to compare against.
+   * @return bool True if other is the same concrete kind as this FOV.
+   */
+  virtual bool equals(const FOV& other) const;
 
  private:
+  std::set<Coordinate> offsets_;
   std::map<Coordinate, std::vector<Coordinate>> leaving_;
-  int rx_;
-  int ry_;
 };
-
-/**
- * @brief Create a filled ellipse FOV, compensating for terminal aspect ratio.
- *
- * @param rx Radius in columns (horizontal).
- * @param ry Radius in rows (vertical). NOTE: row heights are roughly equiv. to
- * 2-3 column widths.
- * @return FOV
- */
-FOV ellipseFOV(int rx, int ry);
 
 #endif

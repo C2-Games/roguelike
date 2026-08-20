@@ -38,6 +38,7 @@ set(SOURCES
     src/entities/enemy_factory.cpp
     src/entities/room_enemy_state.cpp
     src/entities/fov.cpp
+    src/entities/ellipse_fov.cpp
     src/world/map/tile.cpp
     src/world/map/room.cpp
     src/world/map/level.cpp

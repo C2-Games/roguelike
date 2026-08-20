@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "core/services.h"
+#include "entities/ellipse_fov.h"
 #include "entities/enemy_catalog.h"
 #include "entities/fov.h"
 #include "entities/player.h"
@@ -50,7 +51,8 @@ class Game
 
   Coordinate lastVisibilityPos_ = Coordinate(-1, -1);
   int lastVisibilityRoomID_ = -1;
-  FOV lastVisibilityFov_ = ellipseFOV(-1, -1);
+  std::unique_ptr<FOV> lastVisibilityFov_ =
+      std::make_unique<EllipseFOV>(-1, -1);
 
   /**
    * @brief Get the frame duraction in milliseconds.
