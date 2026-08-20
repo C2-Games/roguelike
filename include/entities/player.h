@@ -46,26 +46,12 @@ class Player : public Entity
   const FOV& getFOV() const { return fov_; }
 
   /**
-   * @brief Get the horizontal sight radius (columns).
-   *
-   * @return int
-   */
-  int getSightRadiusX() const { return sightRx_; }
-
-  /**
-   * @brief Get the vertical sight radius (rows).
-   *
-   * @return int
-   */
-  int getSightRadiusY() const { return sightRy_; }
-
-  /**
-   * @brief Change the player's sight radii and rebuild the cached FOV.
+   * @brief Rebuild the player's cached FoV mask from new radii.
    *
    * @param rx New horizontal FoV radius (columns).
    * @param ry New vertical FoV radius (rows).
    */
-  void setSightRadius(int rx, int ry);
+  void changeFOV(int rx, int ry);
 
   /**
    * @brief Get the direction the player last faced (from movement input).
@@ -90,8 +76,6 @@ class Player : public Entity
 
  private:
   int maxHealth_;
-  int sightRx_;
-  int sightRy_;
   FOV fov_;
   Coordinate lastDirection_ = Coordinate(1, 0);
   Weapon weapon_;
