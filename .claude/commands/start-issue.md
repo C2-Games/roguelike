@@ -38,9 +38,24 @@ denies those edits outright. Run this first, every time.
    when the issue title is longer — pick the shortest phrase that still identifies the change,
    don't mechanically truncate the title.
 
-4. **Create the branch** from an up-to-date `main`:
+3.5. **Decide whether to isolate this in a worktree.** Ask the user explicitly — do not decide
+   silently — when either signal fires:
+   - the request itself said "parallel", "worktree", or "isolated", or
+   - `.claude/.current-issue` already exists and records a *different* branch than the one just
+     derived (another issue is already active in this checkout).
+
+   If neither fires, skip straight to step 4 as today — single-track is the default.
+
+4. **Create the branch.**
+
+   **No worktree (default):** from an up-to-date `main`:
    `git fetch origin && git switch -c <branch> origin/main`
    If the branch already exists, `git switch <branch>` instead.
+
+   **Worktree (only if step 3.5 confirmed isolation):** call `EnterWorktree(name: <branch>)`
+   instead. It creates the worktree under `.claude/worktrees/<branch>` off `origin/main` and
+   switches the session into it. Confirm the branch it actually created — if it differs from
+   `<branch>`, record the real name in step 5, don't force a rename.
 
 5. **Write the record** to `.claude/.current-issue` (this file is gitignored):
 

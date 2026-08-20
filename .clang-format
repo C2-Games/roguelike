@@ -1,9 +1,4 @@
 BasedOnStyle: Google
-
-# Allman braces: every brace opens on its own line. This is the stock Allman
-# preset with the SplitEmpty* flags flipped, so an empty body stays `{}` rather
-# than expanding to two lines -- there are a dozen such constructors. Every key
-# is listed because BreakBeforeBraces: Custom does not inherit the preset.
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterCaseLabel: true
