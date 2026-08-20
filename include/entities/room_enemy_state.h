@@ -46,10 +46,7 @@ class RoomEnemyState
    * @param pos Tile to test.
    * @param exclude Enemy skipped by pointer identity, so a caller asking
    * about its own tile never matches itself. Null considers every enemy.
-   * @return The enemy on `pos`, or nullptr when none is there. Writable
-   * even though this method is const: const-ness does not propagate through
-   * unique_ptr to the pointee, so a caller may damage what it finds without
-   * the room itself being mutable.
+   * @return The enemy on `pos`, or nullptr when none is there.
    */
   Enemy* enemyAt(Coordinate pos, const Enemy* exclude = nullptr) const;
 

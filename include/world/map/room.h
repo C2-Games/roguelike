@@ -112,8 +112,7 @@ struct Room
    * @param pos Tile to test.
    * @param exclude Enemy skipped by pointer identity. Null considers every
    * enemy.
-   * @return The enemy on `pos`, or nullptr when none is there. Writable
-   * even through a const Room; see RoomEnemyState::enemyAt.
+   * @return The enemy on `pos`, or nullptr when none is there.
    */
   Enemy* enemyAt(Coordinate pos, const Enemy* exclude = nullptr) const
   {
