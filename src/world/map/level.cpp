@@ -19,10 +19,13 @@ void Level::buildFromConfig(const LevelConfig& config,
 {
   for (const auto& [id, roomCfg] : config.rooms)
   {
-    auto [it, inserted] = rooms_.insert(
-        {id, Room::loadFromFile(
-                 id, std::filesystem::path("assets/rooms") / roomCfg.ref)});
-    it->second.ensureEnemiesSpawned(roomCfg.enemies, catalog, services_);
+    auto roomEntry =
+        rooms_
+            .insert({id, Room::loadFromFile(
+                             id, std::filesystem::path("assets/rooms") /
+                                     roomCfg.ref)})
+            .first;
+    roomEntry->second.ensureEnemiesSpawned(roomCfg.enemies, catalog, services_);
   }
 
   // each edge is authored once and wired both ways, so the graph cannot be
@@ -76,7 +79,8 @@ Coordinate Level::transitionRoom(const DoorConnection& conn)
 const DoorConnection* Level::getDoorConnection(int roomID,
                                                Coordinate doorPos) const
 {
-  auto it = doorConnections_.find({roomID, doorPos});
-  if (it != doorConnections_.end()) return &it->second;
+  auto connectionEntry = doorConnections_.find({roomID, doorPos});
+  if (connectionEntry != doorConnections_.end())
+    return &connectionEntry->second;
   return nullptr;
 }

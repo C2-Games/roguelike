@@ -33,7 +33,7 @@ void EntityLayer::drawEnemies()
       if (room.isVisible(pos.x, pos.y))
       {
         // Hook: OR in colorAttr(ColorPair::EnemyDefault) — or a
-        // per-enemy-type pair — once enemy colouring is designed.
+        // per-enemy pair — once enemy colouring is designed.
         mvwaddch(win_, pos.y, pos.x, enemy->getSymbol());
       }
     };

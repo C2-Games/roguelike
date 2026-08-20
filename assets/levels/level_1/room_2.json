@@ -3,11 +3,11 @@
   "name": "Goblin Lair",
   "ref": "rect_pillar_hall.txt",
   "enemies": [
-    { "type": "goblin", "class": "base", "tier": 1, "min": 3, "max": 7, "prob_dist": 0.85 },
-    { "type": "goblin", "class": "base", "tier": 2, "min": 1, "max": 3, "prob_dist": 0.35 }
+    { "name": "goblin", "class": "base", "tier": 1, "min": 3, "max": 7, "prob_dist": 0.85 },
+    { "name": "goblin", "class": "base", "tier": 2, "min": 1, "max": 3, "prob_dist": 0.35 }
   ],
   "loot": [
-    { "type": "gold_pouch", "class": "currency", "tier": 1, "min": 4, "max": 8 },
-    { "type": "health_pack", "class": "health", "tier": 1, "min": 1, "max": 2 }
+    { "name": "gold_pouch", "class": "currency", "tier": 1, "min": 4, "max": 8 },
+    { "name": "health_pack", "class": "health", "tier": 1, "min": 1, "max": 2 }
   ]
 }
