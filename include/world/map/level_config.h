@@ -4,8 +4,14 @@
 #include <array>
 #include <filesystem>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
+
+class Enemy;
+class EnemyCatalog;
+struct GameServices;
+struct Room;
 
 // Door number based on the order of doors in the room's template file
 using DoorNumber = int;
@@ -27,6 +33,19 @@ struct EnemySpawnConfig
   int tier;
   std::array<int, 2> range;
 };
+
+/**
+ * @brief Roll a fresh set of enemies for a room from its spawn table.
+ *
+ * @param room       The room to populate; provides enemy spawn points.
+ * @param spawnTable The room's authored enemy entries (name/tier/range).
+ * @param catalog    Resolves each entry's name/tier to stats.
+ * @param services   RNG source.
+ * @return Owning vector of newly-created enemies.
+ */
+std::vector<std::unique_ptr<Enemy>> rollEnemiesForRoom(
+    const Room& room, const std::vector<EnemySpawnConfig>& spawnTable,
+    const EnemyCatalog& catalog, GameServices& services);
 
 /** @brief One room's metadata, parsed from room_<id>.json. */
 struct RoomConfig

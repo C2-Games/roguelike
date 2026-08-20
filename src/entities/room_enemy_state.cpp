@@ -2,8 +2,6 @@
 
 #include <algorithm>
 
-#include "entities/enemy_factory.h"
-
 void RoomEnemyState::ensureSpawned(
     const Room& room, const std::vector<EnemySpawnConfig>& spawnTable,
     const EnemyCatalog& catalog, GameServices& services)
@@ -13,7 +11,7 @@ void RoomEnemyState::ensureSpawned(
     return;
   }
   spawned_ = true;
-  enemies_ = enemy_factory::rollForRoom(room, spawnTable, catalog, services);
+  enemies_ = rollEnemiesForRoom(room, spawnTable, catalog, services);
 }
 
 Enemy* RoomEnemyState::enemyAt(Coordinate pos, const Enemy* exclude) const
