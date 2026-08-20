@@ -22,6 +22,8 @@ struct Coordinate
     return x == other.x && y == other.y;
   }
 
+  bool operator!=(const Coordinate& other) const { return !(*this == other); }
+
   bool operator<(const Coordinate& other) const
   {
     if (y != other.y) return y < other.y;
