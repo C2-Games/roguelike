@@ -1,6 +1,7 @@
 #ifndef LEVEL_CONFIG_H
 #define LEVEL_CONFIG_H
 
+#include <array>
 #include <filesystem>
 #include <map>
 #include <string>
@@ -24,9 +25,7 @@ struct EnemySpawnConfig
 {
   std::string name;
   int tier;
-  int min;
-  int max;
-  double probDist;
+  std::array<int, 2> range;
 };
 
 /** @brief One room's metadata, parsed from room_<id>.json. */

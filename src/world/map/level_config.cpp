@@ -96,10 +96,17 @@ MapData loadMap(const std::filesystem::path& path)
 
 EnemySpawnConfig parseEnemySpawnConfig(const nlohmann::json& j)
 {
+  const nlohmann::json& range = j.at("range");
+  if (!range.is_array() || range.size() != 2)
+  {
+    throw std::runtime_error("enemy entry '" + j.at("name").get<std::string>() +
+                             "' needs a two-element range");
+  }
+
   return EnemySpawnConfig{
-      j.at("name").get<std::string>(), j.at("tier").get<int>(),
-      j.at("min").get<int>(),          j.at("max").get<int>(),
-      j.at("prob_dist").get<double>(),
+      j.at("name").get<std::string>(),
+      j.at("tier").get<int>(),
+      {range[0].get<int>(), range[1].get<int>()},
   };
 }
 
