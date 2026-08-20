@@ -7,11 +7,10 @@
 #include <iostream>
 #include <thread>
 
+#include "core/frame_state.h"
 #include "entities/enemy.h"
-#include "entities/move_context.h"
 #include "render/window_position.h"
 #include "world/objects/projectile.h"
-#include "world/objects/projectile_context.h"
 
 namespace
 {
@@ -192,41 +191,21 @@ void Game::update()
     lastVisibilityFov_ = player_.getFOV();
   }
 
-  const Coordinate playerPos = player_.getPosition();
   Room& currentRoom = level_.getCurrentRoom();
 
   // Reap before the movement pass so every enemy iterated below is alive.
-  // Must precede MoveContext, which holds a reference into this vector.
   RoomEnemyState::reap(currentRoom.enemies());
 
-  // Build the per-frame contexts once and reuse across every enemy/projectile.
-  MoveContext moveCtx{playerPos, currentRoom, goalMapCache_,
-                      currentRoom.enemies(), services_};
-
-  ProjectileContext projCtx{
-      currentRoom, [&](Coordinate pos, int damage) -> bool {
-        // Try to damage the first live enemy sitting on `pos`.
-        auto& enemies = currentRoom.enemies();
-        auto hit =
-            std::find_if(enemies.begin(), enemies.end(),
-                         [&pos](const std::unique_ptr<Enemy>& e) {
-                           return e->isAlive() && e->getPosition() == pos;
-                         });
-        if (hit == enemies.end())
-        {
-          return false;
-        }
-        (*hit)->takeDamage(damage);
-        return true;
-      }};
+  // Build the per-frame context once and reuse across every enemy/projectile.
+  FrameState frame{player_, currentRoom};
 
   // Move enemies toward player.
   for (auto& enemy : currentRoom.enemies())
   {
-    enemy->moveTowardPlayer(moveCtx);
+    enemy->moveTowardPlayer(frame, goalMapCache_, services_);
 
     // Check collision with player
-    if (enemy->getPosition() == playerPos)
+    if (enemy->getPosition() == frame.player.getPosition())
     {
       player_.takeDamage(enemy->getAttackDamage());
     }
@@ -237,7 +216,7 @@ void Game::update()
   {
     if (projectile->isActive())
     {
-      projectile->update(projCtx);
+      projectile->update(frame);
     }
   }
   projectiles_.erase(std::remove_if(projectiles_.begin(), projectiles_.end(),

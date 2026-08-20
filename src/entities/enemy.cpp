@@ -6,8 +6,9 @@
 #include <random>
 
 #include "core/coordinate.h"
+#include "core/frame_state.h"
 #include "core/services.h"
-#include "entities/move_context.h"
+#include "entities/player.h"
 #include "world/map/room.h"
 #include "world/map/tile.h"
 #include "world/systems/goal_map_cache.h"
@@ -28,20 +29,6 @@ bool inBounds(int x, int y)
   return x >= 0 && x < Room::WIDTH && y >= 0 && y < Room::HEIGHT;
 }
 
-// True when some OTHER live enemy currently sits on `coord`. Dead enemies
-// don't block; the caller itself is skipped via pointer identity so an enemy
-// never blocks its own step.
-bool isOccupiedByOtherEnemy(
-    const Enemy* self, Coordinate coord,
-    const std::vector<std::unique_ptr<Enemy>>& allEnemies)
-{
-  return std::any_of(allEnemies.begin(), allEnemies.end(),
-                     [&](const std::unique_ptr<Enemy>& e) {
-                       return e.get() != self && e->isAlive() &&
-                              e->getPosition() == coord;
-                     });
-}
-
 // Pick a strictly-decreasing goal-map neighbor to step onto.
 //
 // - Filters neighbors to those with dist < map[pos] (must move CLOSER; skips
@@ -56,7 +43,8 @@ bool isOccupiedByOtherEnemy(
 // unreachable, enemy already on goal, or every reachable neighbor is
 // occupied).
 Coordinate stepDownGradient(const Enemy* self, Coordinate pos,
-                            const GoalMap& map, const MoveContext& ctx)
+                            const GoalMap& map, const Room& room,
+                            GameServices& services)
 {
   int currentDist = map[pos.x][pos.y];
   if (currentDist == kUnreachable || currentDist == 0) return pos;
@@ -84,17 +72,16 @@ Coordinate stepDownGradient(const Enemy* self, Coordinate pos,
   for (std::size_t i = candidates.size(); i > 1; --i)
   {
     std::uniform_int_distribution<std::size_t> pick(0, i - 1);
-    std::size_t j = pick(ctx.services.rng);
+    std::size_t j = pick(services.rng);
     std::swap(candidates[i - 1], candidates[j]);
   }
   std::stable_sort(
       candidates.begin(), candidates.end(),
       [](const Cand& a, const Cand& b) { return a.dist < b.dist; });
 
-  auto it =
-      std::find_if(candidates.begin(), candidates.end(), [&](const Cand& c) {
-        return !isOccupiedByOtherEnemy(self, c.coord, ctx.allEnemies);
-      });
+  auto it = std::find_if(
+      candidates.begin(), candidates.end(),
+      [&](const Cand& c) { return room.enemyAt(c.coord, self) == nullptr; });
   return it != candidates.end() ? it->coord : pos;
 }
 
@@ -102,8 +89,8 @@ Coordinate stepDownGradient(const Enemy* self, Coordinate pos,
 // Walls, Void, Pillars, and Doors are all excluded — matches the blocking
 // rules used by computeGoalMap so wander behavior stays consistent with
 // chase.
-Coordinate pickWanderTile(const Enemy* self, Coordinate pos,
-                          const MoveContext& ctx)
+Coordinate pickWanderTile(const Enemy* self, Coordinate pos, const Room& room,
+                          GameServices& services)
 {
   std::vector<Coordinate> candidates;
   candidates.reserve(4);
@@ -112,14 +99,13 @@ Coordinate pickWanderTile(const Enemy* self, Coordinate pos,
     int nx = pos.x + kDx[i];
     int ny = pos.y + kDy[i];
     if (!inBounds(nx, ny)) continue;
-    if (ctx.room.tiles[nx][ny].getType() != TileType::Floor) continue;
-    if (isOccupiedByOtherEnemy(self, Coordinate(nx, ny), ctx.allEnemies))
-      continue;
+    if (room.tiles[nx][ny].getType() != TileType::Floor) continue;
+    if (room.enemyAt(Coordinate(nx, ny), self) != nullptr) continue;
     candidates.push_back(Coordinate(nx, ny));
   }
   if (candidates.empty()) return pos;
   std::uniform_int_distribution<std::size_t> pick(0, candidates.size() - 1);
-  return candidates[pick(ctx.services.rng)];
+  return candidates[pick(services.rng)];
 }
 
 }  // namespace
@@ -134,15 +120,17 @@ Enemy::Enemy(int x, int y, char symbol, int health, int speed, int attackDamage,
       lastKnownPlayerPos_(std::nullopt)
 {}
 
-void Enemy::moveTowardPlayer(const MoveContext& ctx)
+void Enemy::moveTowardPlayer(const FrameState& frame, const GoalMapCache& cache,
+                             GameServices& services)
 {
-  const bool inFoV = attackFOV_.in(position_, ctx.playerPos);
+  const Coordinate playerPos = frame.player.getPosition();
+  const bool inFoV = attackFOV_.in(position_, playerPos);
 
   // Memory refresh runs every frame so the enemy locks on the moment the
   // player enters its FoV, regardless of speed throttling.
   if (inFoV)
   {
-    lastKnownPlayerPos_ = ctx.playerPos;
+    lastKnownPlayerPos_ = playerPos;
     chaseTurnsRemaining_ = chaseMemoryDuration_;
   }
 
@@ -150,7 +138,7 @@ void Enemy::moveTowardPlayer(const MoveContext& ctx)
   std::optional<Coordinate> target;
   if (inFoV)
   {
-    target = ctx.playerPos;
+    target = playerPos;
   }
   else if (chaseTurnsRemaining_ > 0 && lastKnownPlayerPos_.has_value())
   {
@@ -171,14 +159,15 @@ void Enemy::moveTowardPlayer(const MoveContext& ctx)
   Coordinate nextTile;
   if (target.has_value())
   {
-    const GoalMap& map = ctx.cache.getOrCompute(ctx.room, *target);
-    Coordinate chosen = stepDownGradient(this, position_, map, ctx);
+    const GoalMap& map = cache.getOrCompute(frame.currentRoom, *target);
+    Coordinate chosen =
+        stepDownGradient(this, position_, map, frame.currentRoom, services);
     if (chosen == position_)
     {
       // No legal down-gradient step (target unreachable or all reachable
       // neighbors blocked by other enemies). Wander instead so the enemy
       // still feels alive.
-      nextTile = pickWanderTile(this, position_, ctx);
+      nextTile = pickWanderTile(this, position_, frame.currentRoom, services);
     }
     else
     {
@@ -188,7 +177,7 @@ void Enemy::moveTowardPlayer(const MoveContext& ctx)
   else
   {
     // Idle — never spotted the player, or memory just expired. Wander.
-    nextTile = pickWanderTile(this, position_, ctx);
+    nextTile = pickWanderTile(this, position_, frame.currentRoom, services);
   }
 
   // Apply the intent. Entity::moveTo throttles by speed, so this may or may

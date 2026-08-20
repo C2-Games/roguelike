@@ -122,6 +122,19 @@ struct Room
   }
 
   /**
+   * @brief Find the live enemy standing on `pos`.
+   *
+   * @param pos Tile to test.
+   * @param exclude Enemy skipped by pointer identity. Null considers every
+   * enemy.
+   * @return The enemy on `pos`, or nullptr when none is there.
+   */
+  Enemy* enemyAt(Coordinate pos, const Enemy* exclude = nullptr) const
+  {
+    return enemyState.enemyAt(pos, exclude);
+  }
+
+  /**
    * @brief Roll this room's enemies on first call; a no-op after.
    *
    * @param spawnTable The room's authored enemy entries.
