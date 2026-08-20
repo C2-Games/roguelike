@@ -14,9 +14,7 @@ namespace
 // one bar cell per this much health, so the bar ticks in visible steps.
 constexpr int kHealthPerCell = 5;
 
-// fill colour changes at or below these absolute health values. these and the
-// cell arithmetic in drawPlayerHealthBar are all sized against the current max
-// health of 100; if max health becomes variable, revisit them together.
+// fill colour changes at or below these absolute health values.
 constexpr int kWarnThreshold = 50;
 constexpr int kCriticalThreshold = 20;
 
