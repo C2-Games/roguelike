@@ -174,7 +174,7 @@ void Game::update()
   // this frame, but only when it can have changed.
   bool sameRoomAndShape = level_.getCurrentRoomID() == lastVisibilityRoomID_ &&
                           player_.getFOV() == lastVisibilityFov_;
-  if (playerMoved() || sameRoomAndShape)
+  if (playerMoved() || !sameRoomAndShape)
   {
     Room& room = level_.getCurrentRoom();
     if (sameRoomAndShape)
