@@ -46,9 +46,9 @@ std::vector<Coordinate> FOV::absoluteFOV(Coordinate origin) const
 
 const std::vector<Coordinate>* FOV::leavingOffsets(Coordinate dir) const
 {
-  auto it = leaving_.find(dir);
-  if (it == leaving_.end()) return nullptr;
-  return &it->second;
+  auto dirEntry = leaving_.find(dir);
+  if (dirEntry == leaving_.end()) return nullptr;
+  return &dirEntry->second;
 }
 
 bool FOV::operator==(const FOV& other) const

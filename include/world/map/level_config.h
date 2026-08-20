@@ -22,7 +22,7 @@ struct RoomAdjacency
 /** @brief One enemy spawn-table entry from a room's JSON metadata. */
 struct EnemySpawnConfig
 {
-  std::string type;
+  std::string name;
   int tier;
   int min;
   int max;

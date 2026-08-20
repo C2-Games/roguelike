@@ -97,7 +97,7 @@ MapData loadMap(const std::filesystem::path& path)
 EnemySpawnConfig parseEnemySpawnConfig(const nlohmann::json& j)
 {
   return EnemySpawnConfig{
-      j.at("type").get<std::string>(), j.at("tier").get<int>(),
+      j.at("name").get<std::string>(), j.at("tier").get<int>(),
       j.at("min").get<int>(),          j.at("max").get<int>(),
       j.at("prob_dist").get<double>(),
   };

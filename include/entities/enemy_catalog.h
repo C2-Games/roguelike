@@ -7,7 +7,7 @@
 
 #include "entities/fov.h"
 
-/** @brief Resolved per-tier stats for one enemy type. */
+/** @brief Resolved per-tier stats for one named enemy. */
 struct EnemyTierAttributes
 {
   char symbol;
@@ -20,7 +20,7 @@ struct EnemyTierAttributes
 
 /**
  * @brief Loads every enemy JSON file in a directory into an in-memory lookup
- * of type name -> tier -> resolved attributes.
+ * of name -> tier -> resolved attributes.
  */
 class EnemyCatalog
 {
@@ -35,16 +35,16 @@ class EnemyCatalog
   explicit EnemyCatalog(const std::filesystem::path& dir);
 
   /**
-   * @brief Look up a type/tier combination.
+   * @brief Look up a name/tier combination.
    *
-   * @param type Enemy type name (e.g. "goblin").
+   * @param name Enemy name as authored in its config (e.g. "goblin").
    * @param tier Tier number (e.g. 1 for "tier_1").
    * @return Pointer to the resolved attributes, or nullptr if not found.
    */
-  const EnemyTierAttributes* find(const std::string& type, int tier) const;
+  const EnemyTierAttributes* find(const std::string& name, int tier) const;
 
  private:
-  std::map<std::string, std::map<int, EnemyTierAttributes>> types_;
+  std::map<std::string, std::map<int, EnemyTierAttributes>> catalog_;
 
   void loadFile(const std::filesystem::path& path);
 };

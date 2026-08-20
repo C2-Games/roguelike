@@ -64,25 +64,26 @@ void EnemyCatalog::loadFile(const std::filesystem::path& path)
 {
   try
   {
-    std::ifstream in(path);
-    if (!in)
+    std::ifstream file(path);
+    if (!file)
     {
       throw std::runtime_error("could not open file");
     }
 
-    nlohmann::json j;
-    in >> j;
+    nlohmann::json enemyJson;
+    file >> enemyJson;
 
-    const std::string type = j.at("name").get<std::string>();
-    const char symbol = j.at("symbol").at(0).at(0).get<std::string>().at(0);
+    const std::string name = enemyJson.at("name").get<std::string>();
+    const char symbol =
+        enemyJson.at("symbol").at(0).at(0).get<std::string>().at(0);
 
     std::map<int, EnemyTierAttributes> tiers;
-    for (const auto& [tierKey, attrs] : j.at("attributes").items())
+    for (const auto& [tierKey, attrs] : enemyJson.at("attributes").items())
     {
       tiers.emplace(parseTierKey(tierKey), parseTierAttributes(symbol, attrs));
     }
 
-    types_[type] = std::move(tiers);
+    catalog_[name] = std::move(tiers);
   }
   catch (const std::exception& e)
   {
@@ -91,20 +92,21 @@ void EnemyCatalog::loadFile(const std::filesystem::path& path)
   }
 }
 
-const EnemyTierAttributes* EnemyCatalog::find(const std::string& type,
+const EnemyTierAttributes* EnemyCatalog::find(const std::string& name,
                                               int tier) const
 {
-  auto typeIt = types_.find(type);
-  if (typeIt == types_.end())
+  auto namedEntry = catalog_.find(name);
+  if (namedEntry == catalog_.end())
   {
     return nullptr;
   }
 
-  auto tierIt = typeIt->second.find(tier);
-  if (tierIt == typeIt->second.end())
+  const std::map<int, EnemyTierAttributes>& tiers = namedEntry->second;
+  auto tierEntry = tiers.find(tier);
+  if (tierEntry == tiers.end())
   {
     return nullptr;
   }
 
-  return &tierIt->second;
+  return &tierEntry->second;
 }
