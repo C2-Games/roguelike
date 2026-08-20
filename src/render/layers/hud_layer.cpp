@@ -65,7 +65,7 @@ void HUDLayer::drawPlayerHealthBar(int row, int col)
   const int health = player_.getHealth();
   const int maxHealth = player_.getMaxHealth();
 
-  // round both up, so a max health that is not a multiple of kHealthPerCell
+  // round both up, so a max health that is not a multiple of HEALTH_INCREMENT
   // still fills completely at full health, and a sliver of health still shows
   // one cell rather than reading as dead.
   const int total = (maxHealth + HEALTH_INCREMENT - 1) / HEALTH_INCREMENT;
