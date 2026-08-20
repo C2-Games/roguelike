@@ -7,6 +7,7 @@
 
 #include "core/services.h"
 #include "entities/enemy_catalog.h"
+#include "entities/fov.h"
 #include "entities/player.h"
 #include "render/layers/debug_layer.h"
 #include "render/layers/entity_layer.h"
@@ -47,10 +48,9 @@ class Game
   bool isRunning_;
   Renderer renderer_;
 
-  // player state as of the last visibility recompute. seeded out of range so
-  // the first frame always recomputes
   Coordinate lastVisibilityPos_ = Coordinate(-1, -1);
   int lastVisibilityRoomID_ = -1;
+  FOV lastVisibilityFov_ = ellipseFOV(-1, -1);
 
   /**
    * @brief Get the frame duraction in milliseconds.

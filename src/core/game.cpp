@@ -173,12 +173,23 @@ void Game::update()
 {
   // Recompute FoV visibility for the current room before anything else runs
   // this frame, but only when it can have changed.
-  if (playerMoved())
+  bool sameRoomAndShape = level_.getCurrentRoomID() == lastVisibilityRoomID_ &&
+                          player_.getFOV() == lastVisibilityFov_;
+  if (playerMoved() || sameRoomAndShape)
   {
-    level_.getCurrentRoom().updateVisibility(player_.getPosition(),
-                                             player_.getFOV());
+    Room& room = level_.getCurrentRoom();
+    if (sameRoomAndShape)
+    {
+      room.updateVisibility(lastVisibilityPos_, player_.getPosition(),
+                            player_.getFOV());
+    }
+    else
+    {
+      room.updateVisibility(player_.getPosition(), player_.getFOV());
+    }
     lastVisibilityPos_ = player_.getPosition();
     lastVisibilityRoomID_ = level_.getCurrentRoomID();
+    lastVisibilityFov_ = player_.getFOV();
   }
 
   const Coordinate playerPos = player_.getPosition();

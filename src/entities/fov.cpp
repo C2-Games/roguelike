@@ -8,7 +8,20 @@
 #include <utility>
 #include <vector>
 
-FOV::FOV(std::set<Coordinate> offsets) : offsets(std::move(offsets)) {}
+FOV::FOV(std::set<Coordinate> offsets, int rx, int ry)
+    : offsets(std::move(offsets)), rx_(rx), ry_(ry)
+{
+  static const std::vector<Coordinate> CARDINALS = {
+      Coordinate(0, -1), Coordinate(0, 1), Coordinate(-1, 0), Coordinate(1, 0)};
+  for (const Coordinate& dir : CARDINALS)
+  {
+    std::vector<Coordinate>& bucket = leaving_[dir];
+    std::copy_if(this->offsets.begin(), this->offsets.end(),
+                 std::back_inserter(bucket), [this, &dir](const Coordinate& s) {
+                   return this->offsets.count(s - dir) == 0;
+                 });
+  }
+}
 
 bool FOV::in(Coordinate origin, Coordinate position) const
 {
@@ -30,6 +43,18 @@ std::vector<Coordinate> FOV::absoluteFOV(Coordinate origin) const
 
   return positions;
 };
+
+const std::vector<Coordinate>* FOV::leavingOffsets(Coordinate dir) const
+{
+  auto it = leaving_.find(dir);
+  if (it == leaving_.end()) return nullptr;
+  return &it->second;
+}
+
+bool FOV::operator==(const FOV& other) const
+{
+  return rx_ == other.rx_ && ry_ == other.ry_;
+}
 
 FOV ellipseFOV(int rx, int ry)
 {
@@ -54,5 +79,5 @@ FOV ellipseFOV(int rx, int ry)
   }
 
   // cooked.
-  return FOV(offsets);
+  return FOV(offsets, rx, ry);
 }
