@@ -1,7 +1,8 @@
 #include "world/objects/projectile.h"
 
+#include "core/frame_state.h"
+#include "entities/enemy.h"
 #include "world/map/room.h"
-#include "world/objects/projectile_context.h"
 
 Projectile::Projectile(Coordinate position, Coordinate direction, int damage,
                        int tilesPerTick, int range, ColorPair color)
@@ -13,7 +14,7 @@ Projectile::Projectile(Coordinate position, Coordinate direction, int damage,
       color_(color)
 {}
 
-void Projectile::update(const ProjectileContext& ctx)
+void Projectile::update(const FrameState& frame)
 {
   for (int i = 0; i < tilesPerTick_; ++i)
   {
@@ -28,15 +29,17 @@ void Projectile::update(const ProjectileContext& ctx)
     }
 
     // isWalkable() stops the projectile.
-    if (!ctx.room.tiles[candidate.x][candidate.y].isWalkable())
+    if (!frame.currentRoom.tiles[candidate.x][candidate.y].isWalkable())
     {
       deactivate();
       return;
     }
 
-    // Try to damage an entity at the candidate tile.
-    if (ctx.tryHit(candidate, damage_))
+    // damage the first live enemy standing on the candidate tile.
+    Enemy* hit = frame.currentRoom.enemyAt(candidate);
+    if (hit)
     {
+      hit->takeDamage(damage_);
       deactivate();
       return;
     }

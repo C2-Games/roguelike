@@ -4,7 +4,7 @@
 #include "core/colors.h"
 #include "core/coordinate.h"
 
-struct ProjectileContext;
+struct FrameState;
 
 class Projectile
 {
@@ -25,14 +25,13 @@ class Projectile
 
   /**
    * @brief Advance the projectile up to tilesPerTick tiles. Deactivates on
-   * the first wall collision, on the first successful hit reported by
-   * `ctx.tryHit`, or once its range is exhausted.
+   * the first wall collision, on the first live enemy it lands on, or once
+   * its range is exhausted.
    *
-   * @param ctx Per-frame context (current Room for walkability + a hit-sink
-   *   closure the projectile calls when it lands on a potentially-damaged
-   *   coordinate). Built once per frame by Game::update.
+   * @param frame Per-frame world state (the current Room for walkability and
+   *   that room's live enemies for hit resolution).
    */
-  void update(const ProjectileContext& ctx);
+  void update(const FrameState& frame);
 
   /**
    * @brief Get the projectile's current position.

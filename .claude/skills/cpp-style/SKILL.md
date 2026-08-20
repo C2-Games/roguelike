@@ -27,7 +27,7 @@ this skill does not carry a copy to drift out of sync with it.
 
 | Element | Convention | Example |
 |---|---|---|
-| Classes, structs, enums | `PascalCase` | `Enemy`, `MoveContext`, `ColorPair` |
+| Classes, structs, enums | `PascalCase` | `Enemy`, `FrameState`, `ColorPair` |
 | Enum members | `PascalCase`, no `k` prefix | `Wall`, `Floor`, `North`, `FogUnexplored` |
 | Methods, free functions | `camelCase` | `moveTowardPlayer`, `colorAttr`, `initColors` |
 | Member variables | trailing-underscore `camelCase_` | `attackDamage_`, `chaseTurnsRemaining_` |
@@ -82,10 +82,12 @@ class Enemy : public Entity
   /**
    * @brief Advance enemy behavior one frame using wall-aware pathfinding.
    *
-   * @param ctx Per-frame context (player position, current room, goal-map
-   * cache, other enemies, RNG source).
+   * @param frame Per-frame world state (player, current room, live enemies).
+   * @param cache Goal-map cache reused across every enemy this frame.
+   * @param services RNG source.
    */
-  void moveTowardPlayer(const MoveContext& ctx);
+  void moveTowardPlayer(const FrameState& frame, GoalMapCache& cache,
+                        GameServices& services);
 
   /** @brief Reduce enemy health by a damage amount. */
   void takeDamage(int damage);
