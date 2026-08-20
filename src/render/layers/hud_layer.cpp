@@ -12,15 +12,15 @@ namespace
 {
 
 // one bar cell per this much health, so the bar ticks in visible steps.
-constexpr int kHealthPerCell = 5;
+constexpr int HEALTH_INCREMENT = 5;
 
 // fill colour changes at or below these absolute health values.
-constexpr int kWarnThreshold = 50;
-constexpr int kCriticalThreshold = 20;
+constexpr int HEALTH_STATUS_WARNING = 50;
+constexpr int HEALTH_STATUS_CRITICAL = 20;
 
 // U+2588 FULL BLOCK and U+2591 LIGHT SHADE.
-constexpr wchar_t kFilledCell = L'█';
-constexpr wchar_t kEmptyCell = L'░';
+constexpr wchar_t FILLED_CELL = L'█';
+constexpr wchar_t EMPTY_CELL = L'░';
 
 }  // namespace
 
@@ -34,7 +34,7 @@ void HUDLayer::drawBar(int row, int col, int filled, int total, ColorPair fill,
 {
   // block glyphs are not plain chars, so this needs the cchar_t path rather
   // than mvwaddch.
-  wchar_t filledGlyph[] = {kFilledCell, L'\0'};
+  wchar_t filledGlyph[] = {FILLED_CELL, L'\0'};
   cchar_t filledCell;
   setcchar(&filledCell, filledGlyph, A_NORMAL, static_cast<short>(fill),
            nullptr);
@@ -42,7 +42,7 @@ void HUDLayer::drawBar(int row, int col, int filled, int total, ColorPair fill,
   cchar_t emptyCell;
   if (empty.has_value())
   {
-    wchar_t emptyGlyph[] = {kEmptyCell, L'\0'};
+    wchar_t emptyGlyph[] = {EMPTY_CELL, L'\0'};
     setcchar(&emptyCell, emptyGlyph, A_NORMAL, static_cast<short>(*empty),
              nullptr);
   }
@@ -68,16 +68,16 @@ void HUDLayer::drawPlayerHealthBar(int row, int col)
   // round both up, so a max health that is not a multiple of kHealthPerCell
   // still fills completely at full health, and a sliver of health still shows
   // one cell rather than reading as dead.
-  const int total = (maxHealth + kHealthPerCell - 1) / kHealthPerCell;
+  const int total = (maxHealth + HEALTH_INCREMENT - 1) / HEALTH_INCREMENT;
   const int filled =
-      std::min(total, (health + kHealthPerCell - 1) / kHealthPerCell);
+      std::min(total, (health + HEALTH_INCREMENT - 1) / HEALTH_INCREMENT);
 
   ColorPair fill = ColorPair::HealthGood;
-  if (health <= kCriticalThreshold)
+  if (health <= HEALTH_STATUS_CRITICAL)
   {
     fill = ColorPair::HealthCritical;
   }
-  else if (health <= kWarnThreshold)
+  else if (health <= HEALTH_STATUS_WARNING)
   {
     fill = ColorPair::HealthWarn;
   }
