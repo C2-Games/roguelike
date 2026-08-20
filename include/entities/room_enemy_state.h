@@ -4,6 +4,7 @@
 #include <memory>
 #include <vector>
 
+#include "core/coordinate.h"
 #include "entities/enemy.h"
 #include "world/map/level_config.h"
 
@@ -38,6 +39,16 @@ class RoomEnemyState
   {
     return enemies_;
   }
+
+  /**
+   * @brief Find the live enemy standing on `pos`.
+   *
+   * @param pos Tile to test.
+   * @param exclude Enemy skipped by pointer identity, so a caller asking
+   * about its own tile never matches itself. Null considers every enemy.
+   * @return The enemy on `pos`, or nullptr when none is there.
+   */
+  Enemy* enemyAt(Coordinate pos, const Enemy* exclude = nullptr) const;
 
   /** @brief Drop dead enemies from `active`. */
   static void reap(std::vector<std::unique_ptr<Enemy>>& active);

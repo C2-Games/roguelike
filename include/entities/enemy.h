@@ -7,7 +7,9 @@
 #include "entities/entity.h"
 #include "entities/fov.h"
 
-struct MoveContext;
+struct FrameState;
+class GoalMapCache;
+struct GameServices;
 
 class Enemy : public Entity
 {
@@ -49,11 +51,12 @@ class Enemy : public Entity
   /**
    * @brief Advance enemy behavior one frame using wall-aware pathfinding.
    *
-   * @param ctx Per-frame context (playerPos, current Room, goal-map cache,
-   *   other enemies for collision, RNG source). Built once per frame by
-   *   Game::update and reused across every enemy.
+   * @param frame Per-frame world state (player and current room).
+   * @param cache Goal-map cache used to path toward the chase target.
+   * @param services RNG source used for movement tiebreaks and wandering.
    */
-  void moveTowardPlayer(const MoveContext& ctx);
+  void moveTowardPlayer(const FrameState& frame, const GoalMapCache& cache,
+                        GameServices& services);
 
  private:
   int attackDamage_;
