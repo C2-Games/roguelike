@@ -33,10 +33,17 @@ this skill does not carry a copy to drift out of sync with it.
 | Member variables | trailing-underscore `camelCase_` | `attackDamage_`, `chaseTurnsRemaining_` |
 | Constants | `ALL_CAPS` | `HEIGHT` |
 | Files | `snake_case` | `goal_map_cache.h` |
+| Locals | named for what they hold or do | `tiers`, `attributes`, `candidates` |
 
 This matches the existing codebase, not strict upstream Google
 function-naming (which wants `PascalCase` functions) — don't "correct"
 existing camelCase methods to PascalCase.
+
+**Never name a variable `it`, or any suffixed variation of it (`typeIt`,
+`tierIt`, `it2`).** An iterator is still a value with a job — name it for
+what it holds or what it locates, so the dereference downstream reads as
+prose. `auto tiers = catalog_.find(name);` says what `tiers->second` will
+be; `auto it = catalog_.find(name);` says nothing at all.
 
 ## Comments
 

@@ -27,7 +27,7 @@ class RoomEnemyState
    *
    * @param room       The owning room, for spawn-point placement.
    * @param spawnTable The room's authored enemy entries.
-   * @param catalog    Resolves each entry's type/tier to stats.
+   * @param catalog    Resolves each entry's name/tier to stats.
    * @param services   RNG source for the factory roll.
    */
   void ensureSpawned(const Room& room,
