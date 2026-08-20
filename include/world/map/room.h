@@ -69,11 +69,6 @@ struct Room
   /**
    * @brief Update visibility for a step, falling back to a full recompute.
    *
-   * Tries updateVisibilityDelta first; if that returns false (the step
-   * wasn't a precomputed unit cardinal move), falls back to the full
-   * clear+reveal in updateVisibility(origin, fov). A caller can never
-   * forget the fallback.
-   *
    * @param previousOrigin Viewer position before the step.
    * @param origin Viewer position after the step.
    * @param fov FoV mask, unchanged since the previous frame.
