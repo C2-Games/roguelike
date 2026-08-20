@@ -29,9 +29,13 @@ class Projectile
    * its range is exhausted.
    *
    * @param frame Per-frame world state (the current Room for walkability and
-   *   that room's live enemies for hit resolution).
+   *   that room's live enemies).
+   * @return True if this call stopped because the projectile landed on a
+   *   live enemy, at getPosition(); the caller is responsible for finding
+   *   and damaging it. False for every other case (still moving, hit a
+   *   wall, ran out of range).
    */
-  void update(const FrameState& frame);
+  bool update(const FrameState& frame);
 
   /**
    * @brief Get the projectile's current position.
@@ -46,6 +50,13 @@ class Projectile
    * @return ColorPair
    */
   ColorPair getColor() const { return color_; }
+
+  /**
+   * @brief Get the damage this projectile deals on a hit.
+   *
+   * @return Damage dealt to whatever this projectile hits.
+   */
+  int getDamage() const { return damage_; }
 
   /**
    * @brief Whether the projectile is still in flight.
