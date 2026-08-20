@@ -39,7 +39,8 @@ surfaces long after the fact. `/check` is the local mirror that catches it first
   `scripts/ci-local.sh` verifies formatting with `--dry-run --Werror` under `set -euo pipefail`, so
   an unformatted file would abort the run before cppcheck, clang-tidy or the build execute.
 - **`scripts/ci-local.sh`** then runs the full sweep — format check, cppcheck, clang-tidy, build —
-  mirroring `ci.yml` except for CodeQL.
+  mirroring `ci.yml` except for CodeQL (run in the background — the first pass can take several
+  minutes).
 - **The `reviewer` agent** (`.claude/agents/reviewer.md`) then runs a read-only pass over the
   branch's `src/`/`include/` diff — structure, efficiency, long-term validity, isolation of
   objects & behavior — once the sweep above has passed. Skipped when the diff touches neither
@@ -52,8 +53,7 @@ non-trivial still goes through the full plan-mode flow in `/start-issue`.
 
 Nothing is checked while you write. There is deliberately **no `PostToolUse` hook**: the tools
 themselves are cheap (~0.11s each), but on Windows every invocation pays a WSL spawn of over a
-second, and per-file cppcheck sees less than a whole-tree run does. `format_check.py` did this job
-until issue #119 and is recoverable from git history if write-time checking is ever wanted back.
+second, and per-file cppcheck sees less than a whole-tree run does.
 
 ## 3. Claude never commits or pushes
 
@@ -95,14 +95,9 @@ impossible to answer by editing the file.
 
 ## Style: what the tools check, and what the skill checks
 
-Rule 2 covers everything a linter can decide. The rest — naming, comment voice, where a docstring
+Rule 2 covers everything a linter can decide. The rest — naming, commenting, where a docstring
 is allowed to go — lives in the `cpp-style` skill (`.claude/skills/cpp-style/SKILL.md`), which
 auto-triggers on any `.cpp`/`.h`/`.hpp` work.
-
-The split is deliberate: `clang-format` cannot tell you that docstrings go on methods and
-constructors but never on a struct, enum, or free function; that comments are lowercase and
-end in a period; that enum members take bare `PascalCase` with no `k` prefix; or that existing
-camelCase methods must not be "corrected" to Google's PascalCase. Those are the skill's job.
 
 The skill deliberately carries **no scripts and no config copies**. There is one executable
 definition of the checks per layer, and no more:
@@ -113,20 +108,58 @@ definition of the checks per layer, and no more:
 | On the PR | `.github/workflows/ci.yml` — the authority |
 
 `scripts/ci-local.sh` is the local mirror of `ci.yml` and is meant to be run by a human, with or
-without Claude. Adding a fourth copy inside the skill is how the flags drift apart — that already
-happened once, with the skill's `cppcheck --std=c++17` against CI's `c++20`.
+without Claude.
 
 ---
 
-## Lifecycle
+## Lifecycle Workflow
 
-```
-/issues  ->  /start-issue N  ->  plan (you approve)  ->  implementer agent(s) edit + update CLAUDE.md
-         ->  /check (format, sweep, review)  ->  you review  ->  /pr  ->  you commit + push
+```mermaid
+flowchart TD
+    Issues["/issues"] --> StartIssue["/start-issue N"]
+    StartIssue --> WorktreeCheck{"parallel work?"}
+    WorktreeCheck -- "no" --> Trivial{"trivial?<br/>doc/comment-only or<br/>genuine one-liner"}
+    WorktreeCheck -- "yes" --> EnterWT["EnterWorktree(name: branch)"]
+    EnterWT --> Trivial
+ 
+    Trivial -- "yes, skip plan mode" --> Implementer
+    Trivial -- "no" --> Plan["plan"]
+ 
+    subgraph Loop["Review Loop"]
+        Plan --> Implementer["implementer agent(s)<br/>edit + update CLAUDE.md<br/><i>gated by issue_gate.py</i>"]
+        Implementer --> Check["/check<br/>(format, sweep, review)<br/><i>stamps .last-check</i>"]
+        Check -- "reviewer found issues" --> Plan
+    end
+ 
+    Check -- "clean review" --> DocDrift{"doc_drift.py (Stop hook):<br/>watch-list changed but<br/>CLAUDE.md didn't?"}
+    DocDrift -- "yes, unacknowledged" --> Implementer
+    DocDrift -- "no / acknowledged" --> DevReview["developer reviews"]
+ 
+    DevReview --> PR["/pr<br/>verifies .last-check<br/>writes .claude/.pr-body.md"]
+    PR --> CommitPush["you commit + push"]
+    CommitPush --> ExitWT["ExitWorktree<br/>(keep or remove)"]
+ 
+    classDef planMode fill:#ede9fe,stroke:#7c3aed,stroke-width:2px,color:#4c1d95
+    classDef autoMode fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a8a
+    classDef worktreeMode fill:#d1fae5,stroke:#059669,stroke-width:2px,color:#065f46
+    classDef hookGate fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#78350f
+ 
+    class StartIssue,Plan,WorktreeCheck,Trivial planMode
+    class Implementer,Check,DevReview,PR,CommitPush autoMode
+    class EnterWT,ExitWT worktreeMode
+    class DocDrift hookGate
 ```
 
 Independent plan tasks are dispatched to `.claude/agents/implementer.md` in parallel; dependent
 ones run sequentially. See rule 2 and `/start-issue` for the review pass and plan-mode exemption.
+
+Parallel issues run as separate sessions, each entering its own worktree via `/start-issue` — not
+one session juggling several (`EnterWorktree` refuses a second isolated worktree once a session is
+already inside one). Worktree cleanup (`ExitWorktree`: keep or remove) happens after merge,
+prompted by `/pr`'s handoff or by the harness at session end — never automatic mid-session.
+
+PR bodies stay short — a plain summary and change list, not a narration of how the change was
+decided.
 
 ## Common commands
 
@@ -135,10 +168,10 @@ ones run sequentially. See rule 2 and `/start-issue` for the review pass and pla
 | `/issues [filter]` | List open GitHub issues to pick from (`gh issue list`, repo resolved via `GH_REPO`) |
 | `/new-issue <description>` | File a new GitHub issue, asking which milestone to assign (or creating one if explicitly told) — also how Claude handles a direct prompt with no issue on record |
 | `/start-issue <n> [n...]` | Fetch the issue(s), cut a `<type>/<kebab-description>` branch off `main` (kebab-description ≤4 words, ideally <3), record `.claude/.current-issue`, then enter plan mode |
-| `/check` | Full local CI sweep via `scripts/ci-local.sh` — format, cppcheck, clang-tidy, build — then a `reviewer`-agent pass over `src/`/`include/` changes |
+| `/check` | Full local CI sweep via `scripts/ci-local.sh` — format, cppcheck, clang-tidy, build — then a `reviewer`-agent pass over `src/`/`include/` changes, stamping `.claude/.last-check` |
 | `/build [debug\|release]` | `scripts/build-debug.sh` / `scripts/build-release.sh` |
 | `/run` | Build debug, run from the repo root, report `game.log` and `error.log` |
-| `/pr` | Verify issue + branch, write `.claude/.pr-body.md`, print the push/create commands for you |
+| `/pr` | Confirm `/check` is current, verify issue + branch, write `.claude/.pr-body.md`, print the push/create commands for you |
 
 ## Two environments — never hard-code one
 
