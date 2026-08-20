@@ -30,7 +30,7 @@ std::vector<std::unique_ptr<Enemy>> rollForRoom(
       LOG_ERR("Room " + std::to_string(room.roomID) +
               ": spawn table exceeds available spawn points; dropping "
               "remaining entries from '" +
-              entry.type + "'");
+              entry.name + "'");
       break;
     }
 
@@ -39,11 +39,11 @@ std::vector<std::unique_ptr<Enemy>> rollForRoom(
       continue;
     }
 
-    const EnemyTierAttributes* attrs = catalog.find(entry.type, entry.tier);
+    const EnemyTierAttributes* attrs = catalog.find(entry.name, entry.tier);
     if (attrs == nullptr)
     {
       LOG_ERR("Room " + std::to_string(room.roomID) +
-              ": unknown enemy type/tier '" + entry.type + "'/" +
+              ": unknown enemy name/tier '" + entry.name + "'/" +
               std::to_string(entry.tier) + "; skipping");
       continue;
     }
@@ -52,7 +52,7 @@ std::vector<std::unique_ptr<Enemy>> rollForRoom(
     int hi = entry.max;
     if (lo > hi)
     {
-      LOG_ERR("Room " + std::to_string(room.roomID) + ": '" + entry.type +
+      LOG_ERR("Room " + std::to_string(room.roomID) + ": '" + entry.name +
               "' has min > max; swapping");
       std::swap(lo, hi);
     }

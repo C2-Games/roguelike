@@ -220,7 +220,8 @@ Room Room::loadFromFile(int roomID, const std::filesystem::path& path)
       if (type == TileType::Door)
       {
         DoorNumber label = c - '0';
-        auto [it, inserted] = room.doors.emplace(label, Coordinate{x, y});
+        const bool inserted =
+            room.doors.emplace(label, Coordinate{x, y}).second;
         if (!inserted)
         {
           throw std::runtime_error("Duplicate door label '" +
@@ -255,11 +256,11 @@ Room Room::loadFromFile(int roomID, const std::filesystem::path& path)
 
 Coordinate Room::doorAt(DoorNumber number) const
 {
-  auto it = doors.find(number);
-  if (it == doors.end())
+  auto doorEntry = doors.find(number);
+  if (doorEntry == doors.end())
   {
     throw std::runtime_error("room " + std::to_string(roomID) + " (" + name +
                              ") has no door " + std::to_string(number));
   }
-  return it->second;
+  return doorEntry->second;
 }

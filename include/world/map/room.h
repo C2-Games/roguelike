@@ -133,7 +133,7 @@ struct Room
    * @brief Roll this room's enemies on first call; a no-op after.
    *
    * @param spawnTable The room's authored enemy entries.
-   * @param catalog    Resolves each entry's type/tier to stats.
+   * @param catalog    Resolves each entry's name/tier to stats.
    * @param services   RNG source for the factory roll.
    */
   void ensureEnemiesSpawned(const std::vector<EnemySpawnConfig>& spawnTable,
