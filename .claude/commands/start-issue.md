@@ -109,10 +109,21 @@ denies those edits outright. Run this first, every time.
    write-time hook — so a plan without `/check` ships unverified code. Present it with
    `ExitPlanMode` for approval.
 
-   **Break the plan into isolated tasks**, noting which are independent of each other. Once
-   approved (`ExitPlanMode`), dispatch independent tasks in parallel to the `implementer` agent
-   (`.claude/agents/implementer.md`) — multiple `Agent` tool calls in a single message when the
-   tasks are truly independent. Dependent tasks run sequentially, one after another.
+   **Break the plan into isolated tasks**, each written with this structure so parallel-dispatch
+   eligibility is obvious at a glance instead of inferred from prose:
+
+   ```
+   ### Task <N>: <short title> — issue #<issue-number>
+   **Subagent:** implementer
+   **Depends on:** Task <M> | independent
+   ```
+
+   followed by the task's description. `Depends on: Task <M>` names the task whose output this one
+   needs; `independent` means it can run in parallel with any other independent task. Once approved
+   (`ExitPlanMode`), dispatch every task marked `independent` (relative to what's already landed) in
+   parallel to the `implementer` agent (`.claude/agents/implementer.md`) — multiple `Agent` tool
+   calls in a single message. Run a task with a `Depends on` marker only after that dependency's
+   implementer call has returned and been folded in, one after another.
 
    **Include a `CLAUDE.md` step when the change earns one.** It is the map a future session
    reads before touching code, so it is updated as part of the work, not retrofitted after.
