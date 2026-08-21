@@ -216,7 +216,14 @@ void Game::update()
   {
     if (projectile->isActive())
     {
-      projectile->update(frame);
+      bool hitEnemy = projectile->update(frame);
+      if (hitEnemy)
+      {
+        if (Enemy* target = currentRoom.enemyAt(projectile->getPosition()))
+        {
+          target->takeDamage(projectile->getDamage());
+        }
+      }
     }
   }
   projectiles_.erase(std::remove_if(projectiles_.begin(), projectiles_.end(),
