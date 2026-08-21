@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <memory>
 
+#include "core/colors.h"
 #include "entities/enemy.h"
 #include "render/window_position.h"
 #include "world/map/room.h"
@@ -90,7 +91,10 @@ void EntityLayer::drawPlayer()
   // no visibility check is needed here.
   if (player_.isAlive())
   {
+    const bool flashing = player_.isFlashing();
+    if (flashing) wattron(win_, colorAttr(ColorPair::PlayerHit));
     drawSymbol(win_, player_.getSymbol(), player_.getPosition(), nullptr);
+    if (flashing) wattroff(win_, colorAttr(ColorPair::PlayerHit));
   };
 };
 

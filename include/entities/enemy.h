@@ -56,8 +56,11 @@ class Enemy : public Entity
    * @param frame Per-frame world state (player and current room).
    * @param cache Goal-map cache used to path toward the chase target.
    * @param services RNG source used for movement tiebreaks and wandering.
+   * @return bool True when the enemy attacks the player this frame (melee
+   * currently always connects; this is the attack attempt, not a hit-chance
+   * outcome).
    */
-  void moveTowardPlayer(const FrameState& frame, const GoalMapCache& cache,
+  bool moveTowardPlayer(const FrameState& frame, const GoalMapCache& cache,
                         GameServices& services);
 
  private:
@@ -65,6 +68,13 @@ class Enemy : public Entity
   int chaseMemoryDuration_;
   int chaseTurnsRemaining_;
   std::optional<Coordinate> lastKnownPlayerPos_;
+
+  // Frames remaining before the next attack attempt while blocked by the
+  // player; decoupled from movement speed_ so attacking can run slower
+  // than walking. Gates attack cadence, not whether an attack connects —
+  // melee currently always hits, but this cooldown is the same one a future
+  // ranged/projectile attack would use.
+  int attackCooldownRemaining_;
 };
 
 #endif

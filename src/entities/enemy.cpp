@@ -24,31 +24,37 @@ namespace
 constexpr std::array<int, 4> kDx = {0, 1, 0, -1};
 constexpr std::array<int, 4> kDy = {-1, 0, 1, 0};
 
+// Frames between attack attempts while an enemy is blocked against the
+// player. Deliberately decoupled from movement speed_ so attacking runs
+// slower than walking. This is the attack cadence, not a hit-chance —
+// melee currently always connects.
+constexpr int ATTACK_COOLDOWN_FRAMES = 30;
+
 // True when (x, y) lies inside the fixed-size room grid.
 bool inBounds(int x, int y)
 {
   return x >= 0 && x < Room::WIDTH && y >= 0 && y < Room::HEIGHT;
 }
 
+// Outcome of a single down-gradient step attempt.
+struct GradientStep
+{
+  Coordinate nextTile;     // pos unchanged if no move (blocked or attacking).
+  bool wouldAttackPlayer;  // true when the best down-gradient neighbor is the
+                           // player's tile.
+};
+
 // Pick a strictly-decreasing goal-map neighbor to step onto.
 //
-// - Filters neighbors to those with dist < map[pos] (must move CLOSER; skips
-//   unreachable, equal, and uphill tiles).
-// - Sorts remaining candidates by distance ascending. Random tiebreak within
-//   each distance class (via prior shuffle + stable_sort).
-// - Walks the sorted list and returns the first tile not occupied by another
-//   live enemy. This implements the "fall back to next-best neighbor on
-//   collision" policy.
-//
-// Returns `pos` unchanged when there are no valid down-gradient moves (goal
-// unreachable, enemy already on goal, or every reachable neighbor is
-// occupied).
-Coordinate stepDownGradient(const Enemy* self, Coordinate pos,
-                            const GoalMap& map, const Room& room,
-                            GameServices& services)
+// Returns `pos` unchanged (with `wouldAttackPlayer = false`) when there are
+// no valid down-gradient moves (goal unreachable, enemy already on goal, or
+// every reachable neighbor is occupied).
+GradientStep stepDownGradient(const Enemy* self, Coordinate pos,
+                              const GoalMap& map, const Room& room,
+                              Coordinate playerPos, GameServices& services)
 {
   int currentDist = map[pos.x][pos.y];
-  if (currentDist == kUnreachable || currentDist == 0) return pos;
+  if (currentDist == kUnreachable || currentDist == 0) return {pos, false};
 
   struct Cand
   {
@@ -80,10 +86,17 @@ Coordinate stepDownGradient(const Enemy* self, Coordinate pos,
       candidates.begin(), candidates.end(),
       [](const Cand& a, const Cand& b) { return a.dist < b.dist; });
 
-  auto freeCandidate = std::find_if(
-      candidates.begin(), candidates.end(),
-      [&](const Cand& c) { return room.enemyAt(c.coord, self) == nullptr; });
-  return freeCandidate != candidates.end() ? freeCandidate->coord : pos;
+  if (!candidates.empty() && candidates.front().coord == playerPos)
+  {
+    return {pos, true};
+  }
+
+  auto freeCandidate =
+      std::find_if(candidates.begin(), candidates.end(), [&](const Cand& c) {
+        return c.coord != playerPos && room.enemyAt(c.coord, self) == nullptr;
+      });
+  return {freeCandidate != candidates.end() ? freeCandidate->coord : pos,
+          false};
 }
 
 // Pick a random walkable Floor neighbor not occupied by another enemy.
@@ -117,10 +130,11 @@ Enemy::Enemy(Coordinate position, std::unique_ptr<FOV> fov, EntitySymbol symbol,
       attackDamage_(attackDamage),
       chaseMemoryDuration_(chaseMemoryDuration),
       chaseTurnsRemaining_(0),
-      lastKnownPlayerPos_(std::nullopt)
+      lastKnownPlayerPos_(std::nullopt),
+      attackCooldownRemaining_(0)
 {}
 
-void Enemy::moveTowardPlayer(const FrameState& frame, const GoalMapCache& cache,
+bool Enemy::moveTowardPlayer(const FrameState& frame, const GoalMapCache& cache,
                              GameServices& services)
 {
   const Coordinate playerPos = frame.player.getPosition();
@@ -155,14 +169,21 @@ void Enemy::moveTowardPlayer(const FrameState& frame, const GoalMapCache& cache,
     }
   }
 
-  // Determine the tile to attempt to step onto.
+  // Determine the tile to attempt to step onto. wasBlockedByPlayer tracks
+  // whether the best down-gradient step this frame is the player's tile.
   Coordinate nextTile;
+  bool wasBlockedByPlayer = false;
   if (target.has_value())
   {
     const GoalMap& map = cache.getOrCompute(frame.currentRoom, *target);
-    Coordinate chosen =
-        stepDownGradient(this, position_, map, frame.currentRoom, services);
-    if (chosen == position_)
+    GradientStep step = stepDownGradient(
+        this, position_, map, frame.currentRoom, playerPos, services);
+    if (step.wouldAttackPlayer)
+    {
+      wasBlockedByPlayer = true;
+      nextTile = position_;
+    }
+    else if (step.nextTile == position_)
     {
       // No legal down-gradient step (target unreachable or all reachable
       // neighbors blocked by other enemies). Wander instead so the enemy
@@ -171,7 +192,7 @@ void Enemy::moveTowardPlayer(const FrameState& frame, const GoalMapCache& cache,
     }
     else
     {
-      nextTile = chosen;
+      nextTile = step.nextTile;
     }
   }
   else
@@ -193,6 +214,22 @@ void Enemy::moveTowardPlayer(const FrameState& frame, const GoalMapCache& cache,
     --chaseTurnsRemaining_;
     if (chaseTurnsRemaining_ == 0) lastKnownPlayerPos_.reset();
   }
+
+  // Disengaging resets the cooldown so the next approach starts fresh.
+  if (!wasBlockedByPlayer)
+  {
+    attackCooldownRemaining_ = 0;
+    return false;
+  }
+  if (attackCooldownRemaining_ > 0)
+  {
+    --attackCooldownRemaining_;
+    return false;
+  }
+
+  // Minus one: this frame is itself part of the gap.
+  attackCooldownRemaining_ = ATTACK_COOLDOWN_FRAMES - 1;
+  return true;
 }
 
 void Enemy::takeDamage(int damage)

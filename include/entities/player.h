@@ -61,10 +61,26 @@ class Player : public Entity
    */
   const Weapon& getWeapon() const { return weapon_; }
 
+  /** @brief Start (or restart) the one-shot red hit-flash. */
+  void triggerHitFlash() { hitFlashFramesRemaining_ = HIT_FLASH_FRAMES; }
+
+  /** @brief Advance the hit-flash timer by one frame. */
+  void tickHitFlash()
+  {
+    if (hitFlashFramesRemaining_ > 0) --hitFlashFramesRemaining_;
+  }
+
+  /** @brief Whether the one-shot hit-flash is currently active. */
+  bool isFlashing() const { return hitFlashFramesRemaining_ > 0; }
+
  private:
+  // Duration of the one-shot red hit-flash, in frames.
+  static constexpr int HIT_FLASH_FRAMES = 8;
+
   int maxHealth_;
   Coordinate lastDirection_ = Coordinate(1, 0);
   Weapon weapon_;
+  int hitFlashFramesRemaining_ = 0;
 };
 
 #endif

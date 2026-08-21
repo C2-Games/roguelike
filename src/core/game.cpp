@@ -199,17 +199,18 @@ void Game::update()
   // Build the per-frame context once and reuse across every enemy/projectile.
   FrameState frame{player_, currentRoom};
 
-  // Move enemies toward player.
+  // Move enemies toward player. The player's tile is blocked, so a blocked
+  // approach registers as a rate-limited attack instead of the enemy
+  // stacking on the player's tile.
   for (auto& enemy : currentRoom.enemies())
   {
-    enemy->moveTowardPlayer(frame, goalMapCache_, services_);
-
-    // Check collision with player
-    if (enemy->getPosition() == frame.player.getPosition())
+    if (enemy->moveTowardPlayer(frame, goalMapCache_, services_))
     {
       player_.takeDamage(enemy->getAttackDamage());
+      player_.triggerHitFlash();
     }
   }
+  player_.tickHitFlash();
 
   // Advance projectiles, apply hits, and drop any that expired.
   for (auto& projectile : projectiles_)
