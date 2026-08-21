@@ -1,34 +1,10 @@
-#include <ncurses.h>
-
-#include <clocale>
-
 #include "core/game.h"
-#include "io/output/colors.h"
+#include "io/ui_manager.h"
 
 int main()
 {
-  // Enable locale-aware (UTF-8) input/output for ncursesw.
-  setlocale(LC_ALL, "");
-
-  // Initialize ncurses
-  initscr();
-  initColors();
-  cbreak();
-  noecho();
-  nodelay(stdscr, TRUE);
-
-  // include multiple special keys including keypad
-  keypad(stdscr, TRUE);
-
-  // Remove cursor from screen
-  curs_set(0);
-
-  // get terminal size
-  int termHeight, termWidth;
-  getmaxyx(stdscr, termHeight, termWidth);
-
-  // start game.
-  Game game(termWidth, termHeight);
+  UIManager uiManager;
+  Game game(uiManager);
   game.run();
 
   return 0;

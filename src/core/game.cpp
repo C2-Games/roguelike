@@ -1,18 +1,15 @@
 #include "core/game.h"
 
-#include <ncurses.h>
-
 #include <algorithm>
 #include <chrono>
-#include <iostream>
 #include <thread>
 
 #include "core/frame_state.h"
 #include "core/render_state_builder.h"
 #include "entities/enemy.h"
 #include "entities/entity.h"
-#include "io/input/handle_input.h"
-#include "io/output/window_position.h"
+#include "io/input/game_commands.h"
+#include "io/ui_manager.h"
 #include "world/objects/projectile.h"
 
 namespace
@@ -24,47 +21,19 @@ constexpr std::mt19937::result_type kDefaultSeed = 80085;
 constexpr int HIT_FLASH_FRAMES = 8;
 }  // namespace
 
-Game::Game(int width, int height, int fps)
-    : termWidth_(width),
-      termHeight_(height),
-      fps_(fps),
+Game::Game(UIManager& uiManager, int fps)
+    : fps_(fps),
       services_(kDefaultSeed),
       player_(Coordinate(Room::WIDTH / 2, Room::HEIGHT / 2)),
       enemyCatalog_("assets/enemies"),
       level_("assets/levels/level_1", services_, enemyCatalog_),
-      isRunning_(true)
-{
-  // add window overlays.
-  WindowPosition geom = centerWindow(termHeight_, termWidth_);
-  renderer_.addLayer(RenderLayer::Map,
-                     std::make_unique<MapLayer>(geom.winHeight, geom.winWidth,
-                                                geom.originY, geom.originX));
-  renderer_.addLayer(RenderLayer::Entity, std::make_unique<EntityLayer>(
-                                              geom.winHeight, geom.winWidth,
-                                              geom.originY, geom.originX));
-
-  const int hud_margin = 2;
-  renderer_.addLayer(
-      RenderLayer::HUD,
-      std::make_unique<HUDLayer>(termHeight_, termWidth_, hud_margin));
-
-  // if debug build, add the debug window.
-#ifndef NDEBUG
-  renderer_.addLayer(RenderLayer::Debug,
-                     std::make_unique<DebugLayer>(termHeight_, termWidth_));
-#endif
-}
+      isRunning_(true),
+      uiManager_(uiManager)
+{}
 
 void Game::run()
 {
-  printw("Roguelike Game Started! Use arrow keys to move. Press Q to quit.\n");
-  printw("Press SPACE to begin...\n");
-
-  int ch;
-  do
-  {
-    ch = getch();
-  } while (ch != ' ');
+  UIManager::showStartScreen();
 
   const auto frame_duration = getDuration();
 
@@ -93,21 +62,21 @@ void Game::run()
     currentFps_ = totalFrame.count() > 0.0 ? 1000.0 / totalFrame.count() : 0.0;
   }
 
-  endwin();
-  std::cout << "Game Over!\n";
+  UIManager::showGameOver();
 }
 
 void Game::handleInput()
 {
-  GameCommand command = input::pollInput();
+  GameCommand command = uiManager_.pollInput();
   Coordinate newPlayerPos = player_.getPosition();
 
   switch (command)
   {
-    case GameCommand::Resize:  // in case of a terminal resize.
-      getmaxyx(stdscr, termHeight_, termWidth_);
-      renderer_.resizeAll(termHeight_, termWidth_);
-      return;
+    case GameCommand::Resize:
+      // unreachable: UIManager::pollInput() already resolves resizes to
+      // None before Game sees them. kept only so the switch stays
+      // exhaustive over GameCommand.
+      break;
     case GameCommand::MoveUp:
       newPlayerPos.y -= 1;
       player_.setLastDirection(Coordinate(0, -1));
@@ -242,7 +211,7 @@ bool Game::playerMoved() const
 
 void Game::render()
 {
-  renderer_.compose(
+  uiManager_.render(
       render_state_builder::build(player_, level_, projectiles_, currentFps_,
                                   playerHitFlashFramesRemaining_ > 0));
 }
