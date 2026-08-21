@@ -145,11 +145,16 @@ void Game::handleInput()
       mvprintw(2, 0, "Invalid key\n");
       break;
   }
-  if (newPlayerPos.x >= 0 && newPlayerPos.x < Room::WIDTH &&
-      newPlayerPos.y >= 0 && newPlayerPos.y < Room::HEIGHT &&
-      level_.getCurrentRoom()
-          .tiles[newPlayerPos.x][newPlayerPos.y]
-          .isWalkable())
+  const std::vector<Coordinate> footprint = player_.occupiedTiles(newPlayerPos);
+  bool canMove =
+      !footprint.empty() &&
+      std::all_of(
+          footprint.begin(), footprint.end(), [&](const Coordinate& tile) {
+            return tile.x >= 0 && tile.x < Room::WIDTH && tile.y >= 0 &&
+                   tile.y < Room::HEIGHT &&
+                   level_.getCurrentRoom().tiles[tile.x][tile.y].isWalkable();
+          });
+  if (canMove)
   {
     // Check for a linked door before applying normal movement.
     if (level_.getCurrentRoom()
@@ -200,12 +205,19 @@ void Game::update()
   FrameState frame{player_, currentRoom};
 
   // Move enemies toward player.
+  const std::vector<Coordinate> playerTiles = frame.player.occupiedTiles();
   for (auto& enemy : currentRoom.enemies())
   {
     enemy->moveTowardPlayer(frame, goalMapCache_, services_);
 
-    // Check collision with player
-    if (enemy->getPosition() == frame.player.getPosition())
+    // Check collision with player: any overlap between their footprints.
+    const std::vector<Coordinate> enemyTiles = enemy->occupiedTiles();
+    bool collided = std::any_of(
+        enemyTiles.begin(), enemyTiles.end(), [&](const Coordinate& tile) {
+          return std::find(playerTiles.begin(), playerTiles.end(), tile) !=
+                 playerTiles.end();
+        });
+    if (collided)
     {
       player_.takeDamage(enemy->getAttackDamage());
     }

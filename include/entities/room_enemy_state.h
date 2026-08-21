@@ -41,12 +41,12 @@ class RoomEnemyState
   }
 
   /**
-   * @brief Find the live enemy standing on `pos`.
+   * @brief Find the live enemy whose footprint covers `pos`.
    *
    * @param pos Tile to test.
    * @param exclude Enemy skipped by pointer identity, so a caller asking
    * about its own tile never matches itself. Null considers every enemy.
-   * @return The enemy on `pos`, or nullptr when none is there.
+   * @return The enemy covering `pos`, or nullptr when none is there.
    */
   Enemy* enemyAt(Coordinate pos, const Enemy* exclude = nullptr) const;
 

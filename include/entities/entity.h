@@ -2,6 +2,7 @@
 #define ENTITY_H
 
 #include <memory>
+#include <vector>
 
 #include "core/coordinate.h"
 #include "entities/entity_symbol.h"
@@ -63,6 +64,36 @@ class Entity
    * @param newPos Corrdinates of new position.
    */
   void moveTo(Coordinate newPos) { moveHook(newPos); };
+
+  /**
+   * @brief Every absolute tile this entity's symbol covers, offset from a
+   * given origin.
+   *
+   * @param origin World position to offset the symbol from.
+   * @return std::vector<Coordinate> One entry per non-transparent ('\0')
+   * cell.
+   */
+  std::vector<Coordinate> occupiedTiles(Coordinate origin) const;
+
+  /**
+   * @brief This entity's currently-occupied tiles, at its current position.
+   *
+   * @return std::vector<Coordinate> One entry per non-transparent ('\0')
+   * cell.
+   */
+  std::vector<Coordinate> occupiedTiles() const
+  {
+    return occupiedTiles(position_);
+  }
+
+  /**
+   * @brief Whether this entity's symbol, offset from origin, covers pos.
+   *
+   * @param origin World position to offset the symbol from.
+   * @param pos Tile to test.
+   * @return bool True if a non-transparent ('\0') symbol cell lands on pos.
+   */
+  bool occupies(Coordinate origin, Coordinate pos) const;
 
   // abstract methods.
   virtual void takeDamage(int damage) = 0;
