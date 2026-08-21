@@ -28,6 +28,12 @@ class EntityLayer : public RenderStack
               const Player& player,
               const std::vector<std::unique_ptr<Projectile>>& projectiles);
 
+  /** @brief Ticks the player hit-flash timer down by one frame. */
+  void doUpdate() override;
+
+  /** @brief Start (or restart) the one-shot red player hit-flash. */
+  void triggerPlayerHitFlash();
+
   /** @brief Draw enemy entities that are inside the player's current FoV. */
   void drawEnemies();
 
@@ -51,9 +57,13 @@ class EntityLayer : public RenderStack
   void onResize(int termHeight, int termWidth) override;
 
  private:
+  // Duration of the one-shot red player hit-flash, in frames.
+  static constexpr int HIT_FLASH_FRAMES = 8;
+
   const Level& graph_;
   const Player& player_;
   const std::vector<std::unique_ptr<Projectile>>& projectiles_;
+  int hitFlashFramesRemaining_ = 0;
 };
 
 #endif
