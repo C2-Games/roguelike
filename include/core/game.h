@@ -48,6 +48,9 @@ class Game
 
   bool isRunning_;
   Renderer renderer_;
+  // Non-owning; owned by renderer_. Its hit-flash timer only ticks while
+  // this layer stays enabled (RenderStack::doUpdate() is skipped otherwise).
+  EntityLayer* entityLayer_ = nullptr;
 
   Coordinate lastVisibilityPos_ = Coordinate(-1, -1);
   int lastVisibilityRoomID_ = -1;

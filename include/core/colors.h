@@ -22,6 +22,8 @@ enum class ColorPair : short
   HealthCritical = 11,  ///< Health bar fill at or below 20 health.
   BarEmpty = 12,        ///< Unfilled remainder of any bar.
   Shield = 13,          ///< Reserved for the shield overlay bar.
+
+  PlayerHit = 14,  ///< One-shot red flash when an enemy lands a hit.
 };
 
 /**
