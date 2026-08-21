@@ -12,7 +12,7 @@ struct FrameState;
 class GoalMapCache;
 struct GameServices;
 
-enum AIState
+enum class AIState
 {
   Idle,       // never spotted the player, or gave up searching.
   Chasing,    // player is currently in FoV; target is their live position.
