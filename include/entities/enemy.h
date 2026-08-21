@@ -65,8 +65,7 @@ class Enemy : public Entity
   {
     Idle,       // never spotted the player, or gave up searching.
     Chasing,    // player is currently in FoV; target is their live position.
-    Searching,  // lost sight; target is the last-known position, memory
-                // ticking down.
+    Searching,  // lost sight; target is the last-known position
   };
 
   int attackDamage_;
