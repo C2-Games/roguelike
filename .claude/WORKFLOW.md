@@ -126,7 +126,7 @@ flowchart TD
     Trivial -- "no" --> Plan["plan"]
  
     subgraph Loop["Review Loop"]
-        Plan --> Implementer["implementer agent(s)<br/>edit + update CLAUDE.md<br/><i>gated by issue_gate.py</i>"]
+        Plan --> Implementer["implementer agent(s)<br/>one per Task: id + Depends on + Subagent<br/>edit + update CLAUDE.md<br/><i>gated by issue_gate.py</i>"]
         Implementer --> Check["/check<br/>(format, sweep, review)<br/><i>stamps .last-check</i>"]
         Check -- "reviewer found issues" --> Plan
     end
@@ -150,8 +150,11 @@ flowchart TD
     class DocDrift hookGate
 ```
 
-Independent plan tasks are dispatched to `.claude/agents/implementer.md` in parallel; dependent
-ones run sequentially. See rule 2 and `/start-issue` for the review pass and plan-mode exemption.
+Each plan task states an id, a `Depends on: Task N` marker (or `independent`), and the subagent
+that executes it — see `/start-issue`'s plan-writing step for the exact structure. Tasks marked
+`independent` are dispatched to `.claude/agents/implementer.md` in parallel; a task with a
+`Depends on` marker runs only after that dependency lands, sequentially. See rule 2 for the
+review pass and plan-mode exemption.
 
 Parallel issues run as separate sessions, each entering its own worktree via `/start-issue` — not
 one session juggling several (`EnterWorktree` refuses a second isolated worktree once a session is
