@@ -128,7 +128,8 @@ Enemy::Enemy(Coordinate position, std::unique_ptr<FOV> fov, EntitySymbol symbol,
       chaseMemoryDuration_(chaseMemoryDuration),
       chaseTurnsRemaining_(0),
       lastKnownPlayerPos_(std::nullopt),
-      state_(AIState::Idle)
+      state_(AIState::Idle),
+      attackCooldownRemaining_(0)
 {}
 
 void Enemy::transitionState(bool inFoV, Coordinate playerPos)
@@ -190,7 +191,7 @@ void Enemy::onEnterChasing() {}
 
 void Enemy::onEnterSearching() {}
 
-void Enemy::moveTowardPlayer(const FrameState& frame, const GoalMapCache& cache,
+bool Enemy::moveTowardPlayer(const FrameState& frame, const GoalMapCache& cache,
                              GameServices& services)
 {
   const Coordinate playerPos = frame.player.getPosition();

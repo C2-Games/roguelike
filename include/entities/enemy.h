@@ -77,6 +77,9 @@ class Enemy : public Entity
   std::optional<Coordinate> lastKnownPlayerPos_;
   AIState state_;
 
+  // frames remaining before the next attack attempt
+  int attackCooldownRemaining_;
+
   /**
    * @brief Recompute this frame's AI state from FoV and chase-memory data.
    *
