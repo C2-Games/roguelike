@@ -1,12 +1,12 @@
-#include "render/layers/hud_layer.h"
+#include "io/output/layers/hud_layer.h"
 
 #include <ncurses.h>
 
 #include <algorithm>
 
-#include "core/colors.h"
-#include "render/window_position.h"
-#include "world/objects/weapon.h"
+#include "io/output/colors.h"
+#include "io/output/render_state.h"
+#include "io/output/window_position.h"
 
 namespace
 {
@@ -24,9 +24,8 @@ constexpr wchar_t EMPTY_CELL = L'░';
 
 }  // namespace
 
-HUDLayer::HUDLayer(int h, int w, int margin, const Player& player,
-                   const Level& graph)
-    : RenderStack(h, w), player_(player), graph_(graph), margin_(margin)
+HUDLayer::HUDLayer(int h, int w, int margin)
+    : RenderStack(h, w), margin_(margin)
 {}
 
 void HUDLayer::drawBar(int row, int col, int filled, int total, ColorPair fill,
@@ -60,10 +59,10 @@ void HUDLayer::drawBar(int row, int col, int filled, int total, ColorPair fill,
   }
 }
 
-void HUDLayer::drawPlayerHealthBar(int row, int col)
+void HUDLayer::drawPlayerHealthBar(const RenderState& state, int row, int col)
 {
-  const int health = player_.getHealth();
-  const int maxHealth = player_.getMaxHealth();
+  const int health = state.playerHealth;
+  const int maxHealth = state.playerMaxHealth;
 
   // round both up, so a max health that is not a multiple of HEALTH_INCREMENT
   // still fills completely at full health, and a sliver of health still shows
@@ -86,23 +85,22 @@ void HUDLayer::drawPlayerHealthBar(int row, int col)
   mvwprintw(win_, row, col + total + 1, "%3d/%d", health, maxHealth);
 };
 
-void HUDLayer::drawRoomID(int row, int col)
+void HUDLayer::drawRoomID(const RenderState& state, int row, int col)
 {
-  mvwprintw(win_, row, col, "Room:%d/%d", graph_.getCurrentRoomID() + 1,
-            graph_.getRoomCount());
+  mvwprintw(win_, row, col, "Room:%d/%d", state.roomIndex + 1, state.roomCount);
 };
 
-void HUDLayer::drawWeaponStats(int row, int col)
+void HUDLayer::drawWeaponStats(const RenderState& state, int row, int col)
 {
-  const Weapon& weapon = player_.getWeapon();
+  const WeaponView& weapon = state.weapon;
 
-  wattron(win_, colorAttr(weapon.getColor()));
-  mvwprintw(win_, row, col, "%s DMG:%d SPD:%d RNG:%d", weapon.getName(),
-            weapon.getDamage(), weapon.getSpeed(), weapon.getRange());
-  wattroff(win_, colorAttr(weapon.getColor()));
+  wattron(win_, colorAttr(weapon.color));
+  mvwprintw(win_, row, col, "%s DMG:%d SPD:%d RNG:%d", weapon.name.c_str(),
+            weapon.damage, weapon.speed, weapon.range);
+  wattroff(win_, colorAttr(weapon.color));
 };
 
-void HUDLayer::doRender()
+void HUDLayer::doRender(const RenderState& state)
 {
   werase(win_);  // need to erase each frame.
 
@@ -112,9 +110,9 @@ void HUDLayer::doRender()
   int bandRow = std::max(0, geom.originY - margin_);
 
   // room number, in middle (subtract 4 to center better -- 4 chars in 'Room').
-  this->drawRoomID(bandRow + 1, geom.originX + geom.winWidth / 2 - 4);
+  this->drawRoomID(state, bandRow + 1, geom.originX + geom.winWidth / 2 - 4);
 
   // health bar & weapon stats top left.
-  this->drawPlayerHealthBar(bandRow, geom.originX);
-  this->drawWeaponStats(bandRow + 1, geom.originX);
+  this->drawPlayerHealthBar(state, bandRow, geom.originX);
+  this->drawWeaponStats(state, bandRow + 1, geom.originX);
 };

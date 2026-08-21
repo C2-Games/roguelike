@@ -10,11 +10,11 @@
 #include "entities/enemy_catalog.h"
 #include "entities/fov.h"
 #include "entities/player.h"
-#include "render/layers/debug_layer.h"
-#include "render/layers/entity_layer.h"
-#include "render/layers/hud_layer.h"
-#include "render/layers/map_layer.h"
-#include "render/renderer.h"
+#include "io/output/layers/debug_layer.h"
+#include "io/output/layers/entity_layer.h"
+#include "io/output/layers/hud_layer.h"
+#include "io/output/layers/map_layer.h"
+#include "io/output/renderer.h"
 #include "world/map/level.h"
 #include "world/objects/projectile.h"
 #include "world/systems/goal_map_cache.h"
@@ -38,7 +38,7 @@ class Game
  private:
   int termWidth_, termHeight_;
   const int fps_;
-  double currentFps_;
+  double currentFps_ = 0.0;
   GameServices services_;
   Player player_;
   EnemyCatalog enemyCatalog_;
@@ -48,9 +48,7 @@ class Game
 
   bool isRunning_;
   Renderer renderer_;
-  // Non-owning; owned by renderer_. Its hit-flash timer only ticks while
-  // this layer stays enabled (RenderStack::doUpdate() is skipped otherwise).
-  EntityLayer* entityLayer_ = nullptr;
+  int playerHitFlashFramesRemaining_ = 0;
 
   Coordinate lastVisibilityPos_ = Coordinate(-1, -1);
   int lastVisibilityRoomID_ = -1;

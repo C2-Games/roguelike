@@ -1,4 +1,4 @@
-#include "render/renderer.h"
+#include "io/output/renderer.h"
 
 #include <ncurses.h>
 
@@ -7,7 +7,7 @@ void Renderer::addLayer(RenderLayer z, std::unique_ptr<RenderStack> layer)
   layers_[z] = std::move(layer);
 };
 
-void Renderer::compose()
+void Renderer::compose(const RenderState& state)
 {
   erase();  // erase stdscr first.
 
@@ -17,7 +17,7 @@ void Renderer::compose()
     if (layer->isEnabled())
     {
       layer->doUpdate();
-      layer->doRender();
+      layer->doRender(state);
 
       // overlay the ncurses::WINDOW object.
       overlay(layer->getWindow(), stdscr);
