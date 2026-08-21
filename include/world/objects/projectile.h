@@ -25,15 +25,14 @@ class Projectile
 
   /**
    * @brief Advance the projectile up to tilesPerTick tiles. Deactivates on
-   * the first wall collision, on the first live enemy it lands on, or once
+   * the first wall collision, on the first live entity it lands on, or once
    * its range is exhausted.
    *
-   * @param frame Per-frame world state (the current Room for walkability and
-   *   that room's live enemies).
+   * @param frame Per-frame world state (the current Room for walkability,
+   *   that room's live enemies, and the player).
    * @return True if this call stopped because the projectile landed on a
-   *   live enemy, at getPosition(); the caller is responsible for finding
-   *   and damaging it. False for every other case (still moving, hit a
-   *   wall, ran out of range).
+   *   live entity (enemy or player), at getPosition(). False for every other
+   *   case (still moving, hit a wall, ran out of range).
    */
   bool update(const FrameState& frame);
 

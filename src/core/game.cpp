@@ -9,6 +9,7 @@
 
 #include "core/frame_state.h"
 #include "entities/enemy.h"
+#include "entities/entity.h"
 #include "render/window_position.h"
 #include "world/objects/projectile.h"
 
@@ -216,10 +217,11 @@ void Game::update()
   {
     if (projectile->isActive())
     {
-      bool hitEnemy = projectile->update(frame);
-      if (hitEnemy)
+      bool hitEntity = projectile->update(frame);
+      if (hitEntity)
       {
-        if (Enemy* target = currentRoom.enemyAt(projectile->getPosition()))
+        if (Entity* target =
+                currentRoom.entityAt(projectile->getPosition(), player_))
         {
           target->takeDamage(projectile->getDamage());
         }
