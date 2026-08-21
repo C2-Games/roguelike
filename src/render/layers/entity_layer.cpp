@@ -5,6 +5,7 @@
 #include <cstddef>
 #include <memory>
 
+#include "core/colors.h"
 #include "entities/enemy.h"
 #include "render/window_position.h"
 #include "world/map/room.h"
@@ -42,6 +43,16 @@ EntityLayer::EntityLayer(
       player_(player),
       projectiles_(projectiles)
 {}
+
+void EntityLayer::doUpdate()
+{
+  if (hitFlashFramesRemaining_ > 0) --hitFlashFramesRemaining_;
+}
+
+void EntityLayer::triggerPlayerHitFlash()
+{
+  hitFlashFramesRemaining_ = HIT_FLASH_FRAMES;
+}
 
 void EntityLayer::drawEnemies()
 {
@@ -90,7 +101,10 @@ void EntityLayer::drawPlayer()
   // no visibility check is needed here.
   if (player_.isAlive())
   {
+    const bool flashing = hitFlashFramesRemaining_ > 0;
+    if (flashing) wattron(win_, colorAttr(ColorPair::PlayerHit));
     drawSymbol(win_, player_.getSymbol(), player_.getPosition(), nullptr);
+    if (flashing) wattroff(win_, colorAttr(ColorPair::PlayerHit));
   };
 };
 

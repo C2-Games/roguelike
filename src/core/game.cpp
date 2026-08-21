@@ -35,10 +35,11 @@ Game::Game(int width, int height, int fps)
   renderer_.addLayer(RenderLayer::Map, std::make_unique<MapLayer>(
                                            geom.winHeight, geom.winWidth,
                                            geom.originY, geom.originX, level_));
-  renderer_.addLayer(RenderLayer::Entity,
-                     std::make_unique<EntityLayer>(
-                         geom.winHeight, geom.winWidth, geom.originY,
-                         geom.originX, level_, player_, projectiles_));
+  auto entityLayer = std::make_unique<EntityLayer>(
+      geom.winHeight, geom.winWidth, geom.originY, geom.originX, level_,
+      player_, projectiles_);
+  entityLayer_ = entityLayer.get();
+  renderer_.addLayer(RenderLayer::Entity, std::move(entityLayer));
 
   const int hud_margin = 2;
   renderer_.addLayer(RenderLayer::HUD,
@@ -200,15 +201,13 @@ void Game::update()
   // Build the per-frame context once and reuse across every enemy/projectile.
   FrameState frame{player_, currentRoom};
 
-  // Move enemies toward player.
+  // Move enemies toward player or attack
   for (auto& enemy : currentRoom.enemies())
   {
-    enemy->moveTowardPlayer(frame, goalMapCache_, services_);
-
-    // Check collision with player
-    if (enemy->getPosition() == frame.player.getPosition())
+    if (enemy->moveTowardPlayer(frame, goalMapCache_, services_))
     {
       player_.takeDamage(enemy->getAttackDamage());
+      entityLayer_->triggerPlayerHitFlash();
     }
   }
 

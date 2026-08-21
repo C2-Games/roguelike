@@ -49,4 +49,7 @@ void initColors()
 
   // Shield bar: blue fill for the overlay drawn on top of the health bar.
   registerPair(ColorPair::Shield, COLOR_BLUE, COLOR_BLACK);
+
+  // One-shot flash overlay for the player symbol when an enemy hits them.
+  registerPair(ColorPair::PlayerHit, COLOR_RED, COLOR_BLACK);
 }
