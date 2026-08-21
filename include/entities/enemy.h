@@ -12,6 +12,13 @@ struct FrameState;
 class GoalMapCache;
 struct GameServices;
 
+enum AIState
+{
+  Idle,       // never spotted the player, or gave up searching.
+  Chasing,    // player is currently in FoV; target is their live position.
+  Searching,  // lost sight; target is the last-known position
+};
+
 class Enemy : public Entity
 {
  public:
@@ -61,13 +68,6 @@ class Enemy : public Entity
                         GameServices& services);
 
  private:
-  enum class AIState
-  {
-    Idle,       // never spotted the player, or gave up searching.
-    Chasing,    // player is currently in FoV; target is their live position.
-    Searching,  // lost sight; target is the last-known position
-  };
-
   int attackDamage_;
   int chaseMemoryDuration_;
   int chaseTurnsRemaining_;
