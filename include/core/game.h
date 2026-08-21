@@ -10,14 +10,11 @@
 #include "entities/enemy_catalog.h"
 #include "entities/fov.h"
 #include "entities/player.h"
-#include "io/output/layers/debug_layer.h"
-#include "io/output/layers/entity_layer.h"
-#include "io/output/layers/hud_layer.h"
-#include "io/output/layers/map_layer.h"
-#include "io/output/renderer.h"
 #include "world/map/level.h"
 #include "world/objects/projectile.h"
 #include "world/systems/goal_map_cache.h"
+
+class UIManager;
 
 class Game
 {
@@ -25,18 +22,17 @@ class Game
   /**
    * @brief Construct a new Game:: Game object.
    *
-   * @param width Current terminal width (columns).
-   * @param height Current terminal height (rows).
+   * @param uiManager The I/O boundary Game reads input from and pushes
+   * render snapshots through. Must outlive this Game.
    * @param fps frames per second of game. By default, 60.
    *
    */
-  Game(int width, int height, int fps = 60);
+  explicit Game(UIManager& uiManager, int fps = 60);
 
   /** @brief Runs the main game loop. */
   void run();
 
  private:
-  int termWidth_, termHeight_;
   const int fps_;
   double currentFps_ = 0.0;
   GameServices services_;
@@ -47,7 +43,7 @@ class Game
   std::vector<std::unique_ptr<Projectile>> projectiles_;
 
   bool isRunning_;
-  Renderer renderer_;
+  UIManager& uiManager_;
   int playerHitFlashFramesRemaining_ = 0;
 
   Coordinate lastVisibilityPos_ = Coordinate(-1, -1);

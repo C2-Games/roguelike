@@ -10,8 +10,7 @@ enum class GameCommand
   MoveRight,
   Attack,
   Quit,
-  // handled inline by Game for now; a future UIManager will intercept this
-  // before Game ever sees it.
+  // consumed by UIManager::pollInput(); Game never observes this value.
   Resize,
 };
 

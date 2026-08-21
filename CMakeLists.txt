@@ -39,6 +39,7 @@ set(SOURCES
     src/entities/room_enemy_state.cpp
     src/entities/fov.cpp
     src/entities/ellipse_fov.cpp
+    src/io/ui_manager.cpp
     src/io/input/handle_input.cpp
     src/io/output/colors.cpp
     src/io/output/renderer.cpp
