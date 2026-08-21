@@ -73,7 +73,7 @@ Coordinate stepDownGradient(const Enemy* self, Coordinate pos,
   for (std::size_t i = candidates.size(); i > 1; --i)
   {
     std::uniform_int_distribution<std::size_t> pick(0, i - 1);
-    std::size_t j = pick(services.rng);
+    std::size_t j = pick(services.movementRng);
     std::swap(candidates[i - 1], candidates[j]);
   }
   std::stable_sort(
@@ -106,7 +106,7 @@ Coordinate pickWanderTile(const Enemy* self, Coordinate pos, const Room& room,
   }
   if (candidates.empty()) return pos;
   std::uniform_int_distribution<std::size_t> pick(0, candidates.size() - 1);
-  return candidates[pick(services.rng)];
+  return candidates[pick(services.movementRng)];
 }
 
 }  // namespace
