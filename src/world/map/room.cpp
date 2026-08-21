@@ -7,7 +7,9 @@
 #include <stdexcept>
 #include <string>
 
+#include "entities/enemy.h"
 #include "entities/fov.h"
+#include "entities/player.h"
 
 namespace
 {
@@ -263,4 +265,22 @@ Coordinate Room::doorAt(DoorNumber number) const
                              ") has no door " + std::to_string(number));
   }
   return doorEntry->second;
+}
+
+const Entity* Room::entityAt(Coordinate pos, const Player& player) const
+{
+  if (Enemy* enemy = enemyAt(pos))
+  {
+    return enemy;
+  }
+  if (player.isAlive() && player.getPosition() == pos)
+  {
+    return &player;
+  }
+  return nullptr;
+}
+
+Entity* Room::entityAt(Coordinate pos, Player& player) const
+{
+  return const_cast<Entity*>(entityAt(pos, const_cast<const Player&>(player)));
 }

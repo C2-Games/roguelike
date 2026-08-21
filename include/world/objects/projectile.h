@@ -25,13 +25,16 @@ class Projectile
 
   /**
    * @brief Advance the projectile up to tilesPerTick tiles. Deactivates on
-   * the first wall collision, on the first live enemy it lands on, or once
+   * the first wall collision, on the first live entity it lands on, or once
    * its range is exhausted.
    *
-   * @param frame Per-frame world state (the current Room for walkability and
-   *   that room's live enemies for hit resolution).
+   * @param frame Per-frame world state (the current Room for walkability,
+   *   that room's live enemies, and the player).
+   * @return True if this call stopped because the projectile landed on a
+   *   live entity (enemy or player), at getPosition(). False for every other
+   *   case (still moving, hit a wall, ran out of range).
    */
-  void update(const FrameState& frame);
+  bool update(const FrameState& frame);
 
   /**
    * @brief Get the projectile's current position.
@@ -46,6 +49,13 @@ class Projectile
    * @return ColorPair
    */
   ColorPair getColor() const { return color_; }
+
+  /**
+   * @brief Get the damage this projectile deals on a hit.
+   *
+   * @return Damage dealt to whatever this projectile hits.
+   */
+  int getDamage() const { return damage_; }
 
   /**
    * @brief Whether the projectile is still in flight.

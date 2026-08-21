@@ -12,7 +12,9 @@
 #include "world/map/tile.h"
 
 class EnemyCatalog;
+class Entity;
 class FOV;
+class Player;
 
 struct Room
 {
@@ -128,6 +130,16 @@ struct Room
   {
     return enemyState.enemyAt(pos, exclude);
   }
+
+  /**
+   * @brief Find the live entity (enemy or the player) standing on `pos`.
+   *
+   * @param pos Tile to test.
+   * @param player The player to consider alongside this room's enemies.
+   * @return The entity on `pos`, or nullptr when none is there.
+   */
+  Entity* entityAt(Coordinate pos, Player& player) const;
+  const Entity* entityAt(Coordinate pos, const Player& player) const;
 
   /**
    * @brief Roll this room's enemies on first call; a no-op after.

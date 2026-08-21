@@ -9,6 +9,7 @@
 
 #include "core/frame_state.h"
 #include "entities/enemy.h"
+#include "entities/entity.h"
 #include "render/window_position.h"
 #include "world/objects/projectile.h"
 
@@ -228,7 +229,15 @@ void Game::update()
   {
     if (projectile->isActive())
     {
-      projectile->update(frame);
+      bool hitEntity = projectile->update(frame);
+      if (hitEntity)
+      {
+        if (Entity* target =
+                currentRoom.entityAt(projectile->getPosition(), player_))
+        {
+          target->takeDamage(projectile->getDamage());
+        }
+      }
     }
   }
   projectiles_.erase(std::remove_if(projectiles_.begin(), projectiles_.end(),
