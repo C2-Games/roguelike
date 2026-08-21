@@ -24,10 +24,7 @@ namespace
 constexpr std::array<int, 4> kDx = {0, 1, 0, -1};
 constexpr std::array<int, 4> kDy = {-1, 0, 1, 0};
 
-// Frames between attack attempts while an enemy is blocked against the
-// player. Deliberately decoupled from movement speed_ so attacking runs
-// slower than walking. This is the attack cadence, not a hit-chance —
-// melee currently always connects.
+// Frames between attack attempts
 constexpr int ATTACK_COOLDOWN_FRAMES = 30;
 
 // True when (x, y) lies inside the fixed-size room grid.

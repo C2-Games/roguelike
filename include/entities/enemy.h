@@ -69,11 +69,7 @@ class Enemy : public Entity
   int chaseTurnsRemaining_;
   std::optional<Coordinate> lastKnownPlayerPos_;
 
-  // Frames remaining before the next attack attempt while blocked by the
-  // player; decoupled from movement speed_ so attacking can run slower
-  // than walking. Gates attack cadence, not whether an attack connects —
-  // melee currently always hits, but this cooldown is the same one a future
-  // ranged/projectile attack would use.
+  // Frames remaining before the next attack attempt
   int attackCooldownRemaining_;
 };
 
