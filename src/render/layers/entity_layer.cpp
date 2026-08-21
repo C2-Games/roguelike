@@ -44,6 +44,16 @@ EntityLayer::EntityLayer(
       projectiles_(projectiles)
 {}
 
+void EntityLayer::doUpdate()
+{
+  if (hitFlashFramesRemaining_ > 0) --hitFlashFramesRemaining_;
+}
+
+void EntityLayer::triggerPlayerHitFlash()
+{
+  hitFlashFramesRemaining_ = HIT_FLASH_FRAMES;
+}
+
 void EntityLayer::drawEnemies()
 {
   const Room& room = graph_.getCurrentRoom();
@@ -91,7 +101,7 @@ void EntityLayer::drawPlayer()
   // no visibility check is needed here.
   if (player_.isAlive())
   {
-    const bool flashing = player_.isFlashing();
+    const bool flashing = hitFlashFramesRemaining_ > 0;
     if (flashing) wattron(win_, colorAttr(ColorPair::PlayerHit));
     drawSymbol(win_, player_.getSymbol(), player_.getPosition(), nullptr);
     if (flashing) wattroff(win_, colorAttr(ColorPair::PlayerHit));

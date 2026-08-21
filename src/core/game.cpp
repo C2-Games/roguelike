@@ -34,10 +34,11 @@ Game::Game(int width, int height, int fps)
   renderer_.addLayer(RenderLayer::Map, std::make_unique<MapLayer>(
                                            geom.winHeight, geom.winWidth,
                                            geom.originY, geom.originX, level_));
-  renderer_.addLayer(RenderLayer::Entity,
-                     std::make_unique<EntityLayer>(
-                         geom.winHeight, geom.winWidth, geom.originY,
-                         geom.originX, level_, player_, projectiles_));
+  auto entityLayer = std::make_unique<EntityLayer>(
+      geom.winHeight, geom.winWidth, geom.originY, geom.originX, level_,
+      player_, projectiles_);
+  entityLayer_ = entityLayer.get();
+  renderer_.addLayer(RenderLayer::Entity, std::move(entityLayer));
 
   const int hud_margin = 2;
   renderer_.addLayer(RenderLayer::HUD,
@@ -207,10 +208,9 @@ void Game::update()
     if (enemy->moveTowardPlayer(frame, goalMapCache_, services_))
     {
       player_.takeDamage(enemy->getAttackDamage());
-      player_.triggerHitFlash();
+      entityLayer_->triggerPlayerHitFlash();
     }
   }
-  player_.tickHitFlash();
 
   // Advance projectiles, apply hits, and drop any that expired.
   for (auto& projectile : projectiles_)
