@@ -1,7 +1,6 @@
 #include "world/objects/projectile.h"
 
 #include "core/frame_state.h"
-#include "entities/enemy.h"
 #include "world/map/room.h"
 
 Projectile::Projectile(Coordinate position, Coordinate direction, int damage,
@@ -14,34 +13,34 @@ Projectile::Projectile(Coordinate position, Coordinate direction, int damage,
       color_(color)
 {}
 
-void Projectile::update(const FrameState& frame)
+bool Projectile::update(const FrameState& frame)
 {
   for (int i = 0; i < tilesPerTick_; ++i)
   {
     Coordinate candidate = position_ + direction_;
 
-    // Check before touching tile.
+    // check before touching tile.
     if (candidate.x < 0 || candidate.x >= Room::WIDTH || candidate.y < 0 ||
         candidate.y >= Room::HEIGHT)
     {
       deactivate();
-      return;
+      return false;
     }
 
     // isWalkable() stops the projectile.
     if (!frame.currentRoom.tiles[candidate.x][candidate.y].isWalkable())
     {
       deactivate();
-      return;
+      return false;
     }
 
-    // damage the first live enemy standing on the candidate tile.
-    Enemy* hit = frame.currentRoom.enemyAt(candidate);
-    if (hit)
+    // stop on the first live entity (enemy or player) standing on the
+    // candidate tile; actual damage is applied by the caller.
+    if (frame.currentRoom.entityAt(candidate, frame.player) != nullptr)
     {
-      hit->takeDamage(damage_);
+      position_ = candidate;
       deactivate();
-      return;
+      return true;
     }
 
     // Advance and check remaining range.
@@ -50,7 +49,8 @@ void Projectile::update(const FrameState& frame)
     if (remainingRange_ <= 0)
     {
       deactivate();
-      return;
+      return false;
     }
   }
+  return false;
 }
