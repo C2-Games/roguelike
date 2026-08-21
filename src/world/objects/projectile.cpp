@@ -34,9 +34,9 @@ bool Projectile::update(const FrameState& frame)
       return false;
     }
 
-    // stop on the first live enemy standing on the candidate tile. Actual
-    // damage is applied by the caller.
-    if (frame.currentRoom.enemyAt(candidate) != nullptr)
+    // stop on the first live entity (enemy or player) standing on the
+    // candidate tile; actual damage is applied by the caller.
+    if (frame.currentRoom.entityAt(candidate, frame.player) != nullptr)
     {
       position_ = candidate;
       deactivate();
