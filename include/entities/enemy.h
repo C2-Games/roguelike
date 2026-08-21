@@ -12,6 +12,13 @@ struct FrameState;
 class GoalMapCache;
 struct GameServices;
 
+enum class AIState
+{
+  Idle,       // never spotted the player, or gave up searching.
+  Chasing,    // player is currently in FoV; target is their live position.
+  Searching,  // lost sight; target is the last-known position
+};
+
 class Enemy : public Entity
 {
  public:
@@ -68,9 +75,40 @@ class Enemy : public Entity
   int chaseMemoryDuration_;
   int chaseTurnsRemaining_;
   std::optional<Coordinate> lastKnownPlayerPos_;
+  AIState state_;
 
-  // Frames remaining before the next attack attempt
+  // frames remaining before the next attack attempt
   int attackCooldownRemaining_;
+
+  /**
+   * @brief Recompute this frame's AI state from FoV and chase-memory data.
+   *
+   * @param inFoV Whether the player is currently in this enemy's FoV.
+   * @param playerPos The player's current position.
+   */
+  void transitionState(bool inFoV, Coordinate playerPos);
+
+  /** @brief Hook invoked on entering Idle. Empty seam for future behavior. */
+  static void onEnterIdle();
+
+  /**
+   * @brief Hook invoked on entering Chasing. Empty seam for future behavior.
+   */
+  static void onEnterChasing();
+
+  /**
+   * @brief Hook invoked on entering Searching. Empty seam for future
+   * behavior.
+   */
+  static void onEnterSearching();
+
+  /**
+   * @brief Move to a new state, invoking its onEnter hook if it actually
+   * changed.
+   *
+   * @param next The state to move to.
+   */
+  void setState(AIState next);
 };
 
 #endif

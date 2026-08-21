@@ -128,8 +128,68 @@ Enemy::Enemy(Coordinate position, std::unique_ptr<FOV> fov, EntitySymbol symbol,
       chaseMemoryDuration_(chaseMemoryDuration),
       chaseTurnsRemaining_(0),
       lastKnownPlayerPos_(std::nullopt),
+      state_(AIState::Idle),
       attackCooldownRemaining_(0)
 {}
+
+void Enemy::transitionState(bool inFoV, Coordinate playerPos)
+{
+  // Memory refresh runs every frame so the enemy locks on the moment the
+  // player enters its FoV, regardless of speed throttling.
+  if (inFoV)
+  {
+    lastKnownPlayerPos_ = playerPos;
+    chaseTurnsRemaining_ = chaseMemoryDuration_;
+    setState(AIState::Chasing);
+    return;
+  }
+
+  // Cascading (not else-if): a single call can fall Chasing -> Searching ->
+  // Idle in one frame, matching a fresh re-evaluation every frame.
+  if (state_ == AIState::Chasing)
+  {
+    setState(AIState::Searching);
+  }
+
+  if (state_ == AIState::Searching)
+  {
+    if (chaseTurnsRemaining_ <= 0 || !lastKnownPlayerPos_.has_value())
+    {
+      setState(AIState::Idle);
+    }
+    else if (position_ == *lastKnownPlayerPos_)
+    {
+      // Arrived at the last-known tile but the player has since moved.
+      lastKnownPlayerPos_.reset();
+      chaseTurnsRemaining_ = 0;
+      setState(AIState::Idle);
+    }
+  }
+}
+
+void Enemy::setState(AIState next)
+{
+  if (next == state_) return;
+  state_ = next;
+  switch (state_)
+  {
+    case AIState::Idle:
+      onEnterIdle();
+      break;
+    case AIState::Chasing:
+      onEnterChasing();
+      break;
+    case AIState::Searching:
+      onEnterSearching();
+      break;
+  }
+}
+
+void Enemy::onEnterIdle() {}
+
+void Enemy::onEnterChasing() {}
+
+void Enemy::onEnterSearching() {}
 
 bool Enemy::moveTowardPlayer(const FrameState& frame, const GoalMapCache& cache,
                              GameServices& services)
@@ -137,33 +197,20 @@ bool Enemy::moveTowardPlayer(const FrameState& frame, const GoalMapCache& cache,
   const Coordinate playerPos = frame.player.getPosition();
   const bool inFoV = fov_->in(position_, playerPos);
 
-  // Memory refresh runs every frame so the enemy locks on the moment the
-  // player enters its FoV, regardless of speed throttling.
-  if (inFoV)
-  {
-    lastKnownPlayerPos_ = playerPos;
-    chaseTurnsRemaining_ = chaseMemoryDuration_;
-  }
+  transitionState(inFoV, playerPos);
 
   // Decide what tile the enemy is trying to reach this frame.
   std::optional<Coordinate> target;
-  if (inFoV)
+  switch (state_)
   {
-    target = playerPos;
-  }
-  else if (chaseTurnsRemaining_ > 0 && lastKnownPlayerPos_.has_value())
-  {
-    if (position_ == *lastKnownPlayerPos_)
-    {
-      // Arrived at the last-known tile but the player has since moved.
-      // Give up and fall through to idle wander.
-      lastKnownPlayerPos_.reset();
-      chaseTurnsRemaining_ = 0;
-    }
-    else
-    {
-      target = *lastKnownPlayerPos_;
-    }
+    case AIState::Chasing:
+      target = playerPos;
+      break;
+    case AIState::Searching:
+      target = lastKnownPlayerPos_;
+      break;
+    case AIState::Idle:
+      break;
   }
 
   // Determine the tile to attempt to step onto. wasBlockedByPlayer tracks
