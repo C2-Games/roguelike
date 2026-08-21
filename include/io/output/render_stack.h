@@ -3,6 +3,8 @@
 
 #include <ncurses.h>
 
+struct RenderState;
+
 class RenderStack
 {
  public:
@@ -45,8 +47,12 @@ class RenderStack
     reshape(termHeight, termWidth, 0, 0);
   }
 
-  /** @brief Draw this layer's content on the WINDOW. */
-  virtual void doRender() = 0;
+  /**
+   * @brief Draw this layer's content on the WINDOW.
+   *
+   * @param state Per-frame render snapshot to draw from.
+   */
+  virtual void doRender(const RenderState& state) = 0;
 
   /**
    * @brief Enable or disable this layer. Disabled layers are skipped entirely

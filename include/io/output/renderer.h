@@ -4,7 +4,9 @@
 #include <map>
 #include <memory>
 
-#include "render/render_stack.h"
+#include "io/output/render_stack.h"
+
+struct RenderState;
 
 // composition order, lowest first. the values are the z-order itself, so
 // changing one reorders the screen.
@@ -27,8 +29,12 @@ class Renderer
    */
   void addLayer(RenderLayer z, std::unique_ptr<RenderStack> layer);
 
-  /** @brief Composite all enabled layers onto stdscr and flush to terminal. */
-  void compose();
+  /**
+   * @brief Composite all enabled layers onto stdscr and flush to terminal.
+   *
+   * @param state Per-frame render snapshot passed to every layer.
+   */
+  void compose(const RenderState& state);
 
   /**
    * @brief Resize all layers_ to a terminal resize.

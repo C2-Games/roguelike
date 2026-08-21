@@ -1,8 +1,6 @@
 #ifndef COLORS_H
 #define COLORS_H
 
-#include <ncurses.h>
-
 enum class ColorPair : short
 {
   Default = 0,        ///< Terminal default (used inside the FoV).
@@ -25,19 +23,5 @@ enum class ColorPair : short
 
   PlayerHit = 14,  ///< One-shot red flash when an enemy lands a hit.
 };
-
-/**
- * @brief Convert a ColorPair enum value into an ncurses attribute chtype.
- *
- * @param p Named colour pair.
- * @return chtype Attribute chunk suitable for bitwise-OR with a symbol.
- */
-inline chtype colorAttr(ColorPair p)
-{
-  return COLOR_PAIR(static_cast<short>(p));
-}
-
-/** @brief Initialise ncurses colour support and register all named pairs. */
-void initColors();
 
 #endif

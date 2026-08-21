@@ -8,10 +8,11 @@
 #include <thread>
 
 #include "core/frame_state.h"
+#include "core/render_state_builder.h"
 #include "entities/enemy.h"
 #include "entities/entity.h"
 #include "io/input/handle_input.h"
-#include "render/window_position.h"
+#include "io/output/window_position.h"
 #include "world/objects/projectile.h"
 
 namespace
@@ -19,6 +20,8 @@ namespace
 // Fixed until a real seed-input/new-game flow exists: every launch should
 // reproduce the same room/enemy layout for a given level config.
 constexpr std::mt19937::result_type kDefaultSeed = 80085;
+// Duration, in frames, that the player's hit-flash stays visible.
+constexpr int HIT_FLASH_FRAMES = 8;
 }  // namespace
 
 Game::Game(int width, int height, int fps)
@@ -33,25 +36,22 @@ Game::Game(int width, int height, int fps)
 {
   // add window overlays.
   WindowPosition geom = centerWindow(termHeight_, termWidth_);
-  renderer_.addLayer(RenderLayer::Map, std::make_unique<MapLayer>(
-                                           geom.winHeight, geom.winWidth,
-                                           geom.originY, geom.originX, level_));
-  auto entityLayer = std::make_unique<EntityLayer>(
-      geom.winHeight, geom.winWidth, geom.originY, geom.originX, level_,
-      player_, projectiles_);
-  entityLayer_ = entityLayer.get();
-  renderer_.addLayer(RenderLayer::Entity, std::move(entityLayer));
+  renderer_.addLayer(RenderLayer::Map,
+                     std::make_unique<MapLayer>(geom.winHeight, geom.winWidth,
+                                                geom.originY, geom.originX));
+  renderer_.addLayer(RenderLayer::Entity, std::make_unique<EntityLayer>(
+                                              geom.winHeight, geom.winWidth,
+                                              geom.originY, geom.originX));
 
   const int hud_margin = 2;
-  renderer_.addLayer(RenderLayer::HUD,
-                     std::make_unique<HUDLayer>(termHeight_, termWidth_,
-                                                hud_margin, player_, level_));
+  renderer_.addLayer(
+      RenderLayer::HUD,
+      std::make_unique<HUDLayer>(termHeight_, termWidth_, hud_margin));
 
   // if debug build, add the debug window.
 #ifndef NDEBUG
   renderer_.addLayer(RenderLayer::Debug,
-                     std::make_unique<DebugLayer>(termHeight_, termWidth_,
-                                                  currentFps_, player_));
+                     std::make_unique<DebugLayer>(termHeight_, termWidth_));
 #endif
 }
 
@@ -202,8 +202,12 @@ void Game::update()
     if (enemy->moveTowardPlayer(frame, goalMapCache_, services_))
     {
       player_.takeDamage(enemy->getAttackDamage());
-      entityLayer_->triggerPlayerHitFlash();
+      playerHitFlashFramesRemaining_ = HIT_FLASH_FRAMES;
     }
+  }
+  if (playerHitFlashFramesRemaining_ > 0)
+  {
+    --playerHitFlashFramesRemaining_;
   }
 
   // Advance projectiles, apply hits, and drop any that expired.
@@ -236,4 +240,9 @@ bool Game::playerMoved() const
          level_.getCurrentRoomID() != lastVisibilityRoomID_;
 }
 
-void Game::render() { renderer_.compose(); };
+void Game::render()
+{
+  renderer_.compose(
+      render_state_builder::build(player_, level_, projectiles_, currentFps_,
+                                  playerHitFlashFramesRemaining_ > 0));
+}

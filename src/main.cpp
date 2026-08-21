@@ -3,6 +3,7 @@
 #include <clocale>
 
 #include "core/game.h"
+#include "io/output/colors.h"
 
 int main()
 {

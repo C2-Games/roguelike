@@ -28,10 +28,9 @@ endif()
 # source files.
 set(SOURCES
     src/main.cpp
-    src/core/colors.cpp
     src/core/game.cpp
     src/core/logger.cpp
-    src/io/input/handle_input.cpp
+    src/core/render_state_builder.cpp
     src/entities/entity.cpp
     src/entities/player.cpp
     src/entities/enemy.cpp
@@ -40,6 +39,14 @@ set(SOURCES
     src/entities/room_enemy_state.cpp
     src/entities/fov.cpp
     src/entities/ellipse_fov.cpp
+    src/io/input/handle_input.cpp
+    src/io/output/colors.cpp
+    src/io/output/renderer.cpp
+    src/io/output/render_stack.cpp
+    src/io/output/layers/map_layer.cpp
+    src/io/output/layers/entity_layer.cpp
+    src/io/output/layers/hud_layer.cpp
+    src/io/output/layers/debug_layer.cpp
     src/world/map/tile.cpp
     src/world/map/room.cpp
     src/world/map/level.cpp
@@ -48,12 +55,6 @@ set(SOURCES
     src/world/systems/goal_map_cache.cpp
     src/world/objects/weapon.cpp
     src/world/objects/projectile.cpp
-    src/render/renderer.cpp
-    src/render/render_stack.cpp
-    src/render/layers/map_layer.cpp
-    src/render/layers/entity_layer.cpp
-    src/render/layers/hud_layer.cpp
-    src/render/layers/debug_layer.cpp
 )
 
 # executable.
