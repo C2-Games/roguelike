@@ -12,10 +12,30 @@ denies those edits outright. Run this first, every time.
 ## Steps
 
 1. **Fetch each issue.** For every number in `$ARGUMENTS`:
-   `gh issue view <n> --json number,title,labels,body`
+   `gh issue view <n> --json number,title,labels,body,milestone`
    (`GH_REPO` is set in `.claude/settings.json`, so the SSH-alias remote is handled.)
    If `gh` is not installed, say so once, accept the bare numbers, and ask the user for a
    one-line description to name the branch from.
+
+1.5. **Load milestone context.** Take the *first* issue's milestone. If it has none, or `gh`
+   errors, say so in one line and skip to step 2 — no blocking question for an edge case
+   nothing was asked about. Otherwise fetch the full milestone set, both states:
+   `gh issue list --state all --milestone "<name>" --json number,title,state,labels,body --limit 200`
+   Closed issues in the set are implementation-pattern context (reused again in step 7); open
+   ones (excluding the issue(s) being started) feed a lightweight relatedness pass —
+   title/label/body overlap for "looks related enough to combine," and dependency language
+   ("depends on," "blocks," "after #n") or same-subsystem overlap for "looks like a
+   prerequisite."
+
+   If candidates surface, present them via `AskUserQuestion` — one question per candidate (or
+   grouped if several point the same direction) — options: "combine onto this branch," "do
+   the other issue first instead," "proceed as-is." Do not continue past this step until
+   answered. "Combine" adds that issue's number to the working set used from step 3 onward
+   (branch name still derives from the *first* originally-requested issue); "do first" stops
+   here and tells the user to run `/start-issue` on that issue instead.
+
+   If nothing surfaces, say so in one sentence and continue automatically — never merge or
+   reorder silently, but don't ask when there's nothing to flag.
 
 2. **Confirm scope.** Summarise each issue in a sentence. If the issues do not plausibly
    belong on one branch, say so and ask before continuing.
@@ -68,6 +88,9 @@ denies those edits outright. Run this first, every time.
 7. **Enter plan mode** — call `EnterPlanMode`, then read the code the issue(s) touch and
    produce an implementation plan before writing anything. Do not start editing straight
    from the issue text: the issues here are terse and often understate which files move.
+   Read the milestone issue list loaded in step 1.5 alongside the target issue's own text:
+   closed siblings show established patterns/conventions for this area of the code, open
+   ones flag upcoming work the plan shouldn't conflict with.
 
    **Exception — small changes skip formal plan mode.** A single-file edit that is purely
    documentation/comment text, or a genuine one-line fix, does not need `EnterPlanMode`: state
