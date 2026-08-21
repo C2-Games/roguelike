@@ -10,6 +10,7 @@
 #include "core/frame_state.h"
 #include "entities/enemy.h"
 #include "entities/entity.h"
+#include "io/input/handle_input.h"
 #include "render/window_position.h"
 #include "world/objects/projectile.h"
 
@@ -98,36 +99,32 @@ void Game::run()
 
 void Game::handleInput()
 {
-  int ch = getch();
+  GameCommand command = input::pollInput();
   Coordinate newPlayerPos = player_.getPosition();
 
-  switch (ch)
+  switch (command)
   {
-    case KEY_RESIZE:  // in case of a terminal resize.
+    case GameCommand::Resize:  // in case of a terminal resize.
       getmaxyx(stdscr, termHeight_, termWidth_);
       renderer_.resizeAll(termHeight_, termWidth_);
       return;
-    case KEY_UP:
-    case 'w':  // Up
+    case GameCommand::MoveUp:
       newPlayerPos.y -= 1;
       player_.setLastDirection(Coordinate(0, -1));
       break;
-    case KEY_DOWN:
-    case 's':  // Down
+    case GameCommand::MoveDown:
       newPlayerPos.y += 1;
       player_.setLastDirection(Coordinate(0, 1));
       break;
-    case KEY_LEFT:
-    case 'a':  // Left
+    case GameCommand::MoveLeft:
       newPlayerPos.x -= 1;
       player_.setLastDirection(Coordinate(-1, 0));
       break;
-    case KEY_RIGHT:
-    case 'd':  // Right
+    case GameCommand::MoveRight:
       newPlayerPos.x += 1;
       player_.setLastDirection(Coordinate(1, 0));
       break;
-    case ' ':
+    case GameCommand::Attack:
     {
       // "fire" a projectile in the player's last-faced direction.
       Coordinate dir = player_.getLastDirection();  // acts as an offset.
@@ -139,12 +136,10 @@ void Game::handleInput()
           weapon.getRange(), weapon.getColor()));
       return;
     }
-    case 'q':
-    case 'Q':
+    case GameCommand::Quit:
       isRunning_ = false;
       break;
-    default:
-      mvprintw(2, 0, "Invalid key\n");
+    case GameCommand::None:
       break;
   }
   if (newPlayerPos.x >= 0 && newPlayerPos.x < Room::WIDTH &&

@@ -31,6 +31,7 @@ set(SOURCES
     src/core/colors.cpp
     src/core/game.cpp
     src/core/logger.cpp
+    src/io/input/handle_input.cpp
     src/entities/entity.cpp
     src/entities/player.cpp
     src/entities/enemy.cpp
