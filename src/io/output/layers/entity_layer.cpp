@@ -66,11 +66,13 @@ void EntityLayer::drawProjectiles(const EntityLayerPacket& data)
 
 void EntityLayer::drawPlayer(const EntityLayerPacket& data)
 {
-  if (data.player.tinted) {
+  if (data.player.tinted)
+  {
     wattron(win_, colorAttr(data.player.tintColor));
   }
   drawSymbol(win_, data.player.symbol, data.player.position);
-  if (data.player.tinted) {
+  if (data.player.tinted)
+  {
     wattroff(win_, colorAttr(data.player.tintColor));
   }
 };

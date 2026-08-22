@@ -110,7 +110,7 @@ void HUDLayer::doRender(const HUDLayerPacket& data)
   int bandRow = std::max(0, geom.originY - margin_);
 
   // room number, in middle (subtract 4 to center better -- 4 chars in 'Room').
-  this->drawRoomID(state, bandRow + 1, geom.originX + (geom.winWidth / 2) - 4);
+  this->drawRoomID(data, bandRow + 1, geom.originX + (geom.winWidth / 2) - 4);
 
   // health bar & weapon stats top left.
   this->drawPlayerHealthBar(data, bandRow, geom.originX);
