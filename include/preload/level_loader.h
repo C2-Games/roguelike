@@ -70,8 +70,8 @@ namespace level_loader
  * adjacency back to Wall tiles.
  *
  * @param levelDir Directory containing the level's config files.
- * @param services Shared services; the returned Level stores this by
- *                 reference and it must outlive the Level.
+ * @param services Shared services; used transiently to roll each room's
+ *                 enemy spawns.
  * @param catalog  Resolves each room's spawn-table entries to stats.
  * @return A fully-built Level.
  */

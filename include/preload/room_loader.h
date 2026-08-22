@@ -13,7 +13,7 @@ namespace room_loader
  *
  * @param roomID Unique identifier assigned to the loaded room.
  * @param path   Path to the room file.
- * @return A fully populated Room ready to be added to a RoomGraph.
+ * @return A fully populated Room ready to be added to a Level.
  */
 Room loadRoom(int roomID, const std::filesystem::path& path);
 
