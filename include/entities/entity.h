@@ -82,6 +82,13 @@ class Entity
    */
   void moveTo(Coordinate newPos) { moveHook(newPos); };
 
+  /**
+   * @brief Set entities action state.
+   *
+   * @param state The action state to set.
+   */
+  void setActionState(EntityActionState state) { actionState_ = state; };
+
   // abstract methods.
   virtual void takeDamage(int damage) = 0;
 
@@ -114,13 +121,6 @@ class Entity
       position_ = newPos;
     };
   };
-
-  /**
-   * @brief Set entities action state.
-   *
-   * @param state The action state to set.
-   */
-  void setActionState(EntityActionState state) { actionState_ = state; };
 };
 
 #endif

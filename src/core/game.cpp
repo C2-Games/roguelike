@@ -29,7 +29,6 @@ Game::Game(UIManager& uiManager, int fps)
       enemyCatalog_("assets/enemies"),
       level_(level_loader::loadLevel("assets/levels/level_1", services_,
                                      enemyCatalog_)),
-      isRunning_(true),
       uiManager_(uiManager)
 {}
 
@@ -39,29 +38,59 @@ void Game::run()
 
   const auto frame_duration = getDuration();
 
-  while (isRunning_ && player_.isAlive())
+  while (state_ != GameState::End)
   {
-    // -------- Frame start --------
-    auto start = std::chrono::high_resolution_clock::now();
-    handleInput();
-    update();
-    render();
-
-    // -------- Frame end --------
-    auto end = std::chrono::high_resolution_clock::now();
-    auto elapsed =
-        std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-
-    if (elapsed < frame_duration)
+    while (state_ == GameState::Play)
     {
-      std::this_thread::sleep_for(frame_duration - elapsed);
+      // -------- Frame start --------
+      auto start = std::chrono::high_resolution_clock::now();
+      handleInput();
+      update();
+      render();
+
+      // -------- Frame end --------
+      auto end = std::chrono::high_resolution_clock::now();
+      auto elapsed =
+          std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+      if (elapsed < frame_duration)
+      {
+        std::this_thread::sleep_for(frame_duration - elapsed);
+      }
+
+      // for debug window.
+      std::chrono::duration<double, std::milli> totalFrame =
+          std::chrono::high_resolution_clock::now() - start;
+
+      currentFps_ =
+          totalFrame.count() > 0.0 ? 1000.0 / totalFrame.count() : 0.0;
+
+      if (!player_.isAlive())
+      {
+        setState(GameState::End);
+      }
     }
 
-    // for debug window.
-    std::chrono::duration<double, std::milli> totalFrame =
-        std::chrono::high_resolution_clock::now() - start;
-
-    currentFps_ = totalFrame.count() > 0.0 ? 1000.0 / totalFrame.count() : 0.0;
+    switch (state_)
+    {
+      // no GameCommand ever sets state_ to Start, and none reaches Pause
+      // yet; both fall back to Play defensively rather than spinning the
+      // outer loop with no input poll or render.
+      case GameState::Start:
+      case GameState::Pause:
+        setState(GameState::Play);
+        break;
+      case GameState::TransLevel:
+        // Game hardcodes a single level with no level-ordering/manifest
+        // concept, so there is nowhere to transition to.
+        setState(GameState::End);
+        break;
+      case GameState::Play:
+      case GameState::End:
+        // unreachable here: Play is handled by the inner while; End breaks
+        // the outer while.
+        break;
+    }
   }
 
   UIManager::showGameOver();
@@ -105,10 +134,11 @@ void Game::handleInput()
       projectiles_.push_back(std::make_unique<Projectile>(
           spawnPos, dir, weapon.getDamage(), weapon.getSpeed(),
           weapon.getRange(), weapon.getColor()));
+      player_.setActionState(EntityActionState::Attack);
       return;
     }
     case GameCommand::Quit:
-      isRunning_ = false;
+      setState(GameState::End);
       break;
     case GameCommand::None:
       break;
@@ -129,6 +159,7 @@ void Game::handleInput()
       if (conn != nullptr)
       {
         player_.moveTo(level_.transitionRoom(*conn));
+        player_.setActionState(EntityActionState::TransRoom);
         return;
       }
     }
@@ -161,27 +192,10 @@ void Game::update()
 
   Room& currentRoom = level_.getCurrentRoom();
 
-  // Reap before the movement pass so every enemy iterated below is alive.
-  RoomEnemyState::reap(currentRoom.enemies());
-
   // Build the per-frame context once and reuse across every enemy/projectile.
   FrameState frame{player_, currentRoom};
 
-  // Move enemies toward player or attack
-  for (auto& enemy : currentRoom.enemies())
-  {
-    if (enemy->moveTowardPlayer(frame, goalMapCache_, services_))
-    {
-      player_.takeDamage(enemy->getAttackDamage());
-      playerHitFlashFramesRemaining_ = HIT_FLASH_FRAMES;
-    }
-  }
-  if (playerHitFlashFramesRemaining_ > 0)
-  {
-    --playerHitFlashFramesRemaining_;
-  }
-
-  // Advance projectiles, apply hits, and drop any that expired.
+  // advance projectiles, apply hits, and drop any that expired.
   for (auto& projectile : projectiles_)
   {
     if (projectile->isActive())
@@ -202,6 +216,25 @@ void Game::update()
                                       return !p->isActive();
                                     }),
                      projectiles_.end());
+
+  // reap before the movement pass so every enemy iterated below is alive: a
+  // projectile can drop one to 0 hp above, and moveTowardPlayer() doesn't
+  // guard isAlive() itself.
+  RoomEnemyState::reap(currentRoom.enemies());
+
+  // move enemies toward player or attack.
+  for (auto& enemy : currentRoom.enemies())
+  {
+    if (enemy->moveTowardPlayer(frame, goalMapCache_, services_))
+    {
+      player_.takeDamage(enemy->getAttackDamage());
+      playerHitFlashFramesRemaining_ = HIT_FLASH_FRAMES;
+    }
+  }
+  if (playerHitFlashFramesRemaining_ > 0)
+  {
+    --playerHitFlashFramesRemaining_;
+  }
 }
 
 bool Game::playerMoved() const
