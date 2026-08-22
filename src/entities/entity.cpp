@@ -10,5 +10,5 @@ Entity::Entity(Coordinate position, EntitySymbol symbol, int health, int speed,
       speed_(speed),
       frameCounter_(0),
       fov_(std::move(fov)),
-      state_(EntityActionState::Idle)
+      actionState_(EntityActionState::Idle)
 {}
