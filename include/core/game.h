@@ -2,6 +2,7 @@
 #define GAME_H
 
 #include <chrono>
+#include <cstdint>
 #include <memory>
 #include <vector>
 
@@ -15,6 +16,15 @@
 #include "world/systems/goal_map_cache.h"
 
 class UIManager;
+
+enum class GameState : std::uint8_t
+{
+  Play,
+  Start,
+  Pause,
+  End,
+  TransLevel
+};
 
 class Game
 {
@@ -32,6 +42,20 @@ class Game
   /** @brief Runs the main game loop. */
   void run();
 
+  /**
+   * @brief Get the game's current state.
+   *
+   * @return The game's current phase.
+   */
+  GameState getState() const { return state_; };
+
+  /**
+   * @brief Set the game's current state.
+   *
+   * @param state The state to transition to.
+   */
+  void setState(GameState state) { state_ = state; };
+
  private:
   const int fps_;
   double currentFps_ = 0.0;
@@ -42,7 +66,7 @@ class Game
   GoalMapCache goalMapCache_;
   std::vector<std::unique_ptr<Projectile>> projectiles_;
 
-  bool isRunning_;
+  GameState state_ = GameState::Play;
   UIManager& uiManager_;
   int playerHitFlashFramesRemaining_ = 0;
 
