@@ -16,6 +16,7 @@ void Player::takeDamage(int damage)
 {
   health_ -= damage;
   health_ = std::max(health_, 0);
+  setActionState(EntityActionState::Damaged);
 }
 
 void Player::changeFOV(int rx, int ry)
