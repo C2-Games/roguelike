@@ -100,12 +100,12 @@ class Enemy : public Entity
   static void onEnterSearch();
 
   /**
-   * @brief Move to a new state, invoking its onEnter hook if it actually
+   * @brief Move to a new AI state, invoking its onEnter hook if it actually
    * changed.
    *
    * @param next The state to move to.
    */
-  void setState(AIState next);
+  void setAIState(AIState next);
 };
 
 #endif

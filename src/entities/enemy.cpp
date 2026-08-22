@@ -161,7 +161,7 @@ void Enemy::transitionState(bool inFoV, Coordinate playerPos)
   {
     lastKnownPlayerPos_ = playerPos;
     chaseTurnsRemaining_ = chaseMemoryDuration_;
-    setState(AIState::Chase);
+    setAIState(AIState::Chase);
     return;
   }
 
@@ -169,26 +169,26 @@ void Enemy::transitionState(bool inFoV, Coordinate playerPos)
   // Sentry in one frame, matching a fresh re-evaluation every frame.
   if (aiState_ == AIState::Chase)
   {
-    setState(AIState::Search);
+    setAIState(AIState::Search);
   }
 
   if (aiState_ == AIState::Search)
   {
     if (chaseTurnsRemaining_ <= 0 || !lastKnownPlayerPos_.has_value())
     {
-      setState(AIState::Sentry);
+      setAIState(AIState::Sentry);
     }
     else if (position_ == *lastKnownPlayerPos_)
     {
       // Arrived at the last-known tile but the player has since moved.
       lastKnownPlayerPos_.reset();
       chaseTurnsRemaining_ = 0;
-      setState(AIState::Sentry);
+      setAIState(AIState::Sentry);
     }
   }
 }
 
-void Enemy::setState(AIState next)
+void Enemy::setAIState(AIState next)
 {
   if (next == aiState_)
   {
@@ -300,7 +300,7 @@ bool Enemy::moveTowardPlayer(const FrameState& frame, const GoalMapCache& cache,
 
   // Minus one: this frame is itself part of the gap.
   attackCooldownRemaining_ = ATTACK_COOLDOWN_FRAMES - 1;
-  state_ = EntityAction::Attack;
+  setActionState(EntityActionState::Attack);
   return true;
 }
 
@@ -308,5 +308,5 @@ void Enemy::takeDamage(int damage)
 {
   health_ -= damage;
   health_ = std::max(health_, 0);
-  state_ = EntityAction::Damaged;
+  setActionState(EntityActionState::Damaged);
 }
