@@ -16,9 +16,11 @@ Run `/start-issue <number> [more...]` to open the gate. One branch may carry sev
 is normal here; record them all.
 
 **Direct prompts, not just `/start-issue`.** A change requested directly, with no issue on
-record, gets the same draft-and-confirm treatment `/new-issue` gives a user-typed command:
-Claude matches a template, drafts a title/body, fetches milestones, and waits for explicit
-approval before creating the issue and branch and proceeding — never a silent auto-create.
+record, gets the same treatment `/new-issue` gives a user-typed command: the `issue-drafter`
+agent (`.claude/agents/issue-drafter.md`) is dispatched to match a template, ask follow-ups
+(implementation approach, whether to split into multiple issues, parent/sub-issue linkage,
+milestone), and wait for explicit approval before creating the issue and branch and proceeding —
+never a silent auto-create.
 
 Deliberately not gated: paths outside the repo, and `.claude/**` (otherwise this configuration
 could never be repaired). `.claude/CLAUDE.md` lives inside that exemption — a change to it alone
