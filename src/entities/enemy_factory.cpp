@@ -7,8 +7,8 @@
 #include "core/services.h"
 #include "entities/enemy.h"
 #include "preload/enemy_catalog.h"
-#include "preload/level_loader.h"
 #include "world/map/room.h"
+#include "world/map/room_types.h"
 
 namespace enemy_factory
 {

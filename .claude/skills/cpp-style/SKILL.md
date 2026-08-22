@@ -99,6 +99,21 @@ current task — describe the code as it stands, not the change that
 produced it; that context won't mean anything once the change is old
 news.
 
+**Moving or relocating existing code does not grandfather its comments.**
+When a task says a function/struct/block is "moved," "ported," or
+"unchanged" from its old file, that instruction covers the *logic*, not
+the comment formatting. Re-check every comment and docstring you carry
+over against this page before you finish — capitalization, trailing
+period, and docstring placement (see below) are not exempt just because
+the code predates this convention or the task called the move "verbatim."
+Fix the comment's style even when its wording is otherwise fine.
+
+Before finishing any edit, re-scan every comment/docstring you touched or
+moved and check it against: lowercase first word, trailing period,
+explains *why* not *what*, no docstring on anything but a method/
+constructor. This is a self-check to run per comment, not just a
+reference to consult if something looks off.
+
 **Example:**
 ```cpp
 // bad: restates what the code already says, wrong casing/period.
@@ -124,7 +139,12 @@ health_ = std::min(health_ + healAmount, maxHealth_);
 
 Use `/** */`-style Doxygen block docstrings — **only** on class methods
 and constructors. Never add one to a class declaration, struct
-declaration, or an enum declaration.
+declaration, or an enum declaration. If a struct/class/enum carrying a
+Doxygen block gets relocated (e.g. into a new header during a refactor),
+convert its docstring to a plain `//` comment (or drop it if the block was
+pure restatement) rather than carrying the `/** @brief */` block over
+as-is — this applies regardless of whether the original file predates
+this rule.
 
 Shape:
 - `@brief <description>` line first.

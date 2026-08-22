@@ -7,7 +7,7 @@
 
 #include "core/coordinate.h"
 #include "entities/room_enemy_state.h"
-#include "preload/level_loader.h"
+#include "world/map/room_types.h"
 #include "world/map/tile.h"
 
 class EnemyCatalog;

@@ -1,14 +1,12 @@
 #ifndef LEVEL_LOADER_H
 #define LEVEL_LOADER_H
 
-#include <array>
 #include <filesystem>
 #include <map>
 #include <string>
 #include <vector>
 
-// Door number based on the order of doors in the room's template file
-using DoorNumber = int;
+#include "world/map/room_types.h"
 
 // one door-to-door link between two rooms, currently bidirectional
 // (fromRoom->toRoom and toRoom->fromRoom)
@@ -18,14 +16,6 @@ struct RoomAdjacency
   DoorNumber fromDoor;
   int toRoom;
   DoorNumber toDoor;
-};
-
-/** @brief One enemy spawn-table entry from a room's JSON metadata. */
-struct EnemySpawnConfig
-{
-  std::string name;
-  int tier;
-  std::array<int, 2> range;
 };
 
 /** @brief One room's metadata, parsed from room_<id>.json. */

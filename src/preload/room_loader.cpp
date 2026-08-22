@@ -7,8 +7,8 @@
 #include <stdexcept>
 #include <string>
 
-#include "preload/level_loader.h"
 #include "world/map/room.h"
+#include "world/map/room_types.h"
 
 namespace
 {
