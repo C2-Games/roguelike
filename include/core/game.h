@@ -7,9 +7,9 @@
 
 #include "core/services.h"
 #include "entities/ellipse_fov.h"
-#include "entities/enemy_catalog.h"
 #include "entities/fov.h"
 #include "entities/player.h"
+#include "preload/enemy_catalog.h"
 #include "world/map/level.h"
 #include "world/objects/projectile.h"
 #include "world/systems/goal_map_cache.h"

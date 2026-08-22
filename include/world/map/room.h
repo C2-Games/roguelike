@@ -1,14 +1,13 @@
 #ifndef ROOM_H
 #define ROOM_H
 
-#include <filesystem>
 #include <map>
 #include <string>
 #include <vector>
 
 #include "core/coordinate.h"
 #include "entities/room_enemy_state.h"
-#include "world/map/level_config.h"
+#include "preload/level_loader.h"
 #include "world/map/tile.h"
 
 class EnemyCatalog;
@@ -41,15 +40,6 @@ struct Room
    * @param id Unique room identifier.
    */
   explicit Room(int id);
-
-  /**
-   * @brief Load a Room from a text file authored under assets/rooms/.
-   *
-   * @param roomID Unique identifier assigned to the loaded room.
-   * @param path   Path to the room file.
-   * @return A fully populated Room ready to be added to a RoomGraph.
-   */
-  static Room loadFromFile(int roomID, const std::filesystem::path& path);
 
   /**
    * @brief Look up the grid position of one of this room's doors.

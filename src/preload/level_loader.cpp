@@ -1,4 +1,4 @@
-#include "world/map/level_config.h"
+#include "preload/level_loader.h"
 
 #include <algorithm>
 #include <fstream>
@@ -7,6 +7,9 @@
 #include <stdexcept>
 #include <utility>
 #include <vector>
+
+#include "preload/room_loader.h"
+#include "world/map/level.h"
 
 namespace
 {
@@ -147,8 +150,26 @@ RoomConfig loadRoomConfig(const std::filesystem::path& path, int expectedId)
   }
 }
 
-}  // namespace
+void sealUnlinkedDoors(std::map<int, Room>& rooms,
+                       const LevelMap& doorConnections)
+{
+  for (auto& [id, room] : rooms)
+  {
+    for (const auto& doorEntry : room.doors)
+    {
+      const Coordinate& door = doorEntry.second;
+      if (doorConnections.find({id, door}) == doorConnections.end())
+      {
+        room.tiles[door.x][door.y] = Tile(TileType::Wall, door);
+      }
+    }
+  }
+}
 
+// Load and cross-validate an entire level directory (level.json, map.json,
+// and every room_<id>.json map.json references). Throws std::runtime_error
+// on any missing file, malformed JSON, or cross-reference mismatch (id
+// mismatches, room-count mismatches).
 LevelConfig loadLevelConfig(const std::filesystem::path& levelDir)
 {
   LevelConfig config;
@@ -188,3 +209,43 @@ LevelConfig loadLevelConfig(const std::filesystem::path& levelDir)
 
   return config;
 }
+
+}  // namespace
+
+namespace level_loader
+{
+
+Level loadLevel(const std::filesystem::path& levelDir, GameServices& services,
+                const EnemyCatalog& catalog)
+{
+  LevelConfig config = loadLevelConfig(levelDir);
+
+  std::map<int, Room> rooms;
+  for (const auto& [id, roomCfg] : config.rooms)
+  {
+    auto roomEntry =
+        rooms
+            .insert({id, room_loader::loadRoom(
+                             id, std::filesystem::path("assets/rooms") /
+                                     roomCfg.ref)})
+            .first;
+    roomEntry->second.ensureEnemiesSpawned(roomCfg.enemies, catalog, services);
+  }
+
+  // each edge is authored once and wired both ways, so the graph cannot be
+  // asymmetric by construction.
+  LevelMap doorConnections;
+  for (const RoomAdjacency& edge : config.adjacency)
+  {
+    Coordinate fromDoor = rooms.at(edge.fromRoom).doorAt(edge.fromDoor);
+    Coordinate toDoor = rooms.at(edge.toRoom).doorAt(edge.toDoor);
+    doorConnections[{edge.fromRoom, fromDoor}] = {edge.toRoom, toDoor};
+    doorConnections[{edge.toRoom, toDoor}] = {edge.fromRoom, fromDoor};
+  }
+
+  sealUnlinkedDoors(rooms, doorConnections);
+
+  return Level(config.meta, std::move(rooms), std::move(doorConnections));
+}
+
+}  // namespace level_loader

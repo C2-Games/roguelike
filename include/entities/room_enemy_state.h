@@ -6,7 +6,7 @@
 
 #include "core/coordinate.h"
 #include "entities/enemy.h"
-#include "world/map/level_config.h"
+#include "preload/level_loader.h"
 
 struct Room;
 struct GameServices;
