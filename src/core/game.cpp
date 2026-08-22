@@ -124,7 +124,7 @@ void Game::handleInput()
     {
       const DoorConnection* conn =
           level_.getDoorConnection(level_.getCurrentRoomID(), newPlayerPos);
-      if (conn)
+      if (conn != nullptr)
       {
         player_.moveTo(level_.transitionRoom(*conn));
         return;

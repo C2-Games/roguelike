@@ -23,7 +23,10 @@ void drawSymbol(WINDOW* win, const EntitySymbol& symbol, Coordinate origin,
     for (std::size_t col = 0; col < symbol[row].size(); ++col)
     {
       const char cell = symbol[row][col];
-      if (cell == '\0') continue;
+      if (cell == '\0')
+      {
+        continue;
+      }
 
       const int x = origin.x + static_cast<int>(col);
       const int y = origin.y + static_cast<int>(row);
@@ -85,9 +88,15 @@ void EntityLayer::drawProjectiles(const RenderState& state)
 
 void EntityLayer::drawPlayer(const RenderState& state)
 {
-  if (state.player.tinted) wattron(win_, colorAttr(state.player.tintColor));
+  if (state.player.tinted)
+  {
+    wattron(win_, colorAttr(state.player.tintColor));
+  }
   drawSymbol(win_, state.player.symbol, state.player.position, state, false);
-  if (state.player.tinted) wattroff(win_, colorAttr(state.player.tintColor));
+  if (state.player.tinted)
+  {
+    wattroff(win_, colorAttr(state.player.tintColor));
+  }
 };
 
 void EntityLayer::doRender(const RenderState& state)

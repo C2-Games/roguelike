@@ -16,7 +16,10 @@ std::unique_ptr<FOV> EllipseFOV::clone() const
 
 bool EllipseFOV::equals(const FOV& other) const
 {
-  if (!FOV::equals(other)) return false;
+  if (!FOV::equals(other))
+  {
+    return false;
+  }
   const auto& otherEllipse = static_cast<const EllipseFOV&>(other);
   return rx_ == otherEllipse.rx_ && ry_ == otherEllipse.ry_;
 }
@@ -34,7 +37,8 @@ std::set<Coordinate> EllipseFOV::computeOffsets(int rx, int ry)
     //    dx = rx * sqrt(1 - (dy / ry)^2)
     // could've used std::ceil here, but rounding down is fine w/ me.
     float y_norm = static_cast<float>(dy) / static_cast<float>(ry);
-    int dx_max = static_cast<int>(rx * std::sqrt(1.0f - y_norm * y_norm));
+    int dx_max = static_cast<int>(static_cast<float>(rx) *
+                                  std::sqrt(1.0F - (y_norm * y_norm)));
 
     // iterate through -dx --> dx.
     for (int dx = -dx_max; dx <= dx_max; ++dx)

@@ -1,7 +1,9 @@
 #ifndef GAME_COMMANDS_H
 #define GAME_COMMANDS_H
 
-enum class GameCommand
+#include <cstdint>
+
+enum class GameCommand : std::uint8_t
 {
   None,
   MoveUp,

@@ -20,7 +20,10 @@ void registerPair(ColorPair id, short fg, short bg)
 
 void initColors()
 {
-  if (!has_colors()) return;
+  if (!has_colors())
+  {
+    return;
+  }
 
   start_color();
 

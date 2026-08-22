@@ -1,6 +1,7 @@
 #ifndef ENEMY_H
 #define ENEMY_H
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 
@@ -12,7 +13,7 @@ struct FrameState;
 class GoalMapCache;
 struct GameServices;
 
-enum class AIState
+enum class AIState : std::uint8_t
 {
   Idle,       // never spotted the player, or gave up searching.
   Chasing,    // player is currently in FoV; target is their live position.

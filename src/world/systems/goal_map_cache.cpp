@@ -9,10 +9,16 @@ const GoalMap& GoalMapCache::getOrCompute(const Room& room,
 {
   auto key = std::make_pair(room.roomID, goal);
   auto cachedEntry = cache_.find(key);
-  if (cachedEntry != cache_.end()) return cachedEntry->second;
+  if (cachedEntry != cache_.end())
+  {
+    return cachedEntry->second;
+  }
 
   // prevent unbounded growth over long play sessions.
-  if (cache_.size() >= kCap) cache_.clear();
+  if (cache_.size() >= kCap)
+  {
+    cache_.clear();
+  }
 
   GoalMap map = computeGoalMap(room, goal);
   auto [inserted, _] = cache_.emplace(key, std::move(map));

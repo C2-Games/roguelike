@@ -1,11 +1,12 @@
 #ifndef WEAPON_H
 #define WEAPON_H
 
+#include <cstdint>
 #include <unordered_map>
 
 #include "core/colors.h"
 
-enum class WeaponType
+enum class WeaponType : std::uint8_t
 {
   Basic,
   Rapid,

@@ -10,7 +10,10 @@ namespace
 
 bool isBlocking(const Room& room, int x, int y)
 {
-  if (x < 0 || x >= Room::WIDTH || y < 0 || y >= Room::HEIGHT) return true;
+  if (x < 0 || x >= Room::WIDTH || y < 0 || y >= Room::HEIGHT)
+  {
+    return true;
+  }
   TileType type = room.tiles[x][y].getType();
   return type != TileType::Floor;
 }
@@ -29,7 +32,10 @@ GoalMap computeGoalMap(const Room& room, Coordinate goal)
   {
     return map;
   }
-  if (isBlocking(room, goal.x, goal.y)) return map;
+  if (isBlocking(room, goal.x, goal.y))
+  {
+    return map;
+  }
 
   std::queue<Coordinate> frontier;
   map[goal.x][goal.y] = 0;
@@ -50,8 +56,14 @@ GoalMap computeGoalMap(const Room& room, Coordinate goal)
     {
       int nx = current.x + kDx[i];
       int ny = current.y + kDy[i];
-      if (isBlocking(room, nx, ny)) continue;
-      if (map[nx][ny] != kUnreachable) continue;  // already visited
+      if (isBlocking(room, nx, ny))
+      {
+        continue;
+      }
+      if (map[nx][ny] != kUnreachable)
+      {
+        continue;  // already visited
+      }
       map[nx][ny] = nextDist;
       // Push the neighbor onto the frontier for further exploration.
       frontier.push(Coordinate(nx, ny));

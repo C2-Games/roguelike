@@ -14,7 +14,7 @@ FOV::FOV(std::set<Coordinate> offsets) : offsets_(std::move(offsets))
     std::vector<Coordinate>& bucket = leaving_[dir];
     std::copy_if(offsets_.begin(), offsets_.end(), std::back_inserter(bucket),
                  [this, &dir](const Coordinate& s) {
-                   return offsets_.count(s - dir) == 0;
+                   return !offsets_.contains(s - dir);
                  });
   }
 }
@@ -25,7 +25,7 @@ bool FOV::in(Coordinate origin, Coordinate position) const
 {
   // must mirror absoluteFOV, which builds positions as origin + offset.
   Coordinate offset = position - origin;
-  return offsets_.count(offset) > 0;
+  return offsets_.contains(offset);
 }
 
 std::vector<Coordinate> FOV::absoluteFOV(Coordinate origin) const
@@ -45,7 +45,10 @@ std::vector<Coordinate> FOV::absoluteFOV(Coordinate origin) const
 const std::vector<Coordinate>* FOV::leavingOffsets(Coordinate dir) const
 {
   auto dirEntry = leaving_.find(dir);
-  if (dirEntry == leaving_.end()) return nullptr;
+  if (dirEntry == leaving_.end())
+  {
+    return nullptr;
+  }
   return &dirEntry->second;
 }
 

@@ -1,5 +1,7 @@
 #include "entities/player.h"
 
+#include <algorithm>
+
 #include "core/coordinate.h"
 #include "entities/ellipse_fov.h"
 #include "entities/entity.h"
@@ -13,7 +15,7 @@ Player::Player(Coordinate position, int health, int speed)
 void Player::takeDamage(int damage)
 {
   health_ -= damage;
-  if (health_ < 0) health_ = 0;
+  health_ = std::max(health_, 0);
 }
 
 void Player::changeFOV(int rx, int ry)
