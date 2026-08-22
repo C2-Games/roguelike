@@ -1,16 +1,12 @@
 #ifndef LEVEL_H
 #define LEVEL_H
 
-#include <filesystem>
 #include <map>
 #include <utility>
 
 #include "core/coordinate.h"
-#include "world/map/level_config.h"
+#include "preload/level_loader.h"
 #include "world/map/room.h"
-
-struct GameServices;
-class EnemyCatalog;
 
 struct DoorConnection
 {
@@ -24,17 +20,14 @@ class Level
 {
  public:
   /**
-   * @brief Load a level directory (level.json, map.json, and every room's
-   * JSON metadata + referenced .txt template), wire the room graph, and
-   * spawn every room's enemies.
+   * @brief Construct a Level from an already-built room graph.
    *
-   * @param levelDir Directory containing the level's config files.
-   * @param services Shared services; stored by reference; must outlive
-   *                 the Level.
-   * @param catalog  Resolves each room's spawn-table entries to stats.
+   * @param meta Level-wide metadata.
+   * @param rooms Every room in the level, keyed by room ID.
+   * @param doorConnections Wired door-to-door adjacency, keyed by
+   *                        (roomID, doorPos).
    */
-  Level(const std::filesystem::path& levelDir, GameServices& services,
-        const EnemyCatalog& catalog);
+  Level(LevelMeta meta, std::map<int, Room> rooms, LevelMap doorConnections);
 
   /**
    * @brief Look up the door connection at (roomID, doorPos).
@@ -76,18 +69,8 @@ class Level
  private:
   LevelMeta meta_;
   int currentRoomID_;
-  GameServices& services_;
   std::map<int, Room> rooms_;
   LevelMap doorConnections_;
-
-  /** @brief Populate rooms_ and doorConnections_ from a parsed LevelConfig,
-   *  spawn each room's enemies, and seal any of its doors left unlinked by
-   *  this level's adjacency back to Wall tiles.
-   */
-  void buildFromConfig(const LevelConfig& config, const EnemyCatalog& catalog);
-
-  /** @brief convert unlinked doors to Wall tiles */
-  void sealUnlinkedDoors();
 };
 
 #endif

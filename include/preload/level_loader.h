@@ -1,5 +1,5 @@
-#ifndef LEVEL_CONFIG_H
-#define LEVEL_CONFIG_H
+#ifndef LEVEL_LOADER_H
+#define LEVEL_LOADER_H
 
 #include <array>
 #include <filesystem>
@@ -56,14 +56,28 @@ struct LevelConfig
   std::map<int, RoomConfig> rooms;       // id -> per-room config
 };
 
+class Level;
+struct GameServices;
+class EnemyCatalog;
+
+namespace level_loader
+{
+
 /**
- * @brief Load and cross-validate an entire level directory (level.json,
- * map.json, and every room_<id>.json map.json references).
+ * @brief Load a level directory (level.json, map.json, and every room's
+ * JSON metadata + referenced .txt template), wire the room graph, spawn
+ * every room's enemies, and seal any doors left unlinked by this level's
+ * adjacency back to Wall tiles.
  *
  * @param levelDir Directory containing the level's config files.
- * @throws std::runtime_error on any missing file, malformed JSON, or
- *         cross-reference mismatch (id mismatches, room-count mismatches).
+ * @param services Shared services; the returned Level stores this by
+ *                 reference and it must outlive the Level.
+ * @param catalog  Resolves each room's spawn-table entries to stats.
+ * @return A fully-built Level.
  */
-LevelConfig loadLevelConfig(const std::filesystem::path& levelDir);
+Level loadLevel(const std::filesystem::path& levelDir, GameServices& services,
+                const EnemyCatalog& catalog);
+
+}  // namespace level_loader
 
 #endif
