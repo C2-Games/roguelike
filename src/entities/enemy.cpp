@@ -149,7 +149,7 @@ Enemy::Enemy(Coordinate position, std::unique_ptr<FOV> fov, EntitySymbol symbol,
       chaseMemoryDuration_(chaseMemoryDuration),
       chaseTurnsRemaining_(0),
       lastKnownPlayerPos_(std::nullopt),
-      state_(AIState::Idle),
+      aiState_(AIState::Sentry),
       attackCooldownRemaining_(0)
 {}
 
@@ -161,59 +161,59 @@ void Enemy::transitionState(bool inFoV, Coordinate playerPos)
   {
     lastKnownPlayerPos_ = playerPos;
     chaseTurnsRemaining_ = chaseMemoryDuration_;
-    setState(AIState::Chasing);
+    setState(AIState::Chase);
     return;
   }
 
-  // Cascading (not else-if): a single call can fall Chasing -> Searching ->
-  // Idle in one frame, matching a fresh re-evaluation every frame.
-  if (state_ == AIState::Chasing)
+  // Cascading (not else-if): a single call can fall Chase -> Search ->
+  // Sentry in one frame, matching a fresh re-evaluation every frame.
+  if (aiState_ == AIState::Chase)
   {
-    setState(AIState::Searching);
+    setState(AIState::Search);
   }
 
-  if (state_ == AIState::Searching)
+  if (aiState_ == AIState::Search)
   {
     if (chaseTurnsRemaining_ <= 0 || !lastKnownPlayerPos_.has_value())
     {
-      setState(AIState::Idle);
+      setState(AIState::Sentry);
     }
     else if (position_ == *lastKnownPlayerPos_)
     {
       // Arrived at the last-known tile but the player has since moved.
       lastKnownPlayerPos_.reset();
       chaseTurnsRemaining_ = 0;
-      setState(AIState::Idle);
+      setState(AIState::Sentry);
     }
   }
 }
 
 void Enemy::setState(AIState next)
 {
-  if (next == state_)
+  if (next == aiState_)
   {
     return;
   }
-  state_ = next;
-  switch (state_)
+  aiState_ = next;
+  switch (aiState_)
   {
-    case AIState::Idle:
-      onEnterIdle();
+    case AIState::Sentry:
+      onEnterSentry();
       break;
-    case AIState::Chasing:
-      onEnterChasing();
+    case AIState::Chase:
+      onEnterChase();
       break;
-    case AIState::Searching:
-      onEnterSearching();
+    case AIState::Search:
+      onEnterSearch();
       break;
   }
 }
 
-void Enemy::onEnterIdle() {}
+void Enemy::onEnterSentry() {}
 
-void Enemy::onEnterChasing() {}
+void Enemy::onEnterChase() {}
 
-void Enemy::onEnterSearching() {}
+void Enemy::onEnterSearch() {}
 
 bool Enemy::moveTowardPlayer(const FrameState& frame, const GoalMapCache& cache,
                              GameServices& services)
@@ -225,15 +225,15 @@ bool Enemy::moveTowardPlayer(const FrameState& frame, const GoalMapCache& cache,
 
   // Decide what tile the enemy is trying to reach this frame.
   std::optional<Coordinate> target;
-  switch (state_)
+  switch (aiState_)
   {
-    case AIState::Chasing:
+    case AIState::Chase:
       target = playerPos;
       break;
-    case AIState::Searching:
+    case AIState::Search:
       target = lastKnownPlayerPos_;
       break;
-    case AIState::Idle:
+    case AIState::Sentry:
       break;
   }
 
@@ -265,7 +265,7 @@ bool Enemy::moveTowardPlayer(const FrameState& frame, const GoalMapCache& cache,
   }
   else
   {
-    // Idle — never spotted the player, or memory just expired. Wander.
+    // Sentry — never spotted the player, or memory just expired. Wander.
     nextTile = pickWanderTile(this, position_, frame.currentRoom, services);
   }
 
@@ -300,6 +300,7 @@ bool Enemy::moveTowardPlayer(const FrameState& frame, const GoalMapCache& cache,
 
   // Minus one: this frame is itself part of the gap.
   attackCooldownRemaining_ = ATTACK_COOLDOWN_FRAMES - 1;
+  state_ = EntityAction::Attack;
   return true;
 }
 
@@ -307,4 +308,5 @@ void Enemy::takeDamage(int damage)
 {
   health_ -= damage;
   health_ = std::max(health_, 0);
+  state_ = EntityAction::Damaged;
 }

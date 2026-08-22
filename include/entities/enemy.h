@@ -15,9 +15,10 @@ struct GameServices;
 
 enum class AIState : std::uint8_t
 {
-  Idle,       // never spotted the player, or gave up searching.
-  Chasing,    // player is currently in FoV; target is their live position.
-  Searching,  // lost sight; target is the last-known position
+  Sentry,  // stationary/patrol default: never spotted the player, or gave up
+           // searching.
+  Chase,   // player is currently in FoV; target is their live position.
+  Search,  // lost sight; target is the last-known position.
 };
 
 class Enemy : public Entity
@@ -76,7 +77,7 @@ class Enemy : public Entity
   int chaseMemoryDuration_;
   int chaseTurnsRemaining_;
   std::optional<Coordinate> lastKnownPlayerPos_;
-  AIState state_;
+  AIState aiState_;
 
   // frames remaining before the next attack attempt
   int attackCooldownRemaining_;
@@ -89,19 +90,14 @@ class Enemy : public Entity
    */
   void transitionState(bool inFoV, Coordinate playerPos);
 
-  /** @brief Hook invoked on entering Idle. Empty seam for future behavior. */
-  static void onEnterIdle();
+  /** @brief Hook invoked on entering Sentry. Empty seam for future behavior. */
+  static void onEnterSentry();
 
-  /**
-   * @brief Hook invoked on entering Chasing. Empty seam for future behavior.
-   */
-  static void onEnterChasing();
+  /** @brief Hook invoked on entering Chase. Empty seam for future behavior. */
+  static void onEnterChase();
 
-  /**
-   * @brief Hook invoked on entering Searching. Empty seam for future
-   * behavior.
-   */
-  static void onEnterSearching();
+  /** @brief Hook invoked on entering Search. Empty seam for future behavior. */
+  static void onEnterSearch();
 
   /**
    * @brief Move to a new state, invoking its onEnter hook if it actually

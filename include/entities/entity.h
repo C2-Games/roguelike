@@ -1,11 +1,22 @@
 #ifndef ENTITY_H
 #define ENTITY_H
 
+#include <cstdint>
 #include <memory>
 
 #include "core/coordinate.h"
 #include "entities/entity_symbol.h"
 #include "entities/fov.h"
+
+enum class EntityAction : std::uint8_t
+{
+  Attack,
+  Move,
+  Idle,
+  Damaged,
+  Ability,
+  TransRoom,
+};
 
 class Entity
 {
@@ -51,6 +62,13 @@ class Entity
   const FOV& getFOV() const { return *fov_; }
 
   /**
+   * @brief Get the entity's current action.
+   *
+   * @return The entity's current action this frame.
+   */
+  EntityAction getState() const { return state_; };
+
+  /**
    * @brief Entity is alive.
    *
    * @return bool
@@ -74,6 +92,7 @@ class Entity
   int speed_;
   int frameCounter_;
   std::unique_ptr<FOV> fov_;
+  EntityAction state_;
 
   /**
    * @brief Move hook that moves player to new position based on their speed.
@@ -88,6 +107,10 @@ class Entity
     if (frameCounter_ % speed_ == 0)
     {
       frameCounter_ = 0;  // reset counter.
+      if (!(newPos == position_))
+      {
+        state_ = EntityAction::Move;
+      }
       position_ = newPos;
     };
   };
