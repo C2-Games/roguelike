@@ -40,8 +40,7 @@ RenderState build(const Player& player, const Level& level,
   }
 
   // an empty symbol draws nothing: render() can still run once on the frame
-  // the player dies (Game::run()'s loop only rechecks isAlive() at the top
-  // of the next iteration), so this keeps that frame's player invisible.
+  // the player dies
   state.entity.player =
       EntityView{player.getPosition(),
                  player.isAlive() ? player.getSymbol() : EntitySymbol{},

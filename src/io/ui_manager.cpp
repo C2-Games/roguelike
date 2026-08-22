@@ -16,6 +16,9 @@
 
 namespace
 {
+// gap, in rows, between the HUD band and the map layer's top border.
+constexpr int HUD_MARGIN = 2;
+
 // composes one layer onto stdscr if it's enabled.
 template <typename Layer, typename Packet>
 void composeLayer(Layer& layer, const Packet& packet)
@@ -53,8 +56,7 @@ UIManager::UIManager()
   entityLayer_ = std::make_unique<EntityLayer>(geom.winHeight, geom.winWidth,
                                                geom.originY, geom.originX);
 
-  const int hudMargin = 2;
-  hudLayer_ = std::make_unique<HUDLayer>(termHeight_, termWidth_, hudMargin);
+  hudLayer_ = std::make_unique<HUDLayer>(termHeight_, termWidth_, HUD_MARGIN);
 
   // if debug build, add the debug window.
 #ifndef NDEBUG
