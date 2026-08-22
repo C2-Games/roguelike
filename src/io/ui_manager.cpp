@@ -11,7 +11,21 @@
 #include "io/output/layers/entity_layer.h"
 #include "io/output/layers/hud_layer.h"
 #include "io/output/layers/map_layer.h"
+#include "io/output/render_state.h"
 #include "io/output/window_position.h"
+
+namespace
+{
+// composes one layer onto stdscr if it's enabled.
+template <typename Layer, typename Packet>
+void composeLayer(Layer& layer, const Packet& packet)
+{
+  if (!layer.isEnabled()) return;
+  layer.doUpdate();
+  layer.doRender(packet);
+  overlay(layer.getWindow(), stdscr);
+}
+}  // namespace
 
 UIManager::UIManager()
 {
@@ -34,21 +48,17 @@ UIManager::UIManager()
 
   // add window overlays.
   WindowPosition geom = centerWindow(termHeight_, termWidth_);
-  renderer_.addLayer(RenderLayer::Map,
-                     std::make_unique<MapLayer>(geom.winHeight, geom.winWidth,
-                                                geom.originY, geom.originX));
-  renderer_.addLayer(RenderLayer::Entity, std::make_unique<EntityLayer>(
-                                              geom.winHeight, geom.winWidth,
-                                              geom.originY, geom.originX));
+  mapLayer_ = std::make_unique<MapLayer>(geom.winHeight, geom.winWidth,
+                                         geom.originY, geom.originX);
+  entityLayer_ = std::make_unique<EntityLayer>(geom.winHeight, geom.winWidth,
+                                               geom.originY, geom.originX);
 
   const int hudMargin = 2;
-  renderer_.addLayer(RenderLayer::HUD, std::make_unique<HUDLayer>(
-                                           termHeight_, termWidth_, hudMargin));
+  hudLayer_ = std::make_unique<HUDLayer>(termHeight_, termWidth_, hudMargin);
 
   // if debug build, add the debug window.
 #ifndef NDEBUG
-  renderer_.addLayer(RenderLayer::Debug,
-                     std::make_unique<DebugLayer>(termHeight_, termWidth_));
+  debugLayer_ = std::make_unique<DebugLayer>(termHeight_, termWidth_);
 #endif
 }
 
@@ -66,13 +76,30 @@ GameCommand UIManager::pollInput()
   if (command == GameCommand::Resize)
   {
     getmaxyx(stdscr, termHeight_, termWidth_);
-    renderer_.resizeAll(termHeight_, termWidth_);
+    mapLayer_->onResize(termHeight_, termWidth_);
+    entityLayer_->onResize(termHeight_, termWidth_);
+    hudLayer_->onResize(termHeight_, termWidth_);
+#ifndef NDEBUG
+    if (debugLayer_) debugLayer_->onResize(termHeight_, termWidth_);
+#endif
     return GameCommand::None;
   }
   return command;
 }
 
-void UIManager::render(const RenderState& state) { renderer_.compose(state); }
+void UIManager::render(const RenderState& state)
+{
+  erase();
+
+  composeLayer(*mapLayer_, state.map);
+  composeLayer(*entityLayer_, state.entity);
+  composeLayer(*hudLayer_, state.hud);
+#ifndef NDEBUG
+  if (debugLayer_) composeLayer(*debugLayer_, state.debug);
+#endif
+
+  refresh();
+}
 
 void UIManager::showStartScreen()
 {
