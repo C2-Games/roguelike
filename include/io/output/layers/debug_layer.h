@@ -3,7 +3,7 @@
 
 #include "io/output/render_stack.h"
 
-struct RenderState;
+struct DebugLayerPacket;
 
 class DebugLayer : public RenderStack
 {
@@ -19,9 +19,9 @@ class DebugLayer : public RenderStack
   /**
    * @brief Draw frame timing and player position at the bottom row.
    *
-   * @param state Per-frame render snapshot to draw from.
+   * @param data This layer's per-frame render data.
    */
-  void doRender(const RenderState& state) override;
+  void doRender(const DebugLayerPacket& data);
 };
 
 #endif

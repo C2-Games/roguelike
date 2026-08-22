@@ -1,10 +1,16 @@
 #ifndef UI_MANAGER_H
 #define UI_MANAGER_H
 
+#include <memory>
+
 #include "io/input/game_commands.h"
-#include "io/output/renderer.h"
 
 struct RenderState;
+
+class MapLayer;
+class EntityLayer;
+class HUDLayer;
+class DebugLayer;
 
 class UIManager
 {
@@ -15,8 +21,8 @@ class UIManager
   /** @brief End ncurses mode, if not already ended. */
   ~UIManager();
 
-  // owns ncurses' global state and a Renderer of unique_ptrs; not copyable
-  // or movable.
+  // owns ncurses' global state and the render layers by unique_ptr; not
+  // copyable or movable.
   UIManager(const UIManager&) = delete;
   UIManager& operator=(const UIManager&) = delete;
   UIManager(UIManager&&) = delete;
@@ -45,7 +51,12 @@ class UIManager
 
  private:
   int termWidth_, termHeight_;
-  Renderer renderer_;
+  std::unique_ptr<MapLayer> mapLayer_;
+  std::unique_ptr<EntityLayer> entityLayer_;
+  std::unique_ptr<HUDLayer> hudLayer_;
+#ifndef NDEBUG
+  std::unique_ptr<DebugLayer> debugLayer_;
+#endif
 };
 
 #endif

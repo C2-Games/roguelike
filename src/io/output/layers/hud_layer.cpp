@@ -59,10 +59,10 @@ void HUDLayer::drawBar(int row, int col, int filled, int total, ColorPair fill,
   }
 }
 
-void HUDLayer::drawPlayerHealthBar(const RenderState& state, int row, int col)
+void HUDLayer::drawPlayerHealthBar(const HUDLayerPacket& data, int row, int col)
 {
-  const int health = state.playerHealth;
-  const int maxHealth = state.playerMaxHealth;
+  const int health = data.playerHealth;
+  const int maxHealth = data.playerMaxHealth;
 
   // round both up, so a max health that is not a multiple of HEALTH_INCREMENT
   // still fills completely at full health, and a sliver of health still shows
@@ -85,14 +85,14 @@ void HUDLayer::drawPlayerHealthBar(const RenderState& state, int row, int col)
   mvwprintw(win_, row, col + total + 1, "%3d/%d", health, maxHealth);
 };
 
-void HUDLayer::drawRoomID(const RenderState& state, int row, int col)
+void HUDLayer::drawRoomID(const HUDLayerPacket& data, int row, int col)
 {
-  mvwprintw(win_, row, col, "Room:%d/%d", state.roomIndex + 1, state.roomCount);
+  mvwprintw(win_, row, col, "Room:%d/%d", data.roomIndex + 1, data.roomCount);
 };
 
-void HUDLayer::drawWeaponStats(const RenderState& state, int row, int col)
+void HUDLayer::drawWeaponStats(const HUDLayerPacket& data, int row, int col)
 {
-  const WeaponView& weapon = state.weapon;
+  const WeaponView& weapon = data.weapon;
 
   wattron(win_, colorAttr(weapon.color));
   mvwprintw(win_, row, col, "%s DMG:%d SPD:%d RNG:%d", weapon.name.c_str(),
@@ -100,7 +100,7 @@ void HUDLayer::drawWeaponStats(const RenderState& state, int row, int col)
   wattroff(win_, colorAttr(weapon.color));
 };
 
-void HUDLayer::doRender(const RenderState& state)
+void HUDLayer::doRender(const HUDLayerPacket& data)
 {
   werase(win_);  // need to erase each frame.
 
@@ -110,9 +110,9 @@ void HUDLayer::doRender(const RenderState& state)
   int bandRow = std::max(0, geom.originY - margin_);
 
   // room number, in middle (subtract 4 to center better -- 4 chars in 'Room').
-  this->drawRoomID(state, bandRow + 1, geom.originX + (geom.winWidth / 2) - 4);
+  this->drawRoomID(data, bandRow + 1, geom.originX + (geom.winWidth / 2) - 4);
 
   // health bar & weapon stats top left.
-  this->drawPlayerHealthBar(state, bandRow, geom.originX);
-  this->drawWeaponStats(state, bandRow + 1, geom.originX);
+  this->drawPlayerHealthBar(data, bandRow, geom.originX);
+  this->drawWeaponStats(data, bandRow + 1, geom.originX);
 };

@@ -3,8 +3,6 @@
 
 #include <ncurses.h>
 
-struct RenderState;
-
 class RenderStack
 {
  public:
@@ -51,15 +49,8 @@ class RenderStack
   }
 
   /**
-   * @brief Draw this layer's content on the WINDOW.
-   *
-   * @param state Per-frame render snapshot to draw from.
-   */
-  virtual void doRender(const RenderState& state) = 0;
-
-  /**
    * @brief Enable or disable this layer. Disabled layers are skipped entirely
-   * by Renderer::compose().
+   * by UIManager::render().
    *
    * @param e True to enable, false to disable.
    */

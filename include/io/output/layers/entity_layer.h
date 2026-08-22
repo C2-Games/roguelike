@@ -3,7 +3,7 @@
 
 #include "io/output/render_stack.h"
 
-struct RenderState;
+struct EntityLayerPacket;
 
 class EntityLayer : public RenderStack
 {
@@ -19,32 +19,32 @@ class EntityLayer : public RenderStack
   EntityLayer(int h, int w, int y, int x);
 
   /**
-   * @brief Draw enemy entities that are inside the player's current FoV.
+   * @brief Draw enemy entities.
    *
-   * @param state Per-frame render snapshot to draw from.
+   * @param data This layer's per-frame render data.
    */
-  void drawEnemies(const RenderState& state);
+  void drawEnemies(const EntityLayerPacket& data);
 
   /**
-   * @brief Draw active projectiles that are inside the player's current FoV.
+   * @brief Draw active projectiles.
    *
-   * @param state Per-frame render snapshot to draw from.
+   * @param data This layer's per-frame render data.
    */
-  void drawProjectiles(const RenderState& state);
+  void drawProjectiles(const EntityLayerPacket& data);
 
   /**
    * @brief Draw player entity.
    *
-   * @param state Per-frame render snapshot to draw from.
+   * @param data This layer's per-frame render data.
    */
-  void drawPlayer(const RenderState& state);
+  void drawPlayer(const EntityLayerPacket& data);
 
   /**
    * @brief Draw all alive entities into the layer window.
    *
-   * @param state Per-frame render snapshot to draw from.
+   * @param data This layer's per-frame render data.
    */
-  void doRender(const RenderState& state) override;
+  void doRender(const EntityLayerPacket& data);
 
   /**
    * @brief Recompute the centered, terminal-clamped map window geometry.

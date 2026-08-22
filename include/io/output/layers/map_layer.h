@@ -4,7 +4,7 @@
 #include "core/colors.h"
 #include "io/output/render_stack.h"
 
-struct RenderState;
+struct MapLayerPacket;
 
 class MapLayer : public RenderStack
 {
@@ -22,16 +22,16 @@ class MapLayer : public RenderStack
   /**
    * @brief Draw all room tiles into the map layer window.
    *
-   * @param state Per-frame render snapshot to draw from.
+   * @param data This layer's per-frame render data.
    */
-  void drawMap(const RenderState& state);
+  void drawMap(const MapLayerPacket& data);
 
   /**
    * @brief Render map layer window.
    *
-   * @param state Per-frame render snapshot to draw from.
+   * @param data This layer's per-frame render data.
    */
-  void doRender(const RenderState& state) override;
+  void doRender(const MapLayerPacket& data);
 
   /**
    * @brief Recompute the centered, terminal-clamped map window geometry.

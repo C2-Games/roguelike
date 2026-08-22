@@ -45,16 +45,38 @@ struct WeaponView
   ColorPair color;
 };
 
-struct RenderState
+struct MapLayerPacket
 {
   std::array<std::array<TileView, Room::HEIGHT>, Room::WIDTH> tiles;
+};
+
+struct EntityLayerPacket
+{
   EntityView player;
-  std::vector<EntityView> enemies;          // already alive-filtered
-  std::vector<ProjectileView> projectiles;  // already active-filtered
+  std::vector<EntityView> enemies;  // already alive- and visibility-filtered
+  std::vector<ProjectileView>
+      projectiles;  // already active- and visibility-filtered
+};
+
+struct HUDLayerPacket
+{
   int playerHealth, playerMaxHealth;
   int roomIndex, roomCount;
   WeaponView weapon;
+};
+
+struct DebugLayerPacket
+{
+  Coordinate playerPosition;
   double fps;
+};
+
+struct RenderState
+{
+  MapLayerPacket map;
+  EntityLayerPacket entity;
+  HUDLayerPacket hud;
+  DebugLayerPacket debug;
 };
 
 #endif

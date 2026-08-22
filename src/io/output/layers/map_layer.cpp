@@ -9,13 +9,13 @@
 
 MapLayer::MapLayer(int h, int w, int y, int x) : RenderStack(h, w, y, x) {}
 
-void MapLayer::drawMap(const RenderState& state)
+void MapLayer::drawMap(const MapLayerPacket& data)
 {
   for (int x = 0; x < Room::WIDTH; ++x)
   {
     for (int y = 0; y < Room::HEIGHT; ++y)
     {
-      const TileView& tile = state.tiles[x][y];
+      const TileView& tile = data.tiles[x][y];
 
       // 3-state fog of war:
       //   visible   -> normal render (terminal default colours).
@@ -48,7 +48,7 @@ void MapLayer::drawMap(const RenderState& state)
   };
 };
 
-void MapLayer::doRender(const RenderState& state)
+void MapLayer::doRender(const MapLayerPacket& data)
 {
   werase(win_);  // need to erase each frame.
 
@@ -56,7 +56,7 @@ void MapLayer::doRender(const RenderState& state)
   box(win_, 0, 0);
 
   // draw map.
-  this->drawMap(state);
+  this->drawMap(data);
 };
 
 void MapLayer::onResize(int termHeight, int termWidth)

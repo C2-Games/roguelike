@@ -6,7 +6,7 @@
 #include "core/colors.h"
 #include "io/output/render_stack.h"
 
-struct RenderState;
+struct HUDLayerPacket;
 
 class HUDLayer : public RenderStack
 {
@@ -24,38 +24,38 @@ class HUDLayer : public RenderStack
    * @brief Draw the player's health as a block-glyph bar, tinted by how much
    * health remains, with the numeric value alongside it.
    *
-   * @param state Per-frame render snapshot to draw from.
+   * @param data This layer's per-frame render data.
    * @param row Absolute row to draw the health bar at.
    * @param col Absolute column to draw the health bar at.
    */
-  void drawPlayerHealthBar(const RenderState& state, int row, int col);
+  void drawPlayerHealthBar(const HUDLayerPacket& data, int row, int col);
 
   /**
    * @brief Draw the current room ID and total room count at a fixed screen
    * position.
    *
-   * @param state Per-frame render snapshot to draw from.
+   * @param data This layer's per-frame render data.
    * @param row Absolute row to draw the room indicator at.
    * @param col Absolute column to draw the room indicator at.
    */
-  void drawRoomID(const RenderState& state, int row, int col);
+  void drawRoomID(const HUDLayerPacket& data, int row, int col);
 
   /**
    * @brief Draw the player's current weapon name and stats at a fixed
    * screen position, tinted with the weapon's colour.
    *
-   * @param state Per-frame render snapshot to draw from.
+   * @param data This layer's per-frame render data.
    * @param row Absolute row to draw the weapon stats at.
    * @param col Absolute column to draw the weapon stats at.
    */
-  void drawWeaponStats(const RenderState& state, int row, int col);
+  void drawWeaponStats(const HUDLayerPacket& data, int row, int col);
 
   /**
    * @brief Draw the HP indicator, room ID, and weapon stats each frame.
    *
-   * @param state Per-frame render snapshot to draw from.
+   * @param data This layer's per-frame render data.
    */
-  void doRender(const RenderState& state) override;
+  void doRender(const HUDLayerPacket& data);
 
  private:
   /**

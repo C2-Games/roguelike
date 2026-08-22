@@ -42,7 +42,6 @@ set(SOURCES
     src/io/ui_manager.cpp
     src/io/input/handle_input.cpp
     src/io/output/colors.cpp
-    src/io/output/renderer.cpp
     src/io/output/render_stack.cpp
     src/io/output/layers/map_layer.cpp
     src/io/output/layers/entity_layer.cpp
