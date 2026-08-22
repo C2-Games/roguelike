@@ -28,6 +28,11 @@ Before editing any `.cpp`/`.h`/`.hpp` file, invoke the `cpp-style` skill and fol
 `XXX`, `HACK`, or `TBD` comments — pending work goes in a GitHub issue instead; if work is
 genuinely left over, say so in your final report.
 
+When your task says to move/port/relocate code "verbatim" or "unchanged," that covers logic only.
+Re-check every comment and docstring you carry over against `cpp-style` regardless — lowercase
+first word, trailing period, no Doxygen block on anything but a method/constructor. A style
+violation in the original file is not exempt just because the task called the move verbatim.
+
 ## Never commit or push
 
 Do not run `git commit` or `git push` under any circumstance. This is also globally denied for

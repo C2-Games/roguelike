@@ -1,5 +1,55 @@
 # Roguelike Architecture
 
+## Overview
+
+Single-executable terminal roguelike (target `roguelike`), plain OOP (no ECS), ncurses rendering.
+
+`src/main.cpp` constructs a `UIManager` (`include/io/ui_manager.h`, `src/io/ui_manager.cpp` — sets up ncurses) and then a `Game` (`include/core/game.h`, `src/core/game.cpp`) that takes that `UIManager&`, which owns essentially all game state and *is* the loop (a prior refactor removed a separate `Level`/stage abstraction — `Game::run()` now does `handleInput() → update() → render()` each frame, paced to `fps_`). `Game` owns: `GameServices` (holds two `std::mt19937` engines — `rng` for spawn/level generation, `movementRng` for enemy movement — injected by reference everywhere instead of using globals/statics, both seeded from a fixed constant for reproducible runs), `Player`, `Level` (the *room graph* data structure, not a stage/scene), `GoalMapCache`, and a `vector<unique_ptr<Projectile>>`, plus a non-owning `UIManager&` reference it routes all I/O through. Enemies are not a `Game` member — they live per-`Room` (see below).
+
+## Input
+
+`include/io/input/`, `src/io/input/`: `input::pollInput()` (`handle_input.h`/`.cpp`) is the sole place that calls ncurses `getch()`/reads `KEY_*` constants; it returns a `GameCommand` (`game_commands.h`: `None`/`MoveUp`/`MoveDown`/`MoveLeft`/`MoveRight`/`Attack`/`Quit`/`Resize`), which `Game::handleInput()` switches on. All movement/walkability/door-transition/projectile-spawn decision logic still lives in `Game`, unchanged — only how it learns what was pressed moved out. `UIManager::pollInput()` intercepts `GameCommand::Resize` itself (resizing the render layers) and reports it back to `Game` as `GameCommand::None`, so `Game` never observes a resize — `Game::handleInput()`'s switch keeps an unreachable `case GameCommand::Resize: break;` purely so the switch stays exhaustive over the enum.
+
+## World/map
+
+`include/world/map/`, `src/world/map/`:
+- `Level` — room graph: `rooms_` map and `doorConnections_` (type `LevelMap`) keyed by `(roomID, doorPos)`. Built by `level_loader::loadLevel(levelDir, services, catalog)` (`include/preload/level_loader.h`, `src/preload/level_loader.cpp`), which parses the level config via `loadLevelConfig`, loads each room via `room_loader::loadRoom`, wires door adjacency, seals unlinked doors, then constructs `Level` through a new data constructor `Level(LevelMeta meta, std::map<int, Room> rooms, LevelMap doorConnections, GameServices& services)` — `Level` itself does no file I/O anymore (its old `Level(levelDir, services, catalog)` constructor and private `buildFromConfig`/`sealUnlinkedDoors` methods are gone). `map.json` holds a `rooms` id list plus a flat `edges` array; each edge names both endpoints by room and **door number** (`{"from": {"room": 1, "door": 2}, "to": {"room": 3, "door": 4}}`), resolved against the room's authored door labels via `Room::doorAt`. Each edge is stated once and wired in both directions, so the graph cannot be asymmetric by construction. Doors a level never names are sealed back to `Wall` by `sealUnlinkedDoors()` — a room template may carry more doors than any one level uses.
+- `Room` — a plain data structure with no parsing responsibility: fixed grid (`WIDTH=175`, `HEIGHT=50`) of `Tile`; it no longer has a `loadFromFile` static method. Rooms are loaded via the free function `room_loader::loadRoom` (`include/preload/room_loader.h`, `src/preload/room_loader.cpp`) from hand-authored files in `assets/rooms/*.txt`: a `@key: value` header followed by an ASCII grid. Legend: `#`=Wall, `.`=Floor, `o`=Pillar, space=Void, `E`=enemy spawn, `L`=loot/item spawn, digits=numbered door tiles (collected into `doors`, a `map<DoorNumber, Coordinate>` keyed by the authored digit — labels need not be dense, and `Room::doorAt` throws on an unknown one). Also owns a `RoomEnemyState` member (`enemyState`) holding that room's live enemies, exposed via `enemies()`/`ensureEnemiesSpawned()`.
+
+## Entities
+
+`include/entities/`, `src/entities/`: `Entity` is the abstract base (`Coordinate` position, `EntitySymbol` symbol, health, speed, `FOV`) for `Player` and `Enemy` — both subclasses build their `FOV` (via `ellipseFOV`) and pass it up through `Entity`'s constructor rather than storing their own. `EntitySymbol` (`using EntitySymbol = std::vector<std::vector<char>>`, defined in `entity.h`) is a multi-cell glyph grid; a cell holding `'\0'` renders as transparent (the floor tile beneath shows through) instead of a literal blank glyph. `Enemy::moveTowardPlayer` uses the goal-map/pathfinding system; target selection is driven by an explicit `AIState` (`Idle`/`Chasing`/`Searching`), recomputed each frame by `transitionState()` from FoV and "chase memory" (`lastKnownPlayerPos_`/`chaseTurnsRemaining_`) before movement runs, with empty `onEnterX()` seams for future per-state behavior. The inherited `fov_` doubles as its detection/chase-trigger radius, not a separate attack range. `EnemyCatalog` (`include/preload/enemy_catalog.h`, `src/preload/enemy_catalog.cpp`) parses every file in `assets/enemies/` into a `(name, tier) → stats` lookup, including each enemy's nested `symbol` JSON array into an `EntitySymbol`. Enemy spawning is `enemy_factory::rollForRoom`, which shuffles the room's `E` spawn points, then for each entry in the room's authored spawn tablerolls uniform_int over the entry's authored range for how many to place, resolving stats through `EnemyCatalog::find`. `RoomEnemyState` (a member of each `Room`) holds that room's live enemies (HP/position persist across room transitions) and lazily rolls spawns on first visit via `ensureSpawned(room, services)`.
+
+## Preload
+
+`preload/` (`include/preload/`, `src/preload/`) is a module sibling to `core/`, `entities/`, `world/`, `io/` that owns all level/room/enemy config-file loading — no other part of the game-logic layer does file I/O or JSON/text parsing.
+
+- `EnemyCatalog` (`include/preload/enemy_catalog.h`, `src/preload/enemy_catalog.cpp`) — parses `assets/enemies/*.json`, unchanged behavior from before the move.
+- `room_loader::loadRoom` (`include/preload/room_loader.h`, `src/preload/room_loader.cpp`) — parses one `assets/rooms/*.txt` file into a `Room`.
+- `level_loader.h`/`.cpp` (`include/preload/level_loader.h`, `src/preload/level_loader.cpp`) — holds the config value types (`LevelMeta`, `RoomConfig`, `RoomAdjacency`, `EnemySpawnConfig`, `LevelConfig`, `DoorNumber`) plus `loadLevelConfig` for raw JSON parsing, and the higher-level `level_loader::loadLevel` that orchestrates the whole level build: parse config, load every room, spawn enemies, wire adjacency, seal unlinked doors, return a fully-built `Level`.
+
+`Game` constructs its `level_` member via `level_loader::loadLevel("assets/levels/level_1", services_, enemyCatalog_)` in its constructor's initializer list.
+
+## Pathfinding
+
+`include/world/systems/`, `src/world/systems/`: `pathfinding::computeGoalMap` builds a Dijkstra/BFS distance-to-goal grid per room. `GoalMapCache` caches these keyed by `(roomID, goal)`, capped at 32 entries (clears entirely, not LRU, once full). `visibility::update` recomputes FoV/fog-of-war each frame; `FOV` (`include/entities/fov.h`) is the abstract shape interface, with `ellipseFOV`/`EllipseFOV` (`include/entities/ellipse_fov.h`) building the offset-set ellipse shape, aspect-corrected for terminal cells.
+
+## Rendering
+
+`include/io/output/`, `src/io/output/`: `RenderStack` is an abstract base wrapping one ncurses `WINDOW*`, providing shared window/enable/resize/`doUpdate()` (per-frame state hook, default no-op — currently unused by any layer, but kept as general infrastructure) infrastructure — layers hold no live references into `Game`'s object graph, only geometry from their constructor. There is no shared render-call contract: each of the four layers declares its own `doRender(const XxxLayerPacket&)` taking only the data it needs (`MapLayer::doRender(const MapLayerPacket&)`, `EntityLayer::doRender(const EntityLayerPacket&)`, `HUDLayer::doRender(const HUDLayerPacket&)`, `DebugLayer::doRender(const DebugLayerPacket&)`). `UIManager` owns the four layers directly as typed `unique_ptr` members and composes them itself each frame — no separate `Renderer` class exists — routing each named `RenderState` field (`RenderState::map`/`entity`/`hud`/`debug`) to its matching layer. Layers, constructed in `UIManager`'s constructor: `MapLayer` → `EntityLayer` (draws only what's in the player's FoV) → `HUDLayer` → `DebugLayer` (compiled in only when `NDEBUG` is not defined, i.e. debug builds). `Game::render()` builds a fresh `RenderState` snapshot every frame via `render_state_builder::build()` (`core/render_state_builder.h`/`.cpp`) and pushes it through `uiManager_.render()`. Render-effect state such as the player hit-flash now lives on `Game` (`playerHitFlashFramesRemaining_`), not on any layer — the builder resolves it into the snapshot's `RenderState::entity.player` tint fields each frame, so no raw pointer into a layer exists anymore. `core/colors.h` keeps the plain `ColorPair` enum as shared vocabulary; `io/output/colors.h` holds the ncurses-specific `colorAttr()`/`initColors()`.
+
+## Conventions
+
+Trailing underscore for private members; `#ifndef` include guards (no `#pragma once`); PascalCase classes, snake_case free-function namespaces (`enemy_factory::`, `visibility::`); `getX()`/`isX()` accessors; `unique_ptr` for polymorphic ownership, plain references for non-owning per-frame "context" structs (`FrameState`) instead of globals; Doxygen-style `/** @brief */` header comments; heavy forward-declaration use to keep header coupling low.
+
+## Logging
+
+`Logger::get()` singleton writes to `game.log`/`error.log` at the repo root via `LOG(msg)`/`LOG_ERR(msg)` macros.
+
+## Known gaps
+
+`assets/enemies/` holds a single flat `goblin.json` — the `{class}/` nesting the level format anticipates does not exist yet, and neither do `assets/drops/` or `assets/items/`.
+
 ## io/
 
 Both input & output modules are completely stateless and should have no

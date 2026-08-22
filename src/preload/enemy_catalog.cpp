@@ -1,4 +1,4 @@
-#include "entities/enemy_catalog.h"
+#include "preload/enemy_catalog.h"
 
 #include <fstream>
 #include <nlohmann/json.hpp>

@@ -10,6 +10,7 @@
 #include "entities/entity.h"
 #include "io/input/game_commands.h"
 #include "io/ui_manager.h"
+#include "preload/level_loader.h"
 #include "world/objects/projectile.h"
 
 namespace
@@ -26,7 +27,8 @@ Game::Game(UIManager& uiManager, int fps)
       services_(kDefaultSeed),
       player_(Coordinate(Room::WIDTH / 2, Room::HEIGHT / 2)),
       enemyCatalog_("assets/enemies"),
-      level_("assets/levels/level_1", services_, enemyCatalog_),
+      level_(level_loader::loadLevel("assets/levels/level_1", services_,
+                                     enemyCatalog_)),
       isRunning_(true),
       uiManager_(uiManager)
 {}

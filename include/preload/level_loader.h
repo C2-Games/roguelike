@@ -1,14 +1,12 @@
-#ifndef LEVEL_CONFIG_H
-#define LEVEL_CONFIG_H
+#ifndef LEVEL_LOADER_H
+#define LEVEL_LOADER_H
 
-#include <array>
 #include <filesystem>
 #include <map>
 #include <string>
 #include <vector>
 
-// Door number based on the order of doors in the room's template file
-using DoorNumber = int;
+#include "world/map/room_types.h"
 
 // one door-to-door link between two rooms, currently bidirectional
 // (fromRoom->toRoom and toRoom->fromRoom)
@@ -18,14 +16,6 @@ struct RoomAdjacency
   DoorNumber fromDoor;
   int toRoom;
   DoorNumber toDoor;
-};
-
-/** @brief One enemy spawn-table entry from a room's JSON metadata. */
-struct EnemySpawnConfig
-{
-  std::string name;
-  int tier;
-  std::array<int, 2> range;
 };
 
 /** @brief One room's metadata, parsed from room_<id>.json. */
@@ -56,14 +46,28 @@ struct LevelConfig
   std::map<int, RoomConfig> rooms;       // id -> per-room config
 };
 
+class Level;
+struct GameServices;
+class EnemyCatalog;
+
+namespace level_loader
+{
+
 /**
- * @brief Load and cross-validate an entire level directory (level.json,
- * map.json, and every room_<id>.json map.json references).
+ * @brief Load a level directory (level.json, map.json, and every room's
+ * JSON metadata + referenced .txt template), wire the room graph, spawn
+ * every room's enemies, and seal any doors left unlinked by this level's
+ * adjacency back to Wall tiles.
  *
  * @param levelDir Directory containing the level's config files.
- * @throws std::runtime_error on any missing file, malformed JSON, or
- *         cross-reference mismatch (id mismatches, room-count mismatches).
+ * @param services Shared services; used transiently to roll each room's
+ *                 enemy spawns.
+ * @param catalog  Resolves each room's spawn-table entries to stats.
+ * @return A fully-built Level.
  */
-LevelConfig loadLevelConfig(const std::filesystem::path& levelDir);
+Level loadLevel(const std::filesystem::path& levelDir, GameServices& services,
+                const EnemyCatalog& catalog);
+
+}  // namespace level_loader
 
 #endif
