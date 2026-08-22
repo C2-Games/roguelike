@@ -208,7 +208,7 @@ Installing the toolchain:
 
 | Platform | Install |
 |---|---|
-| Debian/Ubuntu/WSL | `sudo apt install clang-format clang-tidy cppcheck cmake libncurses-dev` |
+| Debian/Ubuntu/WSL | `sudo apt install clang-format clang-tidy-19 cppcheck cmake libncurses-dev` |
 | macOS | `brew install clang-format llvm cppcheck cmake ncurses` |
 
 On macOS, Homebrew keeps ncurses keg-only and `scripts/build-*.sh` do not pass

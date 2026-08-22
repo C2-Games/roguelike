@@ -59,7 +59,7 @@ There is no test suite in this repo (no `tests/` directory, no CTest/GoogleTest/
 
 - `scripts/ci-local.sh` replicates the CI checks locally (format check, cppcheck, clang-tidy, then build) using a `build/` directory with `compile_commands.json` — run this before pushing.
 - Format: `.clang-format` (Google style, with Allman braces — every brace opens on its own line; empty bodies stay `{}`). Check with `clang-format --dry-run --Werror -style=file` over `src/`+`include/` `.cpp`/`.h`/`.hpp` files.
-- Static analysis: `.clang-tidy` enables `bugprone-*`, `performance-*`, `readability-*` (minus `magic-numbers` and `identifier-length`). Also `cppcheck --enable=all` and CodeQL run in CI.
+- Static analysis: `.clang-tidy` enables `bugprone-*`, `performance-*`, `readability-*` (minus `magic-numbers` and `identifier-length`), and requires clang-tidy 19+ (invoked as `clang-tidy-19`) for `HeaderFilterRegex`/`ExcludeHeaderFilterRegex` to surface warnings from this project's own `include/` headers while excluding the fetched nlohmann/json.hpp and system ncurses headers. Also `cppcheck --enable=all` and CodeQL run in CI.
 - Blame hygiene: `.git-blame-ignore-revs` lists formatting-only commits (the Allman/LF reformat).
   GitHub's web blame reads it automatically; **locally each clone needs it enabled once** with
   `git config blame.ignoreRevsFile .git-blame-ignore-revs`. Add future whitespace-only commits to it.
