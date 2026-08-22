@@ -4,3 +4,10 @@ Checks: >
   readability-*,
   -readability-magic-numbers,
   -readability-identifier-length
+# Surface warnings from this project's own headers (default behavior is
+# main-file-only, which silently drops every include/ header finding).
+# ExcludeHeaderFilterRegex (clang-tidy 19+) then carves the third-party
+# nlohmann/json.hpp (fetched into build/_deps/) and system ncurses headers
+# back out, so only src/ and include/ ever surface diagnostics.
+HeaderFilterRegex: '.*/include/.*'
+ExcludeHeaderFilterRegex: '(_deps/|/usr/include/)'

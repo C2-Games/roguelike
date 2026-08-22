@@ -87,7 +87,7 @@ jobs:
             DEBIAN_FRONTEND: noninteractive
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang-tidy libncurses-dev
+          sudo apt-get install -y clang-tidy-19 libncurses-dev
 
       - name: Restore cache
         uses: actions/cache@v4
@@ -107,7 +107,7 @@ jobs:
 
       - name: Run clang-tidy
         run: |
-          find src -name "*.cpp" -print0 | xargs -0 clang-tidy -p build
+          find src -name "*.cpp" -print0 | xargs -0 -n1 -P "$(nproc)" clang-tidy-19 -p build --quiet
 
   # step 2: build binaries (MacOS (silicon) & linux -- FUCK WINDOWS).
   build:

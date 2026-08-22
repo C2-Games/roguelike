@@ -51,7 +51,7 @@ If it reports a missing tool, install the toolchain for the platform:
 
 | Platform | Install |
 |---|---|
-| Debian/Ubuntu/WSL | `sudo apt install clang-format clang-tidy cppcheck cmake libncurses-dev` |
+| Debian/Ubuntu/WSL | `sudo apt install clang-format clang-tidy-19 cppcheck cmake libncurses-dev` |
 | macOS | `brew install clang-format llvm cppcheck cmake ncurses` |
 
 ## 3. Review pass
