@@ -8,9 +8,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    `src/`, `include/`, `assets/`, or the build files. A `PreToolUse` hook denies those edits until
    an issue is recorded for the current branch, and always denies edits made on `main`. One branch
    may carry several issues — record them all. If a change is requested directly, without
-   `/start-issue` having been run, draft the issue the same way `/new-issue` does — matching
-   template, title, and milestone — show it, and wait for explicit approval before creating the
-   issue and branch and proceeding. For parallel issues, `/start-issue` can isolate work in a git
+   `/start-issue` having been run, dispatch the `issue-drafter` agent the same way `/new-issue`
+   does — it matches a template, asks follow-ups, and waits for explicit approval — before
+   creating the issue and branch and proceeding. For parallel issues, `/start-issue` can isolate work in a git
    worktree (`.claude/worktrees/<branch>`) instead of switching the current checkout — see the
    Lifecycle diagram in WORKFLOW.md.
 2. **Format and static analysis run once per change, at `/check`.** Nothing is checked while you
@@ -35,10 +35,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Commands: `/issues`, `/new-issue`, `/start-issue`, `/check`, `/build`, `/run`, `/pr`. The `cpp-style`
 skill (`.claude/skills/cpp-style/SKILL.md`) carries the conventions no linter can check — naming,
 comment voice, and where a Doxygen docstring is allowed to go — and applies to all C++ work here.
-Two project agents back implementation and review: `.claude/agents/implementer.md` executes one
-isolated plan task at a time (dispatched in parallel when tasks are independent), and
-`.claude/agents/reviewer.md` gives `/check` a read-only structure/efficiency/isolation/style pass
-over `src/`/`include/` changes, grounded in the originating issue.
+Three project agents back issue filing, implementation, and review: `.claude/agents/issue-drafter.md`
+drafts and files GitHub issues (dispatched by `/new-issue` and by any direct change request with no
+issue on record), asking follow-ups on implementation approach, whether to split into multiple
+issues, parent/sub-issue linkage, and milestone before creating anything;
+`.claude/agents/implementer.md` executes one isolated plan task at a time (dispatched in parallel
+when tasks are independent); and `.claude/agents/reviewer.md` gives `/check` a read-only
+structure/efficiency/isolation/style pass over `src/`/`include/` changes, grounded in the
+originating issue.
 
 @.claude/WORKFLOW.md
 
