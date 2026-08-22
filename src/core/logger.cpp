@@ -24,8 +24,14 @@ Logger::Logger()
 
 Logger::~Logger()
 {
-  if (logStream_.is_open()) logStream_.close();
-  if (errStream_.is_open()) errStream_.close();
+  if (logStream_.is_open())
+  {
+    logStream_.close();
+  }
+  if (errStream_.is_open())
+  {
+    errStream_.close();
+  }
 }
 
 Logger& Logger::get()

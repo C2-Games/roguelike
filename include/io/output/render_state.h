@@ -2,6 +2,7 @@
 #define RENDER_STATE_H
 
 #include <array>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -10,7 +11,7 @@
 #include "entities/entity_symbol.h"
 #include "world/map/room.h"
 
-enum class TileVisibility
+enum class TileVisibility : std::uint8_t
 {
   Visible,
   Explored,

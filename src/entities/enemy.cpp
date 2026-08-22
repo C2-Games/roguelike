@@ -51,7 +51,10 @@ GradientStep stepDownGradient(const Enemy* self, Coordinate pos,
                               Coordinate playerPos, GameServices& services)
 {
   int currentDist = map[pos.x][pos.y];
-  if (currentDist == kUnreachable || currentDist == 0) return {pos, false};
+  if (currentDist == kUnreachable || currentDist == 0)
+  {
+    return {pos, false};
+  }
 
   struct Cand
   {
@@ -65,9 +68,15 @@ GradientStep stepDownGradient(const Enemy* self, Coordinate pos,
   {
     int nx = pos.x + kDx[i];
     int ny = pos.y + kDy[i];
-    if (!inBounds(nx, ny)) continue;
+    if (!inBounds(nx, ny))
+    {
+      continue;
+    }
     int d = map[nx][ny];
-    if (d >= currentDist) continue;  // must strictly decrease
+    if (d >= currentDist)
+    {
+      continue;  // must strictly decrease
+    }
     candidates.push_back({Coordinate(nx, ny), d});
   }
 
@@ -109,12 +118,24 @@ Coordinate pickWanderTile(const Enemy* self, Coordinate pos, const Room& room,
   {
     int nx = pos.x + kDx[i];
     int ny = pos.y + kDy[i];
-    if (!inBounds(nx, ny)) continue;
-    if (room.tiles[nx][ny].getType() != TileType::Floor) continue;
-    if (room.enemyAt(Coordinate(nx, ny), self) != nullptr) continue;
+    if (!inBounds(nx, ny))
+    {
+      continue;
+    }
+    if (room.tiles[nx][ny].getType() != TileType::Floor)
+    {
+      continue;
+    }
+    if (room.enemyAt(Coordinate(nx, ny), self) != nullptr)
+    {
+      continue;
+    }
     candidates.push_back(Coordinate(nx, ny));
   }
-  if (candidates.empty()) return pos;
+  if (candidates.empty())
+  {
+    return pos;
+  }
   std::uniform_int_distribution<std::size_t> pick(0, candidates.size() - 1);
   return candidates[pick(services.movementRng)];
 }
@@ -169,7 +190,10 @@ void Enemy::transitionState(bool inFoV, Coordinate playerPos)
 
 void Enemy::setState(AIState next)
 {
-  if (next == state_) return;
+  if (next == state_)
+  {
+    return;
+  }
   state_ = next;
   switch (state_)
   {
@@ -256,7 +280,10 @@ bool Enemy::moveTowardPlayer(const FrameState& frame, const GoalMapCache& cache,
   if (!inFoV && !(position_ == oldPos) && chaseTurnsRemaining_ > 0)
   {
     --chaseTurnsRemaining_;
-    if (chaseTurnsRemaining_ == 0) lastKnownPlayerPos_.reset();
+    if (chaseTurnsRemaining_ == 0)
+    {
+      lastKnownPlayerPos_.reset();
+    }
   }
 
   // Disengaging resets the cooldown so the next approach starts fresh.
@@ -279,5 +306,5 @@ bool Enemy::moveTowardPlayer(const FrameState& frame, const GoalMapCache& cache,
 void Enemy::takeDamage(int damage)
 {
   health_ -= damage;
-  if (health_ < 0) health_ = 0;
+  health_ = std::max(health_, 0);
 }

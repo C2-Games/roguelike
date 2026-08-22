@@ -2,11 +2,12 @@
 #ifndef TILE_H
 #define TILE_H
 
+#include <cstdint>
 #include <unordered_map>
 
 #include "core/coordinate.h"
 
-enum class TileType
+enum class TileType : std::uint8_t
 {
   Wall,
   Floor,

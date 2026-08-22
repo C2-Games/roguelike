@@ -23,7 +23,10 @@ class RenderStack
   // need to make sure the ncurses::WINDOW is deleted if object is.
   virtual ~RenderStack()
   {
-    if (win_) delwin(win_);
+    if (win_ != nullptr)
+    {
+      delwin(win_);
+    }
   };
 
   // doing this to enforce no copies. each RenderStack object should be unique.

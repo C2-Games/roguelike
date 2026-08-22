@@ -18,7 +18,7 @@ class HUDLayer : public RenderStack
    * @param w      Width of the layer window in columns.
    * @param margin The margin between HUD & map layer.
    */
-  HUDLayer(int h, int w, const int margin);
+  HUDLayer(int h, int w, int margin);
 
   /**
    * @brief Draw the player's health as a block-glyph bar, tinted by how much

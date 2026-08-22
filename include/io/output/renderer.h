@@ -1,6 +1,7 @@
 #ifndef RENDERER_H
 #define RENDERER_H
 
+#include <cstdint>
 #include <map>
 #include <memory>
 
@@ -10,7 +11,7 @@ struct RenderState;
 
 // composition order, lowest first. the values are the z-order itself, so
 // changing one reorders the screen.
-enum class RenderLayer
+enum class RenderLayer : std::uint8_t
 {
   Map = 1,
   Entity = 2,

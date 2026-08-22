@@ -1,7 +1,9 @@
 #ifndef COLORS_H
 #define COLORS_H
 
-enum class ColorPair : short
+#include <cstdint>
+
+enum class ColorPair : std::uint8_t
 {
   Default = 0,        ///< Terminal default (used inside the FoV).
   FogUnexplored = 1,  ///< Solid dark grey block over never-seen tiles.

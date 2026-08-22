@@ -26,7 +26,10 @@ struct Coordinate
 
   bool operator<(const Coordinate& other) const
   {
-    if (y != other.y) return y < other.y;
+    if (y != other.y)
+    {
+      return y < other.y;
+    }
     return x < other.x;
   }
 };
