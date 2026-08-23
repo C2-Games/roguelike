@@ -131,12 +131,9 @@ void Game::handleInput()
       Coordinate spawnPos = player_.getPosition();  // spawn on the player's own tile
       const Weapon& weapon = player_.getWeapon();
 
-      // spawning on the shooter's own tile removes the "free" first tile
-      // (not counted against range); +1 keeps max travel distance from the
-      // shooter unchanged.
       projectiles_.push_back(std::make_unique<Projectile>(
           spawnPos, dir, weapon.getDamage(), weapon.getSpeed(),
-          weapon.getRange() + 1, weapon.getColor()));
+          weapon.getRange(), weapon.getColor()));
       player_.setActionState(EntityActionState::Attack);
       return;
     }
