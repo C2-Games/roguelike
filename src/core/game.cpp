@@ -126,14 +126,23 @@ void Game::handleInput()
       break;
     case GameCommand::Attack:
     {
-      // "fire" a projectile in the player's last-faced direction.
+      // "fire" a projectile in the player's last-faced direction. Spawns on
+      // the player's own tile rather than one tile ahead: Game::run() calls
+      // update() before render() every frame, so the projectile advances
+      // off this tile before it is ever drawn, and update()'s existing
+      // candidate-tile check (the tile ahead of its current position) now
+      // covers the adjacent tile on the very first tick, catching an entity
+      // standing there instead of skipping past it.
       Coordinate dir = player_.getLastDirection();  // acts as an offset.
-      Coordinate spawnPos = player_.getPosition() + dir;
+      Coordinate spawnPos = player_.getPosition();
       const Weapon& weapon = player_.getWeapon();
 
+      // spawning on the shooter's own tile removes the "free" first tile
+      // (not counted against range); +1 keeps max travel distance from the
+      // shooter unchanged.
       projectiles_.push_back(std::make_unique<Projectile>(
           spawnPos, dir, weapon.getDamage(), weapon.getSpeed(),
-          weapon.getRange(), weapon.getColor()));
+          weapon.getRange() + 1, weapon.getColor()));
       player_.setActionState(EntityActionState::Attack);
       return;
     }
