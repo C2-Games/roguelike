@@ -210,6 +210,13 @@ Room loadRoom(int roomID, const std::filesystem::path& path)
   Room room(roomID);
   parseRoomHeader(in, room, path);
   parseRoomGrid(in, room, path);
+
+  for (const auto& [number, doorPos] : room.doors)
+  {
+    Coordinate entry = Room::inwardOfDoor(doorPos);
+    room.tiles[entry.x][entry.y] = Tile(TileType::EntryWay, entry);
+  }
+
   return room;
 }
 

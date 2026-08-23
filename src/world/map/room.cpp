@@ -109,6 +109,28 @@ Coordinate Room::doorAt(DoorNumber number) const
   return doorEntry->second;
 }
 
+Coordinate Room::inwardOfDoor(Coordinate doorPos)
+{
+  Coordinate inward = doorPos;
+  if (doorPos.x == 0)
+  {
+    inward.x = 1;
+  }
+  else if (doorPos.x == Room::WIDTH - 1)
+  {
+    inward.x = Room::WIDTH - 2;
+  }
+  else if (doorPos.y == 0)
+  {
+    inward.y = 1;
+  }
+  else if (doorPos.y == Room::HEIGHT - 1)
+  {
+    inward.y = Room::HEIGHT - 2;
+  }
+  return inward;
+}
+
 const Entity* Room::entityAt(Coordinate pos, const Player& player) const
 {
   if (Enemy* enemy = enemyAt(pos))

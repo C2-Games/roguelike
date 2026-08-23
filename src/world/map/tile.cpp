@@ -11,6 +11,7 @@ const std::unordered_map<int, TileAttributes> Tile::typeAttributes_ = {
     {static_cast<int>(TileType::Door), {'+', true}},
     {static_cast<int>(TileType::Void), {' ', false}},
     {static_cast<int>(TileType::Pillar), {'o', false}},
+    {static_cast<int>(TileType::EntryWay), {'.', true}},
 };
 
 char Tile::getSymbol() const
