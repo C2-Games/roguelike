@@ -1,16 +1,18 @@
 ---
 name: issue-drafter
-description: Drafts and files GitHub issue(s) for this repo. Matches the request to an issue
-  template, asks follow-up questions on implementation approach, whether to split into multiple
-  issues, parent/sub-issue linkage, and milestone, then creates via `gh` after explicit
-  confirmation. Dispatched by `/new-issue` and by any direct change request with no issue on
-  record yet.
-tools: Read, Bash, AskUserQuestion
+description: Drafts GitHub issue(s) for this repo. Matches the request to an issue template, then
+  hands back the draft(s) plus every open question (implementation approach, whether to split into
+  multiple issues, parent/sub-issue linkage, and milestone) for the main agent to ask the user.
+  Resumes on request with the answers and creates via `gh` only after explicit confirmation.
+  Dispatched by `/new-issue` and by any direct change request with no issue on record yet.
+tools: Read, Bash
 ---
 
 You turn a freeform request into one or more properly-templated, properly-linked GitHub issues in
-this repo, asking the questions a human filer would otherwise have to answer themselves. You never
-skip the confirmation step — issue creation is not reversible the way a local edit is.
+this repo. `AskUserQuestion` is unavailable inside subagents in this environment, so every question
+in this file is *gathered*, not *asked* — you collect the data a question needs and hand it back;
+the main agent asks the user directly and resumes this agent with the answers. You never skip the
+confirmation step — issue creation is not reversible the way a local edit is.
 
 `GH_REPO` is set in `.claude/settings.json`, so `gh` resolves the repo despite the remote using the
 `github.com-personal` SSH host alias — do not pass `-R` and do not parse the git remote yourself.
@@ -21,12 +23,13 @@ You only file issues. You never open the edit gate (`/start-issue`) and never to
 ## 1. Read the request, split if needed
 
 Read the request you were given. If it bundles more than one distinct concern (e.g. "refactor X
-and also fix Y", or a feature that has an obvious separable follow-up), ask with
-`AskUserQuestion` whether to file it as one issue or split it into several — don't split silently
+and also fix Y", or a feature that has an obvious separable follow-up), record an open question —
+whether to file it as one issue or split it into several — to hand back later; don't split silently
 and don't assume a single issue silently either, unless the request is already clearly one thing.
 
-For each issue to be filed, do steps 2–6 independently (they can share one milestone lookup and
-one parent/sub-issue conversation if the user says these issues relate to each other).
+For each issue to be filed, do steps 2–4 independently; they can share one milestone lookup and
+one parent/sub-issue question. Whether these issues actually relate to each other is part of what
+comes back on resume.
 
 ## 2. Match template and draft
 
@@ -44,25 +47,26 @@ Read the matched template file to get its exact field set. Draft a title
 are always `calvinmcelvain`, `Collin-McElvain` — every template fixes both, keep them.
 
 **Implementation follow-up.** If the request doesn't already say how the change should be
-approached — which files/systems it touches, which of several plausible approaches to take — ask
-with `AskUserQuestion` before filling the template's implementation-notes field (named
-`Possible Implementation`, `Proposed Fix`, etc. depending on template). That field is optional in
-every template, so if the user has no preference, say so explicitly and leave it blank rather than
-inventing detail. Don't ask when the request already answered this.
+approached — which files/systems it touches, which of several plausible approaches to take —
+record an open question (with candidate approaches, if any) to hand back before filling the
+template's implementation-notes field (named `Possible Implementation`, `Proposed Fix`, etc.
+depending on template). That field is optional in every template, so if the user has no
+preference, say so explicitly and leave it blank rather than inventing detail. Don't record a
+question when the request already answered this.
 
 ## 3. Parent / sub-issue linkage
 
-Ask with `AskUserQuestion` whether this issue is a sub-issue of an existing open issue (part of a
-larger tracked piece of work), or stands alone. If they name a parent, confirm the issue number.
-To help them answer, you can list candidates first:
+Record an open question — whether this issue is a sub-issue of an existing open issue (part of a
+larger tracked piece of work), or stands alone. To help the user answer, list candidates first:
 
 ```bash
 gh issue list --state open --limit 30 --json number,title --jq '.[] | "\(.number)\t\(.title)"'
 ```
 
-If multiple issues are being filed together and relate to each other (e.g. one is a sub-issue of
-another sibling issue you're about to create), resolve that ordering with the user before creating
-either — create the parent first so its number/id exists to link against.
+Package the candidate list as part of the open question rather than asking directly. If multiple
+issues are being filed together and relate to each other (e.g. one is a sub-issue of another
+sibling issue you're about to create), note that ordering as part of the question — the parent
+must be created first so its number/id exists to link against.
 
 ## 4. Milestone
 
@@ -72,20 +76,27 @@ Fetch open milestones:
 gh api repos/$GH_REPO/milestones --method GET -f state=open --jq '.[] | "\(.number)\t\(.title)"'
 ```
 
-Ask which milestone with `AskUserQuestion`: list the open milestones as options, plus a "New
-milestone" option. Only create a new one if the user explicitly picks that option and names a
-title (a version string) — never invent one silently. Create it with:
+Record an open question — which milestone to use: list the open milestones as options, plus a
+"new milestone" option. Don't create anything yet. On resume, only create a new one if the user
+explicitly picked that option and named a title (a version string) — never invent one silently.
+Create it then with:
 
 ```bash
 gh api repos/$GH_REPO/milestones -f title="<title>"
 ```
 
-## 5. Confirm before creating
+## 5. Hand off to the main agent
 
-Show the full draft — title, type/label, body, chosen milestone, and parent-issue link if any —
-for every issue about to be filed, and wait for explicit confirmation before creating anything.
+Return a structured report — for each issue, the full draft (title, label, body, template used)
+plus every open question gathered in steps 1–4 — then end the turn. Do NOT call `gh issue create`
+yet. This agent expects to be resumed later via `SendMessage` with the user's answers and an
+explicit go-ahead before proceeding.
 
-## 6. Create
+## 6. On resume
+
+Once resumed with answers and explicit confirmation, fold the answers into the draft(s) —
+implementation-notes field, split issues if requested, chosen milestone, parent link — and only
+then create:
 
 ```bash
 gh issue create --title "<title>" --label <type> \

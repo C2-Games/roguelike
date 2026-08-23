@@ -17,10 +17,13 @@ is normal here; record them all.
 
 **Direct prompts, not just `/start-issue`.** A change requested directly, with no issue on
 record, gets the same treatment `/new-issue` gives a user-typed command: the `issue-drafter`
-agent (`.claude/agents/issue-drafter.md`) is dispatched to match a template, ask follow-ups
-(implementation approach, whether to split into multiple issues, parent/sub-issue linkage,
-milestone), and wait for explicit approval before creating the issue and branch and proceeding —
-never a silent auto-create.
+agent (`.claude/agents/issue-drafter.md`) is dispatched to match a template and draft — gathering,
+not asking, the follow-up data (implementation approach, whether to split into multiple issues,
+parent/sub-issue linkage, milestone). `AskUserQuestion` is unavailable inside subagents in this
+environment, so `issue-drafter` hands its draft(s) and open questions back instead of asking them
+itself; the main agent asks with `AskUserQuestion` and resumes `issue-drafter` via `SendMessage`
+with the answers and explicit confirmation before it creates the issue, then cuts the branch and
+proceeds — never a silent auto-create.
 
 Deliberately not gated: paths outside the repo, and `.claude/**` (otherwise this configuration
 could never be repaired). `.claude/CLAUDE.md` lives inside that exemption — a change to it alone
@@ -156,7 +159,9 @@ Each plan task states an id, a `Depends on: Task N` marker (or `independent`), a
 that executes it — see `/start-issue`'s plan-writing step for the exact structure. Tasks marked
 `independent` are dispatched to `.claude/agents/implementer.md` in parallel; a task with a
 `Depends on` marker runs only after that dependency lands, sequentially. See rule 2 for the
-review pass and plan-mode exemption.
+review pass and plan-mode exemption. This breakdown is also mirrored into `TaskCreate`/`TaskUpdate`
+calls (`owner` + `addBlockedBy`) before `ExitPlanMode`, matching `/start-issue`'s plan-writing
+step, so this doc stays in sync with the command file.
 
 Parallel issues run as separate sessions, each entering its own worktree via `/start-issue` — not
 one session juggling several (`EnterWorktree` refuses a second isolated worktree once a session is
