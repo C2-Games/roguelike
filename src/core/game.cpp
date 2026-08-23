@@ -126,9 +126,10 @@ void Game::handleInput()
       break;
     case GameCommand::Attack:
     {
-      // "fire" a projectile in the player's last-faced direction
+      // "fire" a projectile in the player's last-faced direction starting
+      // on the player's own tile.
       Coordinate dir = player_.getLastDirection();  // acts as an offset.
-      Coordinate spawnPos = player_.getPosition();  // spawn on the player's own tile
+      const Coordinate spawnPos = player_.getPosition();
       const Weapon& weapon = player_.getWeapon();
 
       projectiles_.push_back(std::make_unique<Projectile>(
