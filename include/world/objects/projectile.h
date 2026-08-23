@@ -12,8 +12,9 @@ class Projectile
   /**
    * @brief Construct a new Projectile object.
    *
-   * @param position Spawn tile, already offset one step from the firing
-   * entity in the facing direction.
+   * @param position Spawn tile -- the firing entity's own tile. update()
+   * advances into the adjacent tile as its first candidate, so an entity
+   * standing there is checked like any other tile in the projectile's path.
    * @param direction Unit step direction, e.g. (1,0)/(-1,0)/(0,1)/(0,-1).
    * @param damage Damage dealt to the first enemy hit.
    * @param tilesPerTick Tiles advanced per Game::update() call.
