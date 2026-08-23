@@ -13,7 +13,8 @@ enum class TileType : std::uint8_t
   Floor,
   Door,
   Void,
-  Pillar
+  Pillar,
+  EntryWay
 };
 
 struct TileAttributes

@@ -148,7 +148,8 @@ void Game::handleInput()
       newPlayerPos.y >= 0 && newPlayerPos.y < Room::HEIGHT &&
       level_.getCurrentRoom()
           .tiles[newPlayerPos.x][newPlayerPos.y]
-          .isWalkable())
+          .isWalkable() &&
+      level_.getCurrentRoom().enemyAt(newPlayerPos) == nullptr)
   {
     // Check for a linked door before applying normal movement.
     if (level_.getCurrentRoom()

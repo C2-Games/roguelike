@@ -51,6 +51,17 @@ struct Room
   Coordinate doorAt(DoorNumber number) const;
 
   /**
+   * @brief Compute the tile one step inward from a door position on the
+   * room's boundary — the landing tile used both for door-transition
+   * arrival and for marking EntryWay at load time. If the position isn't
+   * on a room edge, it is returned unchanged.
+   *
+   * @param doorPos The door's grid position.
+   * @return The tile one step inward from the door.
+   */
+  static Coordinate inwardOfDoor(Coordinate doorPos);
+
+  /**
    * @brief Recompute this room's per-tile visibility from a viewer position.
    *
    * @param origin World position of the viewer (typically the player).
