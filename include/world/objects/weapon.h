@@ -23,7 +23,7 @@ struct WeaponAttributes
   const char* name;
 };
 
-class Weapon
+struct Weapon
 {
  public:
   /**

@@ -7,7 +7,7 @@
 #include "core/coordinate.h"
 #include "entities/fov.h"
 
-class EllipseFOV : public FOV
+struct EllipseFOV : public FOV
 {
  public:
   /**
