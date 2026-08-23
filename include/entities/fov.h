@@ -8,7 +8,7 @@
 
 #include "core/coordinate.h"
 
-class FOV
+struct FOV
 {
  public:
   virtual ~FOV();

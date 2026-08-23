@@ -23,7 +23,7 @@ struct TileAttributes
   bool walkable;
 };
 
-class Tile
+struct Tile
 {
  public:
   /**
