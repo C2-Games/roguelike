@@ -6,7 +6,7 @@
 
 struct FrameState;
 
-class Projectile
+struct Projectile
 {
  public:
   /**
