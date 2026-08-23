@@ -156,7 +156,9 @@ Each plan task states an id, a `Depends on: Task N` marker (or `independent`), a
 that executes it — see `/start-issue`'s plan-writing step for the exact structure. Tasks marked
 `independent` are dispatched to `.claude/agents/implementer.md` in parallel; a task with a
 `Depends on` marker runs only after that dependency lands, sequentially. See rule 2 for the
-review pass and plan-mode exemption.
+review pass and plan-mode exemption. This breakdown is also mirrored into `TaskCreate`/`TaskUpdate`
+calls (`owner` + `addBlockedBy`) before `ExitPlanMode`, matching `/start-issue`'s plan-writing
+step, so this doc stays in sync with the command file.
 
 Parallel issues run as separate sessions, each entering its own worktree via `/start-issue` — not
 one session juggling several (`EnterWorktree` refuses a second isolated worktree once a session is

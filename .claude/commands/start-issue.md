@@ -125,6 +125,15 @@ denies those edits outright. Run this first, every time.
    calls in a single message. Run a task with a `Depends on` marker only after that dependency's
    implementer call has returned and been folded in, one after another.
 
+   **Mirror the breakdown as tracked tasks.** Before calling `ExitPlanMode`, call `TaskCreate`
+   once per task (`subject` = the short title, `description` = the task's description) and follow
+   with `TaskUpdate` to set `owner` to the subagent name and `addBlockedBy` to the IDs of the
+   tasks it depends on — mapping directly from each task's `Depends on: Task <M>` marker. This
+   keeps the breakdown as inspectable tool state (`TaskList`) in addition to the plan text. As
+   each implementer dispatch returns and its output is folded in, mark that task `completed` via
+   `TaskUpdate` before dispatching whichever task it was blocking. Skip this for a plan with only
+   a single task — `TaskCreate`'s own guidance advises against use for one trivial task.
+
    **Include a `CLAUDE.md` step when the change earns one.** It is the map a future session
    reads before touching code, so it is updated as part of the work, not retrofitted after.
    Update it for: a new subsystem or file-layout change, ownership moving between types, a

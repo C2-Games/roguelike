@@ -42,7 +42,9 @@ issues, parent/sub-issue linkage, and milestone before creating anything;
 `.claude/agents/implementer.md` executes one isolated plan task at a time (dispatched in parallel
 when tasks are independent); and `.claude/agents/reviewer.md` gives `/check` a read-only
 structure/efficiency/isolation/style pass over `src/`/`include/` changes, grounded in the
-originating issue.
+originating issue. Plan-mode task breakdowns are also logged as tracked tasks
+(`TaskCreate`/`TaskUpdate`: `owner` = subagent, `addBlockedBy` = dependencies) before
+calling `ExitPlanMode` — see `/start-issue` step 7 for the mechanics.
 
 @.claude/WORKFLOW.md
 
