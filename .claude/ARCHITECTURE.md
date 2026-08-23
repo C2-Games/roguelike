@@ -1,226 +1,193 @@
-# Roguelike Architecture
+# Architecture
 
-## Overview
+> **Migration in progress.** This doc describes the target module layout
+> (`objects/`/`systems/`/`game/`/`io/`) tracked by #219. The tree does not
+> match it yet — `objects/`, `systems/`, and `game/` don't exist as
+> directories yet, and code still lives under the pre-migration layout
+> (`core/`, `entities/`, `world/`, `io/`, `preload/`). Treat the file tree
+> and module map below as the destination, not the current state, until the
+> rest of the #219 batch lands.
 
-Single-executable terminal roguelike (target `roguelike`), plain OOP (no ECS), ncurses rendering.
-
-`src/main.cpp` constructs a `UIManager` (`include/io/ui_manager.h`, `src/io/ui_manager.cpp` — sets up ncurses) and then a `Game` (`include/core/game.h`, `src/core/game.cpp`) that takes that `UIManager&`, which owns essentially all game state and *is* the loop (a prior refactor removed a separate `Level`/stage abstraction). `Game::run()` is now a `GameState`-driven outer/inner loop: `UIManager::showStartScreen()` runs once up front, then an outer `while (state_ != GameState::End)` wraps an inner `while (state_ == GameState::Play)` that holds the original per-frame `handleInput() → update() → render()` body, paced to `fps_`. When the inner loop exits — because `handleInput()`/`update()` moved `state_` off `Play` — a `switch` on `state_` runs once: `Pause` is a stub that falls back to `Play` (unreachable this issue, since no `GameCommand` reaches it), `TransLevel` sets `state_` to `End` (no next-level concept exists yet), and `Start`/`Play`/`End` are empty, documented-unreachable cases; `UIManager::showGameOver()` then runs once after the outer loop ends. `GameState` (`enum class GameState : std::uint8_t { Play, Start, Pause, End, TransLevel }`, declared above `Game` in `game.h`) is `Game`'s `state_` member, replacing the old boolean `isRunning_`, and is exposed via public `getState()`/`setState(GameState)` accessors — currently only `Game::handleInput()` drives transitions through them (`Quit` → `End`; a door-transition move also sets the player's action state, see Entities below). `Game` owns: `GameServices` (holds two `std::mt19937` engines — `rng` for spawn/level generation, `movementRng` for enemy movement — injected by reference everywhere instead of using globals/statics, both seeded from a fixed constant for reproducible runs), `Player`, `Level` (the *room graph* data structure, not a stage/scene), `GoalMapCache`, and a `vector<unique_ptr<Projectile>>`, plus a non-owning `UIManager&` reference it routes all I/O through. Enemies are not a `Game` member — they live per-`Room` (see below).
-
-## Input
-
-`include/io/input/`, `src/io/input/`: `input::pollInput()` (`handle_input.h`/`.cpp`) is the sole place that calls ncurses `getch()`/reads `KEY_*` constants; it returns a `GameCommand` (`game_commands.h`: `None`/`MoveUp`/`MoveDown`/`MoveLeft`/`MoveRight`/`Attack`/`Quit`/`Resize`), which `Game::handleInput()` switches on. All movement/walkability/door-transition/projectile-spawn decision logic still lives in `Game`, unchanged — only how it learns what was pressed moved out. `UIManager::pollInput()` intercepts `GameCommand::Resize` itself (resizing the render layers) and reports it back to `Game` as `GameCommand::None`, so `Game` never observes a resize — `Game::handleInput()`'s switch keeps an unreachable `case GameCommand::Resize: break;` purely so the switch stays exhaustive over the enum.
-
-## World/map
-
-`include/world/map/`, `src/world/map/`:
-- `Level` — room graph: `rooms_` map and `doorConnections_` (type `LevelMap`) keyed by `(roomID, doorPos)`. Built by `level_loader::loadLevel(levelDir, services, catalog)` (`include/preload/level_loader.h`, `src/preload/level_loader.cpp`), which parses the level config via `loadLevelConfig`, loads each room via `room_loader::loadRoom`, wires door adjacency, seals unlinked doors, then constructs `Level` through a new data constructor `Level(LevelMeta meta, std::map<int, Room> rooms, LevelMap doorConnections, GameServices& services)` — `Level` itself does no file I/O anymore (its old `Level(levelDir, services, catalog)` constructor and private `buildFromConfig`/`sealUnlinkedDoors` methods are gone). `map.json` holds a `rooms` id list plus a flat `edges` array; each edge names both endpoints by room and **door number** (`{"from": {"room": 1, "door": 2}, "to": {"room": 3, "door": 4}}`), resolved against the room's authored door labels via `Room::doorAt`. Each edge is stated once and wired in both directions, so the graph cannot be asymmetric by construction. Doors a level never names are sealed back to `Wall` by `sealUnlinkedDoors()` — a room template may carry more doors than any one level uses.
-- `Room` — a plain data structure with no parsing responsibility: fixed grid (`WIDTH=175`, `HEIGHT=50`) of `Tile`; it no longer has a `loadFromFile` static method. Rooms are loaded via the free function `room_loader::loadRoom` (`include/preload/room_loader.h`, `src/preload/room_loader.cpp`) from hand-authored files in `assets/rooms/*.txt`: a `@key: value` header followed by an ASCII grid. Legend: `#`=Wall, `.`=Floor, `o`=Pillar, space=Void, `E`=enemy spawn, `L`=loot/item spawn, digits=numbered door tiles (collected into `doors`, a `map<DoorNumber, Coordinate>` keyed by the authored digit — labels need not be dense, and `Room::doorAt` throws on an unknown one). Also owns a `RoomEnemyState` member (`enemyState`) holding that room's live enemies, exposed via `enemies()`/`ensureEnemiesSpawned()`.
-
-## Entities
-
-`include/entities/`, `src/entities/`: `Entity` is the abstract base (`Coordinate` position, `EntitySymbol` symbol, health, speed, `FOV`) for `Player` and `Enemy` — both subclasses build their `FOV` (via `ellipseFOV`) and pass it up through `Entity`'s constructor rather than storing their own. `EntitySymbol` (`using EntitySymbol = std::vector<std::vector<char>>`, defined in `entity.h`) is a multi-cell glyph grid; a cell holding `'\0'` renders as transparent (the floor tile beneath shows through) instead of a literal blank glyph. `Entity` also carries a shared `EntityActionState` enum (`Attack`/`Move`/`Idle`/`Damaged`/`Ability`/`TransRoom`) via a protected `actionState_` member and public `getActionState()`/`setActionState()` accessors, used directly by both `Player` and `Enemy` with no per-subclass override; it's currently set by `moveHook` (`Move`, on an actual throttled move committing) and by both `Player::takeDamage` and `Enemy::takeDamage` (`Damaged`), plus `Enemy::moveTowardPlayer` (`Attack`, on a melee attack attempt, overriding whatever `Move` moveHook set moments earlier in the same call) — `Attack` from the player's side and `TransRoom` are now set the same way, from `Game::handleInput()` calling `player_.setActionState(...)` directly (`setActionState` is public on `Entity`, no `Player`-side wrapper needed): the `Attack` command's case sets it right before its early return, and the door-transition branch sets `TransRoom` right after `player_.moveTo(...)`; nothing yet reads `getActionState()` back out downstream, so both are set but not yet consumed. `Ability` still isn't wired up — no `GameCommand` for it exists. `Enemy::moveTowardPlayer` uses the goal-map/pathfinding system; target selection is driven by `Enemy`'s own `AIState` (`Sentry`/`Chase`/`Search`, stored in a private `aiState_` member distinct from the inherited `state_`), recomputed each frame by `transitionState()` from FoV and "chase memory" (`lastKnownPlayerPos_`/`chaseTurnsRemaining_`) before movement runs, with empty `onEnterX()` seams for future per-state behavior; `Sentry` is the patrol/wander default, serving both as the state before the enemy has ever spotted the player and as where it returns after giving up a search. The inherited `fov_` doubles as its detection/chase-trigger radius, not a separate attack range. `EnemyCatalog` (`include/preload/enemy_catalog.h`, `src/preload/enemy_catalog.cpp`) parses every file in `assets/enemies/` into a `(name, tier) → stats` lookup, including each enemy's nested `symbol` JSON array into an `EntitySymbol`. Enemy spawning is `enemy_factory::rollForRoom`, which shuffles the room's `E` spawn points, then for each entry in the room's authored spawn tablerolls uniform_int over the entry's authored range for how many to place, resolving stats through `EnemyCatalog::find`. `RoomEnemyState` (a member of each `Room`) holds that room's live enemies (HP/position persist across room transitions) and lazily rolls spawns on first visit via `ensureSpawned(room, services)`.
-
-## Preload
-
-`preload/` (`include/preload/`, `src/preload/`) is a module sibling to `core/`, `entities/`, `world/`, `io/` that owns all level/room/enemy config-file loading — no other part of the game-logic layer does file I/O or JSON/text parsing.
-
-- `EnemyCatalog` (`include/preload/enemy_catalog.h`, `src/preload/enemy_catalog.cpp`) — parses `assets/enemies/*.json`, unchanged behavior from before the move.
-- `room_loader::loadRoom` (`include/preload/room_loader.h`, `src/preload/room_loader.cpp`) — parses one `assets/rooms/*.txt` file into a `Room`.
-- `level_loader.h`/`.cpp` (`include/preload/level_loader.h`, `src/preload/level_loader.cpp`) — holds the config value types (`LevelMeta`, `RoomConfig`, `RoomAdjacency`, `EnemySpawnConfig`, `LevelConfig`, `DoorNumber`) plus `loadLevelConfig` for raw JSON parsing, and the higher-level `level_loader::loadLevel` that orchestrates the whole level build: parse config, load every room, spawn enemies, wire adjacency, seal unlinked doors, return a fully-built `Level`.
-
-`Game` constructs its `level_` member via `level_loader::loadLevel("assets/levels/level_1", services_, enemyCatalog_)` in its constructor's initializer list.
-
-## Pathfinding
-
-`include/world/systems/`, `src/world/systems/`: `pathfinding::computeGoalMap` builds a Dijkstra/BFS distance-to-goal grid per room. `GoalMapCache` caches these keyed by `(roomID, goal)`, capped at 32 entries (clears entirely, not LRU, once full). `visibility::update` recomputes FoV/fog-of-war each frame; `FOV` (`include/entities/fov.h`) is the abstract shape interface, with `ellipseFOV`/`EllipseFOV` (`include/entities/ellipse_fov.h`) building the offset-set ellipse shape, aspect-corrected for terminal cells.
-
-## Rendering
-
-`include/io/output/`, `src/io/output/`: `RenderStack` is an abstract base wrapping one ncurses `WINDOW*`, providing shared window/enable/resize/`doUpdate()` (per-frame state hook, default no-op — currently unused by any layer, but kept as general infrastructure) infrastructure — layers hold no live references into `Game`'s object graph, only geometry from their constructor. There is no shared render-call contract: each of the four layers declares its own `doRender(const XxxLayerPacket&)` taking only the data it needs (`MapLayer::doRender(const MapLayerPacket&)`, `EntityLayer::doRender(const EntityLayerPacket&)`, `HUDLayer::doRender(const HUDLayerPacket&)`, `DebugLayer::doRender(const DebugLayerPacket&)`). `UIManager` owns the four layers directly as typed `unique_ptr` members and composes them itself each frame — no separate `Renderer` class exists — routing each named `RenderState` field (`RenderState::map`/`entity`/`hud`/`debug`) to its matching layer. Layers, constructed in `UIManager`'s constructor: `MapLayer` → `EntityLayer` (draws only what's in the player's FoV) → `HUDLayer` → `DebugLayer` (compiled in only when `NDEBUG` is not defined, i.e. debug builds). `Game::render()` builds a fresh `RenderState` snapshot every frame via `render_state_builder::build()` (`core/render_state_builder.h`/`.cpp`) and pushes it through `uiManager_.render()`. Render-effect state such as the player hit-flash now lives on `Game` (`playerHitFlashFramesRemaining_`), not on any layer — the builder resolves it into the snapshot's `RenderState::entity.player` tint fields each frame, so no raw pointer into a layer exists anymore. `core/colors.h` keeps the plain `ColorPair` enum as shared vocabulary; `io/output/colors.h` holds the ncurses-specific `colorAttr()`/`initColors()`.
-
-## Conventions
-
-Trailing underscore for private members; `#ifndef` include guards (no `#pragma once`); PascalCase classes, snake_case free-function namespaces (`enemy_factory::`, `visibility::`); `getX()`/`isX()` accessors; `unique_ptr` for polymorphic ownership, plain references for non-owning per-frame "context" structs (`FrameState`) instead of globals; Doxygen-style `/** @brief */` header comments; heavy forward-declaration use to keep header coupling low.
-
-## Logging
-
-`Logger::get()` singleton writes to `game.log`/`error.log` at the repo root via `LOG(msg)`/`LOG_ERR(msg)` macros.
-
-## Known gaps
-
-`assets/enemies/` holds a single flat `goblin.json` — the `{class}/` nesting the level format anticipates does not exist yet, and neither do `assets/drops/` or `assets/items/`.
-
-## io/
-
-Both input & output modules are completely stateless and should have no
-knowledge of game-specific components (`Player`, `Level`, `Room`, `Enemy`,
-`Projectile`). `Game` owns all real game state; each frame it hands `io/`
-a plain-data snapshot to render and reads back a plain-data command — `io/`
-never holds a reference into `Game`'s object graph across frames.
-
-### ui_manager.cpp/.h
-
-The middleware `Game` talks to for all I/O. Owns the four render layers
-directly (typed `unique_ptr` members) and ncurses' lifecycle —
-`initscr`/`initColors`/`cbreak`/`noecho`/`keypad`/`curs_set` on
-construction, `endwin()` on destruction. `main.cpp` only constructs a
-`UIManager`, then a `Game`, then calls `game.run()`.
-
-- `GameCommand pollInput()` — delegates to `input::pollInput()`. Intercepts
-  `GameCommand::Resize` itself (calls `getmaxyx` then `onResize` on each
-  owned layer) rather than surfacing it to `Game`, which has no reason to
-  know terminal dimensions — it always returns `GameCommand::None` for a
-  resize poll.
-- `void render(const RenderState& state)` — routes each named field
-  (`state.map`, `state.entity`, `state.hud`, `state.debug`) to its matching
-  owned layer's own `doRender(const XxxLayerPacket&)`, then composes.
-- `void showStartScreen()` / `void showGameOver()` — the "press SPACE to
-  begin" intro and "Game Over!" message, currently raw `printw`/`getch`/
-  `std::cout` living in `Game::run()`. Confining them here keeps every
-  ncurses call inside `io/`.
-
-### /input/
-
-#### game_commands.h
-
-```cpp
-enum class GameCommand
-{
-  None,
-  MoveUp,
-  MoveDown,
-  MoveLeft,
-  MoveRight,
-  Attack,
-  Quit,
-  Resize,  // consumed by UIManager; Game never observes this value
-};
+## Reference: current file tree
+ 
+```text
+include
+  game/            game.h, services.h, logger.h
+  systems/         combat.h, movement.h, visibility.h, loader.h
+  objects/
+    fovs/          fov.h, ellipse_fov.h
+    entities/      enemy.h, entity_symbol.h, entity.h, player.h
+    tiles/         tile_type.h, tile.h
+    room/          room.h, room_types.h
+    weapons/       weapon.h, weapon_attributes.h, weapon_type.h, projectile.h
+    damage/        damage.h, damage_type.h
+    coordinate.h, colors.h
+  io/
+    input/         game_commands.h, handle_input.h
+    output/
+      layers/       debug_layer.h, entity_layer.h, hud_layer.h, map_layer.h
+      colors.h, render_stack.h
+    ui_manager.h
 ```
-
-#### handle_input.cpp/.h
-
-`GameCommand pollInput()` — the only place `getch()`/`KEY_*` constants are
-read. Pure ncurses-key → `GameCommand` mapping; no movement, collision,
-door, or projectile-spawn logic (that stays in `Game`, driven off the
-returned command, exactly as it runs today inside `Game::handleInput()`).
-An unmapped key resolves to `GameCommand::None` (the current
-`mvprintw(..., "Invalid key")` debug branch is dropped — it reached past
-the I/O boundary to print game-facing text).
-
-### /output/
-
-* Completely stateless: layers hold no live references to `Player`/`Level`/
-  `Room` — only geometry (from their constructor) and whatever
-  per-layer packet they're handed this frame.
-* On every frame, `UIManager` owns the four typed layer instances directly
-  and composes them itself: `render(const RenderState& state)` explicitly
-  routes each packet (`state.map`, `state.entity`, `state.hud`,
-  `state.debug`) to its corresponding layer's own
-  `doRender(const XxxLayerPacket&)` — there is no `Renderer` class and no
-  shared `doRender` signature.
-* `render_stack.h`, `window_position.h`, and `layers/` move here from the
-  current top-level `render/` tree; `RenderStack` keeps only shared
-  window/enable/resize/`doUpdate()` infrastructure — each layer declares
-  its own `doRender(const XxxLayerPacket&)` taking only the data it needs.
-* `colors.h` splits: the plain `ColorPair` enum stays as shared vocabulary
-  (referenced by `Weapon` and other game-side code); `colorAttr()` and
-  `initColors()` — the actual ncurses calls — move here.
-
-#### render_state.h
-
-The plain-data snapshot type. No `Player`/`Level`/`Room`/`Enemy` types
-appear in it — only value types already used as shared vocabulary
-(`Coordinate`, `EntitySymbol`, `ColorPair`).
-
-```cpp
-enum class TileVisibility { Visible, Explored, Unseen };
-
-struct TileView
-{
-  char symbol;
-  TileVisibility visibility;
-};
-
-struct EntityView
-{
-  Coordinate position;
-  EntitySymbol symbol;
-  bool tinted;         // whether to apply tintColor over the symbol this frame
-  ColorPair tintColor;  // meaningful only when tinted == true
-};
-
-struct ProjectileView
-{
-  Coordinate position;
-  ColorPair color;
-};
-
-struct WeaponView
-{
-  std::string name;
-  int damage, speed, range;
-  ColorPair color;
-};
-
-struct MapLayerPacket
-{
-  std::array<std::array<TileView, Room::HEIGHT>, Room::WIDTH> tiles;
-};
-
-struct EntityLayerPacket
-{
-  EntityView player;
-  std::vector<EntityView> enemies;          // already alive- and visibility-filtered
-  std::vector<ProjectileView> projectiles;  // already active- and visibility-filtered
-};
-
-struct HUDLayerPacket
-{
-  int playerHealth, playerMaxHealth;
-  int roomIndex, roomCount;
-  WeaponView weapon;
-};
-
-struct DebugLayerPacket
-{
-  Coordinate playerPosition;
-  double fps;
-};
-
-struct RenderState
-{
-  MapLayerPacket map;
-  EntityLayerPacket entity;
-  HUDLayerPacket hud;
-  DebugLayerPacket debug;
-};
+ 
+<!-- src/ mirrors this same tree for .cpp implementations. -->
+ 
+---
+ 
+## 1. Coupling Rules
+ 
+This is the actual architecture — everything else in this doc is detail
+hanging off these six rules.
+ 
+1. **Game objects (classes) are mutually exclusive.** No class under
+   `objects/` may hold a reference to, call a method on, or `#include`
+   another class under `objects/`. `Entity` does not know about `Room`.
+   `Player` does not know about `Enemy`.
+2. **Data objects (structs) are the one exception.** Plain-data types with
+   no behavior — `Coordinate`, `Colors`, `TileType`, `RoomTypes`, `Weapon`,
+   `WeaponType`, `WeaponAttributes`, `DamageType`, `EntitySymbol` — carry no
+   logic, so anything may hold or pass them freely. They're the shared
+   currency that's allowed to cross boundaries other things can't.
+3. **Systems are the only place two game objects are allowed to interact —
+   and systems are mutually exclusive too.** If `Combat` needs an
+   `Entity`'s `Weapon` to compute `Damage`, that logic lives in
+   `systems/combat.h` — never inside `Entity` or `Weapon` themselves, and
+   never inside another system either. `combat.h` never calls into
+   `movement.h`, `visibility.h`, or `loader.h` directly; `game/` is the
+   only thing that sequences them.
+4. **`game` orchestrates; it doesn't decide.** `game/game.h` owns the main
+   loop and the turn queue and calls systems in sequence. It should not
+   contain gameplay rules ("how much damage does a sword do") — that's
+   `Combat`'s job.
+5. **`ui` knows nothing about game logic or game object classes — but it
+   may read data objects directly.** No file under `io/` may `#include` a
+   class from `objects/` or anything from `systems/`. It *may* `#include`
+   data-object structs straight from `objects/` (e.g. `EntitySymbol`,
+   `Colors`, `Coordinate`) and turns them into ncurses draw calls —
+   nothing more.
+6. **Dependencies point one way:**
+   `io/input → game → systems → objects`, `game → io/output`, and
+   `io/output → objects` (data objects only). Nothing downstream ever
+   calls back upstream, and `ui` never reaches into `systems/` or a class
+   in `objects/`.
+## 2. Dependency Diagram
+ 
+```mermaid
+flowchart TB
+    subgraph UI["io/  (ncurses only)"]
+        In["input/\nhandle_input, game_commands"]
+        Out["output/\nui_manager, render_stack, layers"]
+    end
+ 
+    subgraph GAME["game/"]
+        G["Game\nmain loop + turn queue"]
+    end
+ 
+    subgraph SYS["systems/"]
+        Combat
+        Movement
+        Visibility
+        Loader
+        Fifth["(5th system?)"]
+    end
+ 
+    subgraph OBJ["objects/"]
+        Classes["game objects — classes\nEntity, Player, Enemy, Room,\nTile, Projectile, Fov..."]
+        Data["data objects — structs\nCoordinate, Colors, TileType,\nWeapon, WeaponType, WeaponAttributes,\nDamageType, EntitySymbol..."]
+    end
+ 
+    In -->|GameCommand| G
+    G -->|render-ready data| Out
+    G --> Combat
+    G --> Movement
+    G --> Visibility
+    G --> Loader
+    Combat --> Classes
+    Movement --> Classes
+    Visibility --> Classes
+    Loader --> Classes
+    Classes -.holds/uses.-> Data
+    Combat -.uses.-> Data
+    Movement -.uses.-> Data
+    Visibility -.uses.-> Data
+    Out -.reads.-> Data
 ```
+ 
+## 3. One Turn, End to End
+ 
+```mermaid
+sequenceDiagram
+    participant In as io/input
+    participant G as game/Game
+    participant Sys as systems/*
+    participant Obj as objects/*
+    participant Out as io/output
+ 
+    In->>G: GameCommand (e.g. MoveUp)
+    G->>Sys: Movement.someMethod(...)
+    Sys->>Obj: read/mutate Entity, Tile, Coordinate
+    G->>Sys: Visibility.someMethod(...)
+    Sys->>Obj: read Fov, Tile, Room
+    G->>Sys: Combat.someMethod(...)
+    Sys->>Obj: read/mutate Entity, Weapon, Damage
+    G->>Out: UIManager.someMethod(...)
+    Out->>Out: render_stack composes layers, draws via ncurses
+```
+ 
+## 4. Module Map
+ 
+### `objects/` — the nouns
+ 
+- **Responsibility:** Defines every "thing" in the game world, as either a
+  behavior-bearing **class** or a behavior-free **struct**.
+- **Owns / knows about:** its own internal state; any data-object structs
+  it holds.
+- **Does NOT know about:** any other class in `objects/`; anything in
+  `systems/`, `game/`, or `io/`.
+- **Depends on:** only the data-object structs within `objects/`.
+- **Depended on by:** `systems/` (that's the only place classes and structs
+  from here get combined into behavior), and `io/output` (reads
+  data-object structs directly for rendering — never the classes).
+ 
+### `systems/` — the verbs
+ 
+- **Responsibility:** The only layer where multiple game objects are
+  allowed to interact. Each system takes objects/structs in, applies
+  connecting logic, and mutates or reads state.
+- **Owns / knows about:** how to combine specific object types to produce a
+  gameplay outcome.
+- **Does NOT know about:** `io/`, at all — nor other systems. `combat.h`
+  never calls `movement.h`, `visibility.h`, or `loader.h` directly; each
+  system is only ever called by `game/`.
+- **Depends on:** `objects/`.
+- **Depended on by:** `game/`.
+ 
+### `game/` — the orchestrator
+ 
+- **Responsibility:** Owns the main loop and turn queue. Calls systems in
+  sequence, then calls `UIManager` to render the result. Stays thin —
+  sequencing only, no gameplay rules.
+- **Owns / knows about:** overall world state, turn order, which system
+  runs when, when to render.
+- **Does NOT know about:** ncurses internals, or how a system resolves its
+  logic internally (only calls its public interface).
+- **Depends on:** `systems/` (calls each one), `io/` (polls input, triggers
+  render).
+- **Depended on by:** nothing — this is the composition root.
+- **Key files:** `game.h` (loop/state), `services.h` (*likely a
+  wiring/service-locator point — confirm what this actually holds*),
+  `logger.h` (cross-cutting, usable from anywhere).
 
-Assembled each frame by a new `render_state_builder::build(...)` free
-function living in `core/` (it depends on `Player`/`Level`/`Projectile`, so
-it belongs on the game-specific side of the boundary, not inside `io/`).
-`Game::render()` becomes `uiManager_.render(render_state_builder::build(
-player_, level_, projectiles_, currentFps_, playerHitFlashFramesRemaining_
-> 0))`.
-
-Per-tile visibility (today's `Room::isVisible`/`isExplored`) is baked into
-`TileView` once per tile for `MapLayerPacket`. Enemy and projectile
-visibility is resolved upstream of that, in `render_state_builder::build()`
-itself: each is checked against `room.isVisible(...)` on its own origin
-position before it's pushed onto `EntityLayerPacket::enemies`/`projectiles`
-at all, so `EntityLayer` never holds a `const Room*` and does no filtering
-of its own — it draws exactly the (already alive-, active-, and
-visibility-filtered) list it's handed.
-
-**No counters on the render side.** `io/output/` holds zero frame-to-frame
-state — not even render-effect timers. The player hit-flash countdown
-(today's `EntityLayer::hitFlashFramesRemaining_`, ticked in `doUpdate()`)
-moves to a `Game`-owned counter (`playerHitFlashFramesRemaining_`), reset
-to `HIT_FLASH_FRAMES` when an enemy's attack lands and decremented once per
-frame in `Game::update()`. Each frame, `render_state_builder::build()`
-resolves that counter down to the already-decided `EntityView::tinted` /
-`tintColor` pair on `RenderState::entity.player` — `io/` only ever renders
-what it's told this instant; it never owns or advances a timer. `EntityLayer`
-loses its `doUpdate()` override, `triggerPlayerHitFlash()`, and the
-`hitFlashFramesRemaining_` member entirely — it becomes a pure
-`doRender(const EntityLayerPacket&)` with no state of its own.
+### `io/` — input & output only
+ 
+- **Responsibility:** All ncurses interaction. Translates raw key input
+  into `GameCommand`s for `game/` to consume, and turns world state into
+  drawn frames. **Zero knowledge of game object classes or game logic** —
+  but it's allowed to read data-object structs directly.
+- **Owns / knows about:** ncurses windows, color pairs, screen layout, raw
+  key codes.
+- **Does NOT know about:** `Entity`, `Player`, `Room`, or any other
+  class/rule from `objects/` or `systems/`.
+- **Depends on:** ncurses (external); data-object structs read directly
+  from `objects/` (e.g. `EntitySymbol`, `Colors`, `Coordinate`).
+- **Depended on by:** `game/` only.
