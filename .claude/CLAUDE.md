@@ -9,8 +9,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    an issue is recorded for the current branch, and always denies edits made on `main`. One branch
    may carry several issues — record them all. If a change is requested directly, without
    `/start-issue` having been run, dispatch the `issue-drafter` agent the same way `/new-issue`
-   does — it matches a template, asks follow-ups, and waits for explicit approval — before
-   creating the issue and branch and proceeding. For parallel issues, `/start-issue` can isolate work in a git
+   does — it matches a template and drafts, then hands the draft and open questions back to you;
+   ask them directly and resume `issue-drafter` with the answers, and only then does it create the
+   issue — before cutting the branch and proceeding. For parallel issues, `/start-issue` can isolate work in a git
    worktree (`.claude/worktrees/<branch>`) instead of switching the current checkout — see the
    Lifecycle diagram in WORKFLOW.md.
 2. **Format and static analysis run once per change, at `/check`.** Nothing is checked while you
@@ -37,9 +38,11 @@ skill (`.claude/skills/cpp-style/SKILL.md`) carries the conventions no linter ca
 comment voice, and where a Doxygen docstring is allowed to go — and applies to all C++ work here.
 Three project agents back issue filing, implementation, and review: `.claude/agents/issue-drafter.md`
 drafts and files GitHub issues (dispatched by `/new-issue` and by any direct change request with no
-issue on record), asking follow-ups on implementation approach, whether to split into multiple
-issues, parent/sub-issue linkage, and milestone before creating anything;
-`.claude/agents/implementer.md` executes one isolated plan task at a time (dispatched in parallel
+issue on record); since `AskUserQuestion` is unavailable inside subagents, it does not ask its own
+follow-ups on implementation approach, whether to split into multiple issues, parent/sub-issue
+linkage, and milestone — it gathers the data those questions need, hands it back with the draft(s),
+and the main agent asks the user and resumes `issue-drafter` with the answers before it creates
+anything; `.claude/agents/implementer.md` executes one isolated plan task at a time (dispatched in parallel
 when tasks are independent); and `.claude/agents/reviewer.md` gives `/check` a read-only
 structure/efficiency/isolation/style pass over `src/`/`include/` changes, grounded in the
 originating issue.
