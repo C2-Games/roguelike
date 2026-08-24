@@ -2,10 +2,10 @@
 
 #include "entities/enemy.h"
 #include "entities/player.h"
+#include "objects/weapons/projectile.h"
+#include "objects/weapons/weapon.h"
 #include "world/map/level.h"
 #include "world/map/room.h"
-#include "world/objects/projectile.h"
-#include "world/objects/weapon.h"
 
 namespace render_state_builder
 {

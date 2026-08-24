@@ -1,27 +1,11 @@
 #ifndef WEAPON_H
 #define WEAPON_H
 
-#include <cstdint>
 #include <unordered_map>
 
-#include "core/colors.h"
-
-enum class WeaponType : std::uint8_t
-{
-  Basic,
-  Rapid,
-  Heavy,
-  Sniper
-};
-
-struct WeaponAttributes
-{
-  int damage;
-  int speed;
-  int range;
-  ColorPair color;
-  const char* name;
-};
+#include "objects/colors.h"
+#include "objects/weapons/weapon_attributes.h"
+#include "objects/weapons/weapon_type.h"
 
 struct Weapon
 {

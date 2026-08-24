@@ -2,20 +2,10 @@
 #ifndef TILE_H
 #define TILE_H
 
-#include <cstdint>
 #include <unordered_map>
 
-#include "core/coordinate.h"
-
-enum class TileType : std::uint8_t
-{
-  Wall,
-  Floor,
-  Door,
-  Void,
-  Pillar,
-  EntryWay
-};
+#include "objects/coordinate.h"
+#include "objects/tiles/tile_type.h"
 
 struct TileAttributes
 {
@@ -106,7 +96,7 @@ struct Tile
   bool visible_ = false;
   bool explored_ = false;
 
-  // Static lookup table for tile attributes based on TileType.
+  // static lookup table for tile attributes based on TileType.
   static const std::unordered_map<int, TileAttributes> typeAttributes_;
 };
 

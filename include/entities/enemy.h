@@ -5,9 +5,9 @@
 #include <memory>
 #include <optional>
 
-#include "core/coordinate.h"
 #include "entities/entity.h"
 #include "entities/fov.h"
+#include "objects/coordinate.h"
 
 struct FrameState;
 class GoalMapCache;

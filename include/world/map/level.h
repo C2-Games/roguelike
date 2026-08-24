@@ -4,7 +4,7 @@
 #include <map>
 #include <utility>
 
-#include "core/coordinate.h"
+#include "objects/coordinate.h"
 #include "preload/level_loader.h"
 #include "world/map/room.h"
 

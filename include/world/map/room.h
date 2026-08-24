@@ -5,10 +5,10 @@
 #include <string>
 #include <vector>
 
-#include "core/coordinate.h"
 #include "entities/room_enemy_state.h"
-#include "world/map/room_types.h"
-#include "world/map/tile.h"
+#include "objects/coordinate.h"
+#include "objects/room/room_types.h"
+#include "objects/tiles/tile.h"
 
 class EnemyCatalog;
 class Entity;

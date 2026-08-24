@@ -6,9 +6,9 @@
 #include "core/logger.h"
 #include "core/services.h"
 #include "entities/enemy.h"
+#include "objects/room/room_types.h"
 #include "preload/enemy_catalog.h"
 #include "world/map/room.h"
-#include "world/map/room_types.h"
 
 namespace enemy_factory
 {

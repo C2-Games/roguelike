@@ -1,4 +1,4 @@
-#include "world/objects/weapon.h"
+#include "objects/weapons/weapon.h"
 
 const std::unordered_map<int, WeaponAttributes> Weapon::typeAttributes_ = {
     {static_cast<int>(WeaponType::Basic),

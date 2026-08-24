@@ -4,9 +4,9 @@
 #include <memory>
 #include <vector>
 
-#include "core/coordinate.h"
 #include "entities/enemy.h"
-#include "world/map/room_types.h"
+#include "objects/coordinate.h"
+#include "objects/room/room_types.h"
 
 struct Room;
 struct GameServices;

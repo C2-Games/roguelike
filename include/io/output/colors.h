@@ -3,7 +3,7 @@
 
 #include <ncurses.h>
 
-#include "core/colors.h"
+#include "objects/colors.h"
 
 /**
  * @brief Convert a ColorPair enum value into an ncurses attribute chtype.

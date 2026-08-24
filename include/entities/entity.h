@@ -4,9 +4,9 @@
 #include <cstdint>
 #include <memory>
 
-#include "core/coordinate.h"
-#include "entities/entity_symbol.h"
 #include "entities/fov.h"
+#include "objects/coordinate.h"
+#include "objects/entities/entity_symbol.h"
 
 enum class EntityActionState : std::uint8_t
 {

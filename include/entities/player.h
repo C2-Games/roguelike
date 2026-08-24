@@ -1,9 +1,9 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
-#include "core/coordinate.h"
 #include "entities/entity.h"
-#include "world/objects/weapon.h"
+#include "objects/coordinate.h"
+#include "objects/weapons/weapon.h"
 
 class Player : public Entity
 {
