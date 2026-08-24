@@ -1,4 +1,4 @@
-#include "world/map/level.h"
+#include "game/level.h"
 
 #include <utility>
 
@@ -14,7 +14,7 @@ Coordinate Level::transitionRoom(const DoorConnection& conn)
 {
   setCurrentRoomID(conn.destRoomID);
 
-  // Place the arrival one tile inward from the destination door so the door
+  // place the arrival one tile inward from the destination door so the door
   // is not immediately re-triggered on the next input.
   return Room::inwardOfDoor(conn.destDoorPos);
 }

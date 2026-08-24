@@ -6,28 +6,36 @@
 > (#221: `coordinate.h`, `colors.h`, `tiles/`, `room/room_types.h`,
 > `weapons/`) and the game-object classes (#222: `entities/` — `Entity`,
 > `Player`, `Enemy`; `fovs/` — `FOV`, `EllipseFOV`; `room/room.h` — `Room`).
-> `systems/` and `game/` still don't exist as directories. `RoomEnemyState`
-> (`objects/room/room_enemy_state.h`) is now plain data (`spawned`,
-> `enemies`); the spawn/reap logic that used to live on it, plus
-> `enemy_factory`, moved to `core/room_enemy_logic.h` and `core/enemy_factory.h`
-> — a stopgap home for cross-object logic until `systems/` exists (#223–#226).
+> `RoomEnemyState` is gone entirely — its two fields now live directly on
+> `Room` as `enemiesSpawned`/`enemies`. `systems/loader/` is the first
+> `systems/` directory to land (#223): it holds a `Loader` class (replacing
+> `Game`'s old raw `EnemyCatalog` with a `loader_` member) plus the
+> `enemy_catalog`/`room_loader`/`enemy_spawner` files that back it —
+> `enemy_spawner` folds in what used to be `core/enemy_factory` and
+> `room_enemy_logic::ensureSpawned`. `core/room_enemy_logic.h` now holds only
+> `reap()`; it stays a stopgap home for that one piece of cross-object logic
+> until the rest of `systems/` exists. `Level` moved to `game/level.h`
+> (flagged as likely temporary — may be absorbed once the rest of #219
+> lands). `movement.h`, `visibility.h`, and `combat.h` still don't exist.
 > `Room::enemyAt`/`entityAt` and `updateVisibility` still intentionally reach
 > into `Enemy`/`Player`/`FOV` — that coupling is deferred to #205 (Enemy↔Room)
-> and the `systems/` batch (#223–#226), not fixed by #222. Treat the file tree
-> and module map below as the destination, not the current state, until the
-> rest of the #219 batch lands.
+> and the rest of the `systems/` batch (#224–#226), not fixed by #222/#223.
+> Treat the file tree and module map below as the destination, not the
+> current state, until the rest of the #219 batch lands.
 
 ## Reference: current file tree
  
 ```text
 include
-  game/            game.h, services.h, logger.h
-  systems/         combat.h, movement.h, visibility.h, loader.h
+  game/            game.h, services.h, logger.h, level.h
+  systems/
+    loader/        loader.h, enemy_catalog.h, room_loader.h, enemy_spawner.h
+    combat.h, movement.h, visibility.h
   objects/
     fovs/          fov.h, ellipse_fov.h
     entities/      enemy.h, entity_symbol.h, entity.h, player.h
     tiles/         tile_type.h, tile.h
-    room/          room.h, room_types.h, room_enemy_state.h
+    room/          room.h, room_types.h
     weapons/       weapon.h, weapon_attributes.h, weapon_type.h, projectile.h
     damage/        damage.h, damage_type.h
     coordinate.h, colors.h

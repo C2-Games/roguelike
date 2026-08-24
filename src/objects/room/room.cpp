@@ -134,12 +134,12 @@ Coordinate Room::inwardOfDoor(Coordinate doorPos)
 
 Enemy* Room::enemyAt(Coordinate pos, const Enemy* exclude) const
 {
-  auto hit = std::find_if(enemyState.enemies.begin(), enemyState.enemies.end(),
+  auto hit = std::find_if(enemies.begin(), enemies.end(),
                           [&](const std::unique_ptr<Enemy>& enemy) {
                             return enemy.get() != exclude && enemy->isAlive() &&
                                    enemy->getPosition() == pos;
                           });
-  return hit != enemyState.enemies.end() ? hit->get() : nullptr;
+  return hit != enemies.end() ? hit->get() : nullptr;
 }
 
 const Entity* Room::entityAt(Coordinate pos, const Player& player) const

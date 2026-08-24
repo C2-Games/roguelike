@@ -1,4 +1,4 @@
-#include "preload/room_loader.h"
+#include "systems/loader/room_loader.h"
 
 #include <algorithm>
 #include <cstdint>
@@ -73,8 +73,8 @@ SpawnKind charToSpawnKind(char c)
   }
 }
 
-// Parse the '@key: value' header block, leaving `in` positioned at the start
-// of the grid. Blank lines before the grid are permitted so authors can
+// parse the '@key: value' header block, leaving `in` positioned at the start
+// of the grid. blank lines before the grid are permitted so authors can
 // space out the header visually.
 void parseRoomHeader(std::ifstream& in, Room& room,
                      const std::filesystem::path& path)
@@ -91,13 +91,13 @@ void parseRoomHeader(std::ifstream& in, Room& room,
     }
     if (trimmed[0] != '@')
     {
-      // Rewind — this line belongs to the grid.
+      // rewind — this line belongs to the grid.
       in.clear();
       in.seekg(gridStart);
       return;
     }
 
-    // Parse "@key: value".
+    // parse "@key: value".
     auto colon = trimmed.find(':');
     if (colon == std::string::npos)
     {
@@ -111,15 +111,15 @@ void parseRoomHeader(std::ifstream& in, Room& room,
     {
       room.name = value;
     }
-    // Other keys (levels, author, ...) are parsed by the library layer or
+    // other keys (levels, author, ...) are parsed by the library layer or
     // silently ignored here for forward compatibility.
 
     gridStart = in.tellg();
   }
 }
 
-// Parse the ASCII grid following the header, populating tiles, doors, and
-// spawn points. Throws if the row count doesn't match Room::HEIGHT.
+// parse the ASCII grid following the header, populating tiles, doors, and
+// spawn points. throws if the row count doesn't match Room::HEIGHT.
 void parseRoomGrid(std::ifstream& in, Room& room,
                    const std::filesystem::path& path)
 {
@@ -127,7 +127,7 @@ void parseRoomGrid(std::ifstream& in, Room& room,
   int y = 0;
   while (std::getline(in, line))
   {
-    // Strip trailing CR so CRLF-terminated files (common on Windows editors)
+    // strip trailing CR so CRLF-terminated files (common on Windows editors)
     // parse the same as LF.
     if (!line.empty() && line.back() == '\r')
     {
@@ -140,7 +140,7 @@ void parseRoomGrid(std::ifstream& in, Room& room,
                                " (expected " + std::to_string(Room::HEIGHT) +
                                ")");
     }
-    // Pad short lines with spaces (Void) but reject over-long lines to catch
+    // pad short lines with spaces (Void) but reject over-long lines to catch
     // authoring mistakes.
     if (static_cast<int>(line.size()) > Room::WIDTH)
     {

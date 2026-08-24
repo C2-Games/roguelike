@@ -12,7 +12,7 @@
 #include "objects/entities/enemy.h"
 #include "objects/entities/entity.h"
 #include "objects/weapons/projectile.h"
-#include "preload/level_loader.h"
+#include "systems/loader/loader.h"
 
 namespace
 {
@@ -27,9 +27,7 @@ Game::Game(UIManager& uiManager, int fps)
     : fps_(fps),
       services_(kDefaultSeed),
       player_(Coordinate(Room::WIDTH / 2, Room::HEIGHT / 2)),
-      enemyCatalog_("assets/enemies"),
-      level_(level_loader::loadLevel("assets/levels/level_1", services_,
-                                     enemyCatalog_)),
+      level_(loader::loadLevel("assets/levels/level_1", "assets", services_)),
       uiManager_(uiManager)
 {}
 
@@ -223,10 +221,10 @@ void Game::update()
   // reap before the movement pass so every enemy iterated below is alive: a
   // projectile can drop one to 0 hp above, and moveTowardPlayer() doesn't
   // guard isAlive() itself.
-  room_enemy_logic::reap(currentRoom.enemies());
+  room_enemy_logic::reap(currentRoom.enemies);
 
   // move enemies toward player or attack.
-  for (auto& enemy : currentRoom.enemies())
+  for (auto& enemy : currentRoom.enemies)
   {
     if (enemy->moveTowardPlayer(frame, goalMapCache_, services_))
     {
