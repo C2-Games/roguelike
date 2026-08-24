@@ -2,6 +2,8 @@
 #define VISIBILITY_H
 
 #include "objects/coordinate.h"
+#include "systems/visibility/delta.h"
+#include "systems/visibility/recompute.h"
 
 struct FOV;
 struct Room;
