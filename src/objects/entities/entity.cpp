@@ -1,4 +1,4 @@
-#include "entities/entity.h"
+#include "objects/entities/entity.h"
 
 #include <utility>
 

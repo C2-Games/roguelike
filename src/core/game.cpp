@@ -6,10 +6,11 @@
 
 #include "core/frame_state.h"
 #include "core/render_state_builder.h"
-#include "entities/enemy.h"
-#include "entities/entity.h"
+#include "core/room_enemy_logic.h"
 #include "io/input/game_commands.h"
 #include "io/ui_manager.h"
+#include "objects/entities/enemy.h"
+#include "objects/entities/entity.h"
 #include "objects/weapons/projectile.h"
 #include "preload/level_loader.h"
 
@@ -222,7 +223,7 @@ void Game::update()
   // reap before the movement pass so every enemy iterated below is alive: a
   // projectile can drop one to 0 hp above, and moveTowardPlayer() doesn't
   // guard isAlive() itself.
-  RoomEnemyState::reap(currentRoom.enemies());
+  room_enemy_logic::reap(currentRoom.enemies());
 
   // move enemies toward player or attack.
   for (auto& enemy : currentRoom.enemies())

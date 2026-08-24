@@ -7,9 +7,9 @@
 #include <vector>
 
 #include "core/services.h"
-#include "entities/ellipse_fov.h"
-#include "entities/fov.h"
-#include "entities/player.h"
+#include "objects/entities/player.h"
+#include "objects/fovs/ellipse_fov.h"
+#include "objects/fovs/fov.h"
 #include "objects/weapons/projectile.h"
 #include "preload/enemy_catalog.h"
 #include "world/map/level.h"

@@ -31,13 +31,13 @@ set(SOURCES
     src/core/game.cpp
     src/core/logger.cpp
     src/core/render_state_builder.cpp
-    src/entities/entity.cpp
-    src/entities/player.cpp
-    src/entities/enemy.cpp
-    src/entities/enemy_factory.cpp
-    src/entities/room_enemy_state.cpp
-    src/entities/fov.cpp
-    src/entities/ellipse_fov.cpp
+    src/core/enemy_factory.cpp
+    src/core/room_enemy_logic.cpp
+    src/objects/entities/entity.cpp
+    src/objects/entities/player.cpp
+    src/objects/entities/enemy.cpp
+    src/objects/fovs/fov.cpp
+    src/objects/fovs/ellipse_fov.cpp
     src/io/ui_manager.cpp
     src/io/input/handle_input.cpp
     src/io/output/colors.cpp
@@ -52,7 +52,7 @@ set(SOURCES
     src/objects/tiles/tile.cpp
     src/objects/weapons/weapon.cpp
     src/objects/weapons/projectile.cpp
-    src/world/map/room.cpp
+    src/objects/room/room.cpp
     src/world/map/level.cpp
     src/world/systems/pathfinding.cpp
     src/world/systems/goal_map_cache.cpp

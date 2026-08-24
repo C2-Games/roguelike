@@ -1,4 +1,4 @@
-#include "entities/ellipse_fov.h"
+#include "objects/fovs/ellipse_fov.h"
 
 #include <cmath>
 #include <memory>

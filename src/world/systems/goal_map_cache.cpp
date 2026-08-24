@@ -2,7 +2,7 @@
 
 #include <utility>
 
-#include "world/map/room.h"
+#include "objects/room/room.h"
 
 const GoalMap& GoalMapCache::getOrCompute(const Room& room,
                                           Coordinate goal) const
