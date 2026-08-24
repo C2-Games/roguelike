@@ -135,9 +135,9 @@ bool Enemy::resolveMove(Coordinate nextTile, bool inFoV, bool wouldAttackPlayer)
   return true;
 }
 
-void Enemy::takeDamage(int damage)
+void Enemy::takeDamage(Damage damage)
 {
-  health_ -= damage;
+  health_ -= damage.amount;
   health_ = std::max(health_, 0);
   setActionState(EntityActionState::Damaged);
 }
