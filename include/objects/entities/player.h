@@ -28,9 +28,9 @@ class Player : public Entity
   /**
    * @brief Reduce player health by damage amount.
    *
-   * @param damage Amount of damage to apply.
+   * @param damage Damage to apply.
    */
-  void takeDamage(int damage) override;
+  void takeDamage(Damage damage) override;
 
   /**
    * @brief Rebuild the player's cached FoV mask from new radii.
