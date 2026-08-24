@@ -2,11 +2,12 @@
 #define ROOM_H
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "objects/coordinate.h"
-#include "objects/room/room_enemy_state.h"
+#include "objects/entities/enemy.h"
 #include "objects/room/room_types.h"
 #include "objects/tiles/tile.h"
 
@@ -31,7 +32,8 @@ struct Room
   std::vector<Coordinate> lootSpawns;
   std::vector<Coordinate> itemSpawns;
 
-  RoomEnemyState enemyState;
+  bool enemiesSpawned = false;
+  std::vector<std::unique_ptr<Enemy>> enemies;
 
   /**
    * @brief Construct an empty Room filled with default Wall tiles.
@@ -109,15 +111,9 @@ struct Room
    */
   void reveal(int x, int y);
 
-  std::vector<std::unique_ptr<Enemy>>& enemies() { return enemyState.enemies; }
-  const std::vector<std::unique_ptr<Enemy>>& enemies() const
-  {
-    return enemyState.enemies;
-  }
-
   /**
    * @brief Find the live enemy standing on `pos`. Stays a Room member (unlike
-   * the spawn/reap logic stripped off RoomEnemyState) because Enemy and
+   * the spawn/reap logic that lives outside Room) because Enemy and
    * Projectile, both game-object classes in their own right, call it
    * directly; moving it out from under Room would make those classes reach
    * upward into core/ instead of sideways into Room.

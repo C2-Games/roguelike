@@ -31,7 +31,6 @@ set(SOURCES
     src/core/game.cpp
     src/core/logger.cpp
     src/core/render_state_builder.cpp
-    src/core/enemy_factory.cpp
     src/core/room_enemy_logic.cpp
     src/objects/entities/entity.cpp
     src/objects/entities/player.cpp
@@ -46,14 +45,14 @@ set(SOURCES
     src/io/output/layers/entity_layer.cpp
     src/io/output/layers/hud_layer.cpp
     src/io/output/layers/debug_layer.cpp
-    src/preload/enemy_catalog.cpp
-    src/preload/level_loader.cpp
-    src/preload/room_loader.cpp
+    src/systems/loader/loader.cpp
+    src/systems/loader/enemy_catalog.cpp
+    src/systems/loader/enemy_spawner.cpp
     src/objects/tiles/tile.cpp
     src/objects/weapons/weapon.cpp
     src/objects/weapons/projectile.cpp
     src/objects/room/room.cpp
-    src/world/map/level.cpp
+    src/game/level.cpp
     src/world/systems/pathfinding.cpp
     src/world/systems/goal_map_cache.cpp
 )
