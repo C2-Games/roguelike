@@ -43,25 +43,25 @@ set(SOURCES
     src/io/output/layers/entity_layer.cpp
     src/io/output/layers/hud_layer.cpp
     src/io/output/layers/debug_layer.cpp
-    src/systems/loader/loader.cpp
-    src/systems/loader/room_loader.cpp
-    src/systems/loader/enemy_catalog.cpp
-    src/systems/loader/enemy_spawner.cpp
+    src/preload/level_loader.cpp
+    src/preload/room_loader.cpp
+    src/preload/enemy_catalog.cpp
+    src/preload/room_generator.cpp
     src/systems/movement/pathfinding.cpp
     src/systems/movement/goal_map_cache.cpp
-    src/systems/movement/movement.cpp
+    src/systems/movement/move_enemy.cpp
+    src/systems/movement/move_player.cpp
     src/systems/combat/damage_application.cpp
     src/systems/combat/damage_source.cpp
     src/systems/combat/projectile_movement.cpp
     src/systems/combat/projectile_spawn.cpp
     src/systems/visibility/delta.cpp
     src/systems/visibility/recompute.cpp
-    src/systems/visibility/visibility.cpp
+    src/systems/visibility/update.cpp
     src/objects/tiles/tile.cpp
     src/objects/weapons/weapon.cpp
     src/objects/weapons/projectile.cpp
     src/objects/room/room.cpp
-    src/game/level.cpp
 )
 
 # executable.

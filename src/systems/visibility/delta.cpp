@@ -23,19 +23,13 @@ bool applyDelta(Room& room, Coordinate previousOrigin, Coordinate origin,
   for (const Coordinate& offset : *leaving)
   {
     Coordinate pos = previousOrigin + offset;
-    if (pos.x < 0 || pos.x >= Room::WIDTH || pos.y < 0 || pos.y >= Room::HEIGHT)
-    {
-      continue;
-    }
-    // No bounds-checked equivalent of reveal() exists for clearing a single
-    // tile, so this open-codes the same bounds check reveal() does.
-    room.tiles[pos.x][pos.y].clearVisible();
+    room.toggleReveal(pos, false);
   }
 
   for (const Coordinate& offset : *entering)
   {
     Coordinate pos = origin + offset;
-    room.reveal(pos.x, pos.y);
+    room.toggleReveal(pos, true);
   }
 
   return true;

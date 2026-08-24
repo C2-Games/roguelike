@@ -1,69 +1,35 @@
 # Architecture
 
-> **Migration in progress.** This doc describes the target module layout
-> (`objects/`/`systems/`/`game/`/`io/`) tracked by #219. The tree does not
-> match it yet. `objects/` now holds both the behavior-free data structs
-> (#221: `coordinate.h`, `colors.h`, `tiles/`, `room/room_types.h`,
-> `weapons/`) and the game-object classes (#222: `entities/` — `Entity`,
-> `Player`, `Enemy`; `fovs/` — `FOV`, `EllipseFOV`; `room/room.h` — `Room`).
-> `RoomEnemyState` is gone entirely — its two fields now live directly on
-> `Room` as `enemiesSpawned`/`enemies`. `systems/loader/` is the first
-> `systems/` directory to land (#223): it holds a `Loader` class (replacing
-> `Game`'s old raw `EnemyCatalog` with a `loader_` member) plus the
-> `enemy_catalog`/`room_loader`/`enemy_spawner` files that back it —
-> `enemy_spawner` folds in what used to be `core/enemy_factory` and
-> `room_enemy_logic::ensureSpawned`. `Level` moved to `game/level.h`
-> (flagged as likely temporary — may be absorbed once the rest of #219
-> lands). `systems/movement/` has landed too (#224, folding in #205's problem
-> statement using this issue's design rather than #205's proposed
-> Room-middleware API): like `systems/loader/`, it's a directory —
-> `pathfinding.h`/`goal_map_cache.h` (moved here from the now-retired
-> `world/systems/`) plus `movement.h`, the facade `Game` includes, declaring
-> `movement::advanceEnemy` and `movement::stepPlayer`. `Enemy`'s old
-> `inBounds`/`stepDownGradient`/`pickWanderTile` helpers moved into
-> `movement.cpp` and lost their `const Room&` parameter; `Enemy` now exposes
-> `canSeePlayer`/`planMove`/`resolveMove` instead of `moveTowardPlayer`, and no
-> longer includes anything from `objects/room/` or `core/`.
-> `Game::handleInput()`'s bounds/walkable/door-transition block is now
-> `movement::stepPlayer`; `Game` still resolves the door connection itself,
-> since `Level` lives under `game/`, which `systems/` may not depend on.
-> `Room::enemyAt`/`entityAt` and `updateVisibility` still intentionally reach
-> into `Enemy`/`Player`/`FOV` — that coupling is separate from what #205/#224
-> addressed and is left to a later issue. `systems/visibility/` and
-> `systems/combat/` have both landed as directories with facade headers
-> (`visibility.h`, `combat.h`), matching `systems/loader/` and
-> `systems/movement/`. `core/` is now fully retired (#227): its contents
-> moved to `game/` — `game.h`, `services.h`, `logger.h`, alongside the
-> pre-existing `level.h`. `render_state_builder` folded into `Game` as a
-> private `buildRenderState()` method. `frame_state.h` is gone; `Projectile`
-> no longer references `Room`/`Player` at all — its flight/hit resolution
-> moved to `systems/combat/projectile_movement.h`
-> (`combat::advanceProjectile`), and its construction from a `Player`'s
-> weapon moved to `systems/combat/projectile_spawn.h`
-> (`combat::spawnProjectile`). `room_enemy_logic` is retired; its `reap()`
-> is now `combat::reapDead` in `systems/combat/damage_application.h`.
-> Treat the file tree and module map below as the destination, not the
-> current state, until the rest of the #219 batch lands.
+> **Migration complete.** The `objects/`/`systems/`/`game/`/`io/` module
+> layout tracked by #219 (and its sub-issues #220-227) has fully landed; the
+> file tree and module map below describe the current state, not a target.
+> One deliberate wrinkle worth flagging: `game/game.cpp`'s door-transition
+> logic calls `room_loader::inwardOfDoor(...)` (from `preload/room_loader.h`)
+> at runtime, not just at load time — a `game/` → `preload/` dependency that
+> doesn't show up in the dependency diagram below, since `preload/` is a
+> load-time-only module the diagram doesn't otherwise model.
 
 ## Reference: current file tree
  
 ```text
 include
-  game/            game.h, services.h, logger.h, level.h
+  game/            game.h, services.h, logger.h, level_data.h
+  preload/         level_loader.h, level_meta.h, room_loader.h,
+                    room_generator.h, enemy_catalog.h
   systems/
-    loader/        loader.h, enemy_catalog.h, room_loader.h, enemy_spawner.h
-    movement/      movement.h, pathfinding.h, goal_map_cache.h
+    movement/      movement.h, pathfinding.h, goal_map_cache.h,
+                    move_enemy.h, move_player.h
     combat/        combat.h, damage_application.h, damage_source.h,
                     projectile_movement.h, projectile_spawn.h
-    visibility/    visibility.h, delta.h, recompute.h
+    visibility/    visibility.h, delta.h, recompute.h, update.h
   objects/
     fovs/          fov.h, ellipse_fov.h
     entities/      enemy.h, entity_symbol.h, entity.h, player.h
     tiles/         tile_type.h, tile.h
-    room/          room.h, room_types.h
+    room/          room.h, room_dimensions.h
     weapons/       weapon.h, weapon_attributes.h, weapon_type.h, projectile.h
     damage/        damage.h, damage_type.h
-    coordinate.h, colors.h
+    coordinate.h, colors.h, map.h, door_connections.h
   io/
     input/         game_commands.h, handle_input.h
     output/
@@ -71,6 +37,9 @@ include
       colors.h, render_stack.h, render_state.h, window_position.h
     ui_manager.h
 ```
+
+`preload/` sits outside the `objects/`/`systems/`/`game/`/`io/` grouping — it's a
+load-time-only module, described in its own subsection under Module Map below.
  
 <!-- src/ mirrors this same tree for .cpp implementations. -->
  
@@ -79,35 +48,47 @@ include
 ## 1. Coupling Rules
  
 This is the actual architecture — everything else in this doc is detail
-hanging off these six rules.
+hanging off these seven rules.
  
 1. **Game objects (classes) are mutually exclusive.** No class under
    `objects/` may hold a reference to, call a method on, or `#include`
    another class under `objects/`. `Entity` does not know about `Room`.
    `Player` does not know about `Enemy`.
-2. **Data objects (structs) are the one exception.** Plain-data types with
-   no behavior — `Coordinate`, `Colors`, `TileType`, `RoomTypes`, `Weapon`,
-   `WeaponType`, `WeaponAttributes`, `DamageType`, `EntitySymbol` — carry no
-   logic, so anything may hold or pass them freely. They're the shared
-   currency that's allowed to cross boundaries other things can't.
-3. **Systems are the only place two game objects are allowed to interact —
+2. **Object methods touch at most one attribute at a time.** A method on a
+   class in `objects/` may only get or set a single attribute, or perform a
+   simple check against the object's own attributes — never combine or
+   mutate multiple attributes based on outside state, and never take another
+   game-object class as an argument. Behavior that does that belongs in
+   `systems/`. Two examples from this migration: `Entity::takeDamage` used
+   to look up current health, subtract, clamp, and set a damaged flag in one
+   method; that combined logic is now `systems::combat::applyDamage`, which
+   drives `Entity::setHealth`/`getHealth` directly. `Enemy::planMove`/
+   `resolveMove` — an AI state machine — moved to free functions in
+   `systems/movement`, which now drive `Enemy`'s plain `getAIState`/
+   `setAIState` (and similar) accessors.
+3. **Data objects (structs) are the one exception.** Plain-data types with
+   no behavior — `Coordinate`, `Colors`, `TileType`, `Weapon`, `WeaponType`,
+   `WeaponAttributes`, `DamageType`, `EntitySymbol`, `DoorConnection` —
+   carry no logic, so anything may hold or pass them freely. They're the
+   shared currency that's allowed to cross boundaries other things can't.
+4. **Systems are the only place two game objects are allowed to interact —
    and systems are mutually exclusive too.** If `Combat` needs an
    `Entity`'s `Weapon` to compute `Damage`, that logic lives in
    `systems/combat.h` — never inside `Entity` or `Weapon` themselves, and
    never inside another system either. `combat.h` never calls into
-   `movement.h`, `visibility.h`, or `loader.h` directly; `game/` is the
-   only thing that sequences them.
-4. **`game` orchestrates; it doesn't decide.** `game/game.h` owns the main
+   `movement.h` or `visibility.h` directly; `game/` is the only thing that
+   sequences them.
+5. **`game` orchestrates; it doesn't decide.** `game/game.h` owns the main
    loop and the turn queue and calls systems in sequence. It should not
    contain gameplay rules ("how much damage does a sword do") — that's
    `Combat`'s job.
-5. **`ui` knows nothing about game logic or game object classes — but it
+6. **`ui` knows nothing about game logic or game object classes — but it
    may read data objects directly.** No file under `io/` may `#include` a
    class from `objects/` or anything from `systems/`. It *may* `#include`
    data-object structs straight from `objects/` (e.g. `EntitySymbol`,
    `Colors`, `Coordinate`) and turns them into ncurses draw calls —
    nothing more.
-6. **Dependencies point one way:**
+7. **Dependencies point one way:**
    `io/input → game → systems → objects`, `game → io/output`, and
    `io/output → objects` (data objects only). Nothing downstream ever
    calls back upstream, and `ui` never reaches into `systems/` or a class
@@ -136,8 +117,6 @@ flowchart TB
         Combat
         Movement
         Visibility
-        Loader
-        Fifth["(5th system?)"]
     end
  
     subgraph OBJ["objects/"]
@@ -150,11 +129,9 @@ flowchart TB
     G --> Combat
     G --> Movement
     G --> Visibility
-    G --> Loader
     Combat --> Classes
     Movement --> Classes
     Visibility --> Classes
-    Loader --> Classes
     Classes -.holds/uses.-> Data
     Combat -.uses.-> Data
     Movement -.uses.-> Data
@@ -206,8 +183,8 @@ sequenceDiagram
 - **Owns / knows about:** how to combine specific object types to produce a
   gameplay outcome.
 - **Does NOT know about:** `io/`, at all — nor other systems. `combat.h`
-  never calls `movement.h`, `visibility.h`, or `loader.h` directly; each
-  system is only ever called by `game/`.
+  never calls `movement.h` or `visibility.h` directly; each system is only
+  ever called by `game/`.
 - **Depends on:** `objects/`.
 - **Depended on by:** `game/`.
  
@@ -227,6 +204,19 @@ sequenceDiagram
   `std::mt19937` RNG streams — one for spawn/level generation, one for enemy
   movement, offset by one seed so the streams don't start identical),
   `logger.h` (cross-cutting, usable from anywhere).
+
+### `preload/` — load-time construction only
+
+- **Responsibility:** Builds the initial `LevelData` from on-disk level,
+  room, and enemy config — everything needed to hand `game/` a fully formed
+  level before the first turn runs.
+- **Owns / knows about:** level/room/enemy file formats and how to parse
+  them into `objects/` types.
+- **Does NOT know about:** `systems/`, `io/`, or per-turn gameplay rules.
+- **Depends on:** `objects/`.
+- **Depended on by:** `game/` only — at construction, and again on door
+  transitions (`room_loader::inwardOfDoor`), since `game/` does not persist
+  the load-time context itself.
 
 ### `io/` — input & output only
  

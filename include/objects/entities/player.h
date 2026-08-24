@@ -26,13 +26,6 @@ class Player : public Entity
   int getMaxHealth() const { return maxHealth_; }
 
   /**
-   * @brief Reduce player health by damage amount.
-   *
-   * @param damage Damage to apply.
-   */
-  void takeDamage(Damage damage) override;
-
-  /**
    * @brief Rebuild the player's cached FoV mask from new radii.
    *
    * @param rx New horizontal FoV radius (columns).

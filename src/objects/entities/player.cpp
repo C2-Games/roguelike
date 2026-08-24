@@ -1,7 +1,5 @@
 #include "objects/entities/player.h"
 
-#include <algorithm>
-
 #include "objects/coordinate.h"
 #include "objects/entities/entity.h"
 #include "objects/fovs/ellipse_fov.h"
@@ -11,13 +9,6 @@ Player::Player(Coordinate position, int health, int speed)
              std::make_unique<EllipseFOV>(16, 10)),
       maxHealth_(health)
 {}
-
-void Player::takeDamage(Damage damage)
-{
-  health_ -= damage.amount;
-  health_ = std::max(health_, 0);
-  setActionState(EntityActionState::Damaged);
-}
 
 void Player::changeFOV(int rx, int ry)
 {

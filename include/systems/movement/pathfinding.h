@@ -12,7 +12,7 @@ struct Room;
 using GoalMap = std::vector<std::vector<int>>;
 
 // sentinel written into GoalMap cells the BFS never reaches.
-inline constexpr int kUnreachable = std::numeric_limits<int>::max();
+inline constexpr int UNREACHABLE = std::numeric_limits<int>::max();
 
 /**
  * @brief Build a Dijkstra / BFS goal map rooted at the given tile (player/last

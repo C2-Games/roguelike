@@ -8,26 +8,31 @@
 #include "io/ui_manager.h"
 #include "objects/entities/enemy.h"
 #include "objects/weapons/projectile.h"
+#include "preload/level_loader.h"
+#include "preload/room_loader.h"
 #include "systems/combat/combat.h"
-#include "systems/loader/loader.h"
 #include "systems/visibility/visibility.h"
 
 namespace
 {
-// Fixed until a real seed-input/new-game flow exists: every launch should
+// fixed until a real seed-input/new-game flow exists: every launch should
 // reproduce the same room/enemy layout for a given level config.
-constexpr std::mt19937::result_type kDefaultSeed = 80085;
-// Duration, in frames, that the player's hit-flash stays visible.
+constexpr std::mt19937::result_type DEFAULT_SEED = 80085;
+// duration, in frames, that the player's hit-flash stays visible.
 constexpr int HIT_FLASH_FRAMES = 8;
 }  // namespace
 
 Game::Game(UIManager& uiManager, int fps)
     : fps_(fps),
-      services_(kDefaultSeed),
+      services_(DEFAULT_SEED),
       player_(Coordinate(Room::WIDTH / 2, Room::HEIGHT / 2)),
-      level_(loader::loadLevel("assets/levels/level_1", "assets", services_)),
+      levelData_(
+          preload::loadLevel("assets/levels/level_1", "assets", services_)),
+      currentRoomID_(levelData_.meta.startRoomID),
       uiManager_(uiManager)
-{}
+{
+  currentRoom().toggleOccupied(player_.getPosition(), true);
+}
 
 void Game::run()
 {
@@ -123,7 +128,8 @@ void Game::handleInput()
       isMoveCommand = true;
       break;
     case GameCommand::Attack:
-      projectiles_.push_back(combat::spawnProjectile(player_));
+      currentRoomObjects().projectiles.push_back(
+          combat::spawnProjectile(player_));
       player_.setActionState(EntityActionState::Attack);
       return;
     case GameCommand::Quit:
@@ -144,32 +150,39 @@ void Game::handleInput()
   player_.setLastDirection(direction);
 
   movement::PlayerStepOutcome outcome =
-      movement::stepPlayer(player_, level_.getCurrentRoom(), direction);
+      movement::stepPlayer(player_, currentRoom(), direction);
   if (outcome.kind == movement::PlayerStepKind::AtDoor)
   {
-    const DoorConnection* conn =
-        level_.getDoorConnection(level_.getCurrentRoomID(), outcome.doorPos);
-    if (conn != nullptr)
+    auto connEntry = levelData_.roomConnections.find(
+        DoorConnection{currentRoomID_, outcome.doorPos});
+    if (connEntry != levelData_.roomConnections.end())
     {
-      player_.moveTo(level_.transitionRoom(*conn));
+      const DoorConnection& conn = connEntry->second;
+      currentRoom().toggleOccupied(player_.getPosition(), false);
+      currentRoomID_ = conn.roomID;
+      Coordinate landing = room_loader::inwardOfDoor(conn.doorPosition);
+      player_.moveTo(landing);
+      currentRoom().toggleOccupied(landing, true);
       player_.setActionState(EntityActionState::TransRoom);
     }
     else
     {
+      currentRoom().toggleOccupied(player_.getPosition(), false);
       player_.moveTo(outcome.doorPos);
+      currentRoom().toggleOccupied(outcome.doorPos, true);
     }
   }
 }
 
 void Game::update()
 {
-  // Recompute FoV visibility for the current room before anything else runs
+  // recompute FoV visibility for the current room before anything else runs
   // this frame, but only when it can have changed.
-  bool sameRoomAndShape = level_.getCurrentRoomID() == lastVisibilityRoomID_ &&
+  bool sameRoomAndShape = currentRoomID_ == lastVisibilityRoomID_ &&
                           player_.getFOV() == *lastVisibilityFov_;
   if (playerMoved() || !sameRoomAndShape)
   {
-    Room& room = level_.getCurrentRoom();
+    Room& room = currentRoom();
     if (sameRoomAndShape)
     {
       visibility::update(room, lastVisibilityPos_, player_.getPosition(),
@@ -180,36 +193,36 @@ void Game::update()
       visibility::update(room, player_.getPosition(), player_.getFOV());
     }
     lastVisibilityPos_ = player_.getPosition();
-    lastVisibilityRoomID_ = level_.getCurrentRoomID();
+    lastVisibilityRoomID_ = currentRoomID_;
     lastVisibilityFov_ = player_.getFOV().clone();
   }
 
-  Room& currentRoom = level_.getCurrentRoom();
+  Room& room = currentRoom();
+  RoomObjects& objects = currentRoomObjects();
 
   // advance projectiles, apply hits, and drop any that expired.
-  for (auto& projectile : projectiles_)
+  for (auto& projectile : objects.projectiles)
   {
     if (projectile->isActive())
     {
-      combat::advanceProjectile(*projectile, currentRoom, player_);
+      combat::advanceProjectile(*projectile, room, objects.enemies, player_);
     }
   }
-  projectiles_.erase(std::remove_if(projectiles_.begin(), projectiles_.end(),
-                                    [](const std::unique_ptr<Projectile>& p) {
-                                      return !p->isActive();
-                                    }),
-                     projectiles_.end());
+  objects.projectiles.erase(
+      std::remove_if(
+          objects.projectiles.begin(), objects.projectiles.end(),
+          [](const std::unique_ptr<Projectile>& p) { return !p->isActive(); }),
+      objects.projectiles.end());
 
   // reap before the movement pass so every enemy iterated below is alive: a
   // projectile can drop one to 0 hp above, and advanceEnemy() doesn't
   // guard isAlive() itself.
-  combat::reapDead(currentRoom.enemies);
+  combat::reapDead(room, objects.enemies);
 
   // move enemies toward player or attack.
-  for (auto& enemy : currentRoom.enemies)
+  for (auto& enemy : objects.enemies)
   {
-    if (movement::advanceEnemy(*enemy, player_, currentRoom, goalMapCache_,
-                               services_))
+    if (movement::advanceEnemy(*enemy, player_, room, goalMapCache_, services_))
     {
       combat::applyDamage(player_,
                           combat::meleeDamage(enemy->getAttackDamage()));
@@ -224,28 +237,29 @@ void Game::update()
 
 bool Game::playerMoved() const
 {
-  // room id as well as position
+  // room id as well as position.
   return player_.getPosition() != lastVisibilityPos_ ||
-         level_.getCurrentRoomID() != lastVisibilityRoomID_;
+         currentRoomID_ != lastVisibilityRoomID_;
 }
 
 RenderState Game::buildRenderState() const
 {
   RenderState state;
 
-  const Room& room = level_.getCurrentRoom();
+  const Room& room = currentRoom();
   for (int x = 0; x < Room::WIDTH; ++x)
   {
     for (int y = 0; y < Room::HEIGHT; ++y)
     {
+      Coordinate position(x, y);
       TileView& tile = state.map.tiles[x][y];
-      tile.symbol = room.tiles[x][y].getSymbol();
+      tile.symbol = room.getTileSymbol(position);
 
-      if (room.isVisible(x, y))
+      if (room.isVisible(position))
       {
         tile.visibility = TileVisibility::Visible;
       }
-      else if (room.isExplored(x, y))
+      else if (room.isExplored(position))
       {
         tile.visibility = TileVisibility::Explored;
       }
@@ -257,26 +271,28 @@ RenderState Game::buildRenderState() const
   }
 
   // an empty symbol draws nothing: render() can still run once on the frame
-  // the player dies
+  // the player dies.
   state.entity.player =
       EntityView{player_.getPosition(),
                  player_.isAlive() ? player_.getSymbol() : EntitySymbol{},
                  playerHitFlashFramesRemaining_ > 0, ColorPair::PlayerHit};
 
-  for (const auto& enemy : room.enemies)
+  const RoomObjects& objects = currentRoomObjects();
+
+  for (const auto& enemy : objects.enemies)
   {
     const Coordinate& position = enemy->getPosition();
-    if (enemy->isAlive() && room.isVisible(position.x, position.y))
+    if (enemy->isAlive() && room.isVisible(position))
     {
       state.entity.enemies.push_back(
           EntityView{position, enemy->getSymbol(), false, ColorPair::Default});
     }
   }
 
-  for (const auto& projectile : projectiles_)
+  for (const auto& projectile : objects.projectiles)
   {
     const Coordinate& position = projectile->getPosition();
-    if (projectile->isActive() && room.isVisible(position.x, position.y))
+    if (projectile->isActive() && room.isVisible(position))
     {
       state.entity.projectiles.push_back(
           ProjectileView{position, projectile->getColor()});
@@ -285,8 +301,8 @@ RenderState Game::buildRenderState() const
 
   state.hud.playerHealth = player_.getHealth();
   state.hud.playerMaxHealth = player_.getMaxHealth();
-  state.hud.roomIndex = level_.getCurrentRoomID();
-  state.hud.roomCount = level_.getRoomCount();
+  state.hud.roomIndex = currentRoomID_;
+  state.hud.roomCount = levelData_.meta.roomCount;
 
   const Weapon& weapon = player_.getWeapon();
   state.hud.weapon =
