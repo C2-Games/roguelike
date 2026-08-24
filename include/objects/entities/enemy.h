@@ -51,9 +51,9 @@ class Enemy : public Entity
   /**
    * @brief Reduce enemy health by damage amount.
    *
-   * @param damage Amount of damage to apply.
+   * @param damage Damage to apply.
    */
-  void takeDamage(int damage) override;
+  void takeDamage(Damage damage) override;
 
   /**
    * @brief Whether the player, standing at `playerPos`, is currently inside

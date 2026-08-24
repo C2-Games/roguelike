@@ -3,6 +3,7 @@
 
 #include "objects/colors.h"
 #include "objects/coordinate.h"
+#include "objects/damage/damage.h"
 
 struct FrameState;
 
@@ -16,12 +17,12 @@ struct Projectile
    * advances into the adjacent tile as its first candidate, so an entity
    * standing there is checked like any other tile in the projectile's path.
    * @param direction Unit step direction, e.g. (1,0)/(-1,0)/(0,1)/(0,-1).
-   * @param damage Damage dealt to the first enemy hit.
+   * @param damage Damage dealt to the first entity hit.
    * @param tilesPerTick Tiles advanced per Game::update() call.
    * @param range Max tiles traveled before the projectile expires.
    * @param color Color used to render the projectile's orb.
    */
-  Projectile(Coordinate position, Coordinate direction, int damage,
+  Projectile(Coordinate position, Coordinate direction, Damage damage,
              int tilesPerTick, int range, ColorPair color);
 
   /**
@@ -56,7 +57,7 @@ struct Projectile
    *
    * @return Damage dealt to whatever this projectile hits.
    */
-  int getDamage() const { return damage_; }
+  Damage getDamage() const { return damage_; }
 
   /**
    * @brief Whether the projectile is still in flight.
@@ -68,7 +69,7 @@ struct Projectile
  private:
   Coordinate position_;
   Coordinate direction_;
-  int damage_;
+  Damage damage_;
   int tilesPerTick_;
   int remainingRange_;
   ColorPair color_;
