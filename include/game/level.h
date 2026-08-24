@@ -2,11 +2,22 @@
 #define LEVEL_H
 
 #include <map>
+#include <string>
 #include <utility>
 
 #include "objects/coordinate.h"
 #include "objects/room/room.h"
-#include "preload/level_loader.h"
+
+// level-wide metadata, parsed from level.json.
+struct LevelMeta
+{
+  int id;
+  std::string name;
+  std::string description;
+  int roomCount;
+  int startRoomID;
+  int bossRoomID;
+};
 
 struct DoorConnection
 {
@@ -16,6 +27,7 @@ struct DoorConnection
 
 using LevelMap = std::map<std::pair<int, Coordinate>, DoorConnection>;
 
+// may be absorbed elsewhere once the rest of the game/ reassembly lands.
 class Level
 {
  public:

@@ -7,12 +7,11 @@
 #include <vector>
 
 #include "core/services.h"
+#include "game/level.h"
 #include "objects/entities/player.h"
 #include "objects/fovs/ellipse_fov.h"
 #include "objects/fovs/fov.h"
 #include "objects/weapons/projectile.h"
-#include "preload/enemy_catalog.h"
-#include "world/map/level.h"
 #include "world/systems/goal_map_cache.h"
 
 class UIManager;
@@ -61,7 +60,6 @@ class Game
   double currentFps_ = 0.0;
   GameServices services_;
   Player player_;
-  EnemyCatalog enemyCatalog_;
   Level level_;
   GoalMapCache goalMapCache_;
   std::vector<std::unique_ptr<Projectile>> projectiles_;

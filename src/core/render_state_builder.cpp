@@ -1,11 +1,11 @@
 #include "core/render_state_builder.h"
 
+#include "game/level.h"
 #include "objects/entities/enemy.h"
 #include "objects/entities/player.h"
 #include "objects/room/room.h"
 #include "objects/weapons/projectile.h"
 #include "objects/weapons/weapon.h"
-#include "world/map/level.h"
 
 namespace render_state_builder
 {
@@ -46,7 +46,7 @@ RenderState build(const Player& player, const Level& level,
                  player.isAlive() ? player.getSymbol() : EntitySymbol{},
                  playerHitFlashActive, ColorPair::PlayerHit};
 
-  for (const auto& enemy : room.enemies())
+  for (const auto& enemy : room.enemies)
   {
     const Coordinate& position = enemy->getPosition();
     if (enemy->isAlive() && room.isVisible(position.x, position.y))
