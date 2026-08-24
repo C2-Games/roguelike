@@ -4,6 +4,16 @@
     "GH_REPO": "C2-Games/roguelike"
   },
   "permissions": {
+    "deny": [
+      "Bash(git commit)",
+      "Bash(git commit *)",
+      "Bash(git push)",
+      "Bash(git push *)",
+      "PowerShell(git commit)",
+      "PowerShell(git commit *)",
+      "PowerShell(git push)",
+      "PowerShell(git push *)"
+    ],
     "allow": [
       "Bash(python3 .claude/hooks/toolchain_run.py:*)",
       "Bash(python .claude/hooks/toolchain_run.py:*)",
