@@ -49,50 +49,80 @@ class Enemy : public Entity
   int getAttackDamage() const { return attackDamage_; };
 
   /**
-   * @brief Reduce enemy health by damage amount.
+   * @brief Get the enemy's current AI state.
    *
-   * @param damage Damage to apply.
+   * @return The enemy's current AI state.
    */
-  void takeDamage(Damage damage) override;
+  AIState getAIState() const { return aiState_; }
 
   /**
-   * @brief Whether the player, standing at `playerPos`, is currently inside
-   * this enemy's field of view.
+   * @brief Set the enemy's AI state.
    *
-   * @param playerPos The player's current position.
-   * @return True when the player is within this enemy's FoV.
+   * @param state New AI state.
    */
-  bool canSeePlayer(Coordinate playerPos) const
+  void setAIState(AIState state) { aiState_ = state; }
+
+  /**
+   * @brief Get the number of moves remaining in chase memory.
+   *
+   * @return The number of moves remaining before chase memory expires.
+   */
+  int getChaseTurnsRemaining() const { return chaseTurnsRemaining_; }
+
+  /**
+   * @brief Set the number of moves remaining in chase memory.
+   *
+   * @param turns New number of moves remaining.
+   */
+  void setChaseTurnsRemaining(int turns) { chaseTurnsRemaining_ = turns; }
+
+  /**
+   * @brief Get the last known player position.
+   *
+   * @return The last known player position, or std::nullopt when none is
+   * remembered.
+   */
+  std::optional<Coordinate> getLastKnownPlayerPos() const
   {
-    return fov_->in(position_, playerPos);
+    return lastKnownPlayerPos_;
   }
 
   /**
-   * @brief Refresh this enemy's AI state for the frame and report the tile
-   * it wants to path toward.
+   * @brief Set the last known player position.
    *
-   * @param inFoV Whether the player is currently in this enemy's FoV.
-   * @param playerPos The player's current position.
-   * @return The tile to path toward this frame, or std::nullopt when the
-   * enemy has no target and should wander instead.
+   * @param pos New last-known player position, or std::nullopt to clear it.
    */
-  std::optional<Coordinate> planMove(bool inFoV, Coordinate playerPos);
+  void setLastKnownPlayerPos(std::optional<Coordinate> pos)
+  {
+    lastKnownPlayerPos_ = pos;
+  }
 
   /**
-   * @brief Apply the tile chosen for this frame and resolve the resulting
-   * attack/cooldown outcome.
+   * @brief Get the number of moves the enemy remembers the player's last
+   * position for after losing line of sight.
    *
-   * @param nextTile Tile chosen by the movement system to step onto (equal
-   * to the enemy's current position when it didn't move).
-   * @param inFoV Whether the player was in FoV this frame, driving chase
-   * memory countdown.
-   * @param wouldAttackPlayer Whether the movement system's step chose the
-   * player's own tile as the best target.
-   * @return bool True when the enemy attacks the player this frame (melee
-   * currently always connects; this is the attack attempt, not a hit-chance
-   * outcome).
+   * @return The chase memory duration.
    */
-  bool resolveMove(Coordinate nextTile, bool inFoV, bool wouldAttackPlayer);
+  int getChaseMemoryDuration() const { return chaseMemoryDuration_; }
+
+  /**
+   * @brief Get the number of frames remaining before the next attack
+   * attempt.
+   *
+   * @return The number of frames remaining.
+   */
+  int getAttackCooldownRemaining() const { return attackCooldownRemaining_; }
+
+  /**
+   * @brief Set the number of frames remaining before the next attack
+   * attempt.
+   *
+   * @param frames New number of frames remaining.
+   */
+  void setAttackCooldownRemaining(int frames)
+  {
+    attackCooldownRemaining_ = frames;
+  }
 
  private:
   int attackDamage_;
@@ -103,31 +133,6 @@ class Enemy : public Entity
 
   // frames remaining before the next attack attempt
   int attackCooldownRemaining_;
-
-  /**
-   * @brief Recompute this frame's AI state from FoV and chase-memory data.
-   *
-   * @param inFoV Whether the player is currently in this enemy's FoV.
-   * @param playerPos The player's current position.
-   */
-  void transitionState(bool inFoV, Coordinate playerPos);
-
-  /** @brief Hook invoked on entering Sentry. Empty seam for future behavior. */
-  static void onEnterSentry();
-
-  /** @brief Hook invoked on entering Chase. Empty seam for future behavior. */
-  static void onEnterChase();
-
-  /** @brief Hook invoked on entering Search. Empty seam for future behavior. */
-  static void onEnterSearch();
-
-  /**
-   * @brief Move to a new AI state, invoking its onEnter hook if it actually
-   * changed.
-   *
-   * @param next The state to move to.
-   */
-  void setAIState(AIState next);
 };
 
 #endif

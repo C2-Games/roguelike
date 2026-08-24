@@ -1,4 +1,4 @@
-#include "systems/loader/loader.h"
+#include "preload/level_loader.h"
 
 #include <algorithm>
 #include <fstream>
@@ -10,11 +10,12 @@
 #include <utility>
 #include <vector>
 
-#include "game/level.h"
-#include "objects/room/room_types.h"
-#include "systems/loader/enemy_catalog.h"
-#include "systems/loader/enemy_spawner.h"
-#include "systems/loader/room_loader.h"
+#include "game/level_data.h"
+#include "objects/tiles/tile.h"
+#include "objects/tiles/tile_type.h"
+#include "preload/enemy_catalog.h"
+#include "preload/room_generator.h"
+#include "preload/room_loader.h"
 
 namespace
 {
@@ -183,16 +184,17 @@ RoomConfig loadRoomConfig(const std::filesystem::path& path, int expectedId)
 }
 
 void sealUnlinkedDoors(std::map<int, Room>& rooms,
-                       const LevelMap& doorConnections)
+                       const RoomConnections& roomConnections)
 {
   for (auto& [id, room] : rooms)
   {
-    for (const auto& doorEntry : room.doors)
+    for (const auto& doorEntry : room.getDoors())
     {
       const Coordinate& door = doorEntry.second;
-      if (doorConnections.find({id, door}) == doorConnections.end())
+      if (roomConnections.find(DoorConnection{id, door}) ==
+          roomConnections.end())
       {
-        room.tiles[door.x][door.y] = Tile(TileType::Wall, door);
+        room.setTile(door, Tile(TileType::Wall, door));
       }
     }
   }
@@ -244,11 +246,12 @@ LevelConfig loadLevelConfig(const std::filesystem::path& levelDir)
 
 }  // namespace
 
-namespace loader
+namespace preload
 {
 
-Level loadLevel(const std::filesystem::path& levelDir,
-                const std::filesystem::path& assetsDir, GameServices& services)
+LevelData loadLevel(const std::filesystem::path& levelDir,
+                    const std::filesystem::path& assetsDir,
+                    GameServices& services)
 {
   EnemyCatalog catalog(assetsDir / "enemies");
   std::filesystem::path roomsDir = assetsDir / "rooms";
@@ -256,29 +259,35 @@ Level loadLevel(const std::filesystem::path& levelDir,
   LevelConfig config = loadLevelConfig(levelDir);
 
   std::map<int, Room> rooms;
+  RoomData roomData;
   for (const auto& [id, roomCfg] : config.rooms)
   {
-    auto roomEntry =
-        rooms.insert({id, room_loader::loadRoom(id, roomsDir / roomCfg.ref)})
-            .first;
-    enemy_spawner::ensureSpawned(roomEntry->second, roomCfg.enemies, catalog,
-                                 services);
+    room_loader::ParsedRoom parsed =
+        room_loader::loadRoom(id, roomsDir / roomCfg.ref);
+    auto roomEntry = rooms.emplace(id, std::move(parsed.room)).first;
+    roomData[id] = room_generator::generate(
+        roomEntry->second, parsed.enemySpawns, parsed.lootSpawns,
+        parsed.itemSpawns, roomCfg.enemies, catalog, services);
   }
 
   // each edge is authored once and wired both ways, so the graph cannot be
   // asymmetric by construction.
-  LevelMap doorConnections;
+  RoomConnections roomConnections;
   for (const RoomAdjacency& edge : config.adjacency)
   {
-    Coordinate fromDoor = rooms.at(edge.fromRoom).doorAt(edge.fromDoor);
-    Coordinate toDoor = rooms.at(edge.toRoom).doorAt(edge.toDoor);
-    doorConnections[{edge.fromRoom, fromDoor}] = {edge.toRoom, toDoor};
-    doorConnections[{edge.toRoom, toDoor}] = {edge.fromRoom, fromDoor};
+    Coordinate fromDoor =
+        room_loader::doorAt(rooms.at(edge.fromRoom), edge.fromDoor);
+    Coordinate toDoor = room_loader::doorAt(rooms.at(edge.toRoom), edge.toDoor);
+    roomConnections[DoorConnection{edge.fromRoom, fromDoor}] =
+        DoorConnection{edge.toRoom, toDoor};
+    roomConnections[DoorConnection{edge.toRoom, toDoor}] =
+        DoorConnection{edge.fromRoom, fromDoor};
   }
 
-  sealUnlinkedDoors(rooms, doorConnections);
+  sealUnlinkedDoors(rooms, roomConnections);
 
-  return Level(config.meta, std::move(rooms), std::move(doorConnections));
+  return LevelData{std::move(config.meta), std::move(roomConnections),
+                   std::move(roomData), std::move(rooms)};
 }
 
-}  // namespace loader
+}  // namespace preload

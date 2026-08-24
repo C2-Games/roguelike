@@ -57,9 +57,9 @@ struct Tile
   /**
    * @brief Check if tile is currently within the viewer's field of view.
    *
-   * @return bool
+   * @return True if the tile is currently visible.
    */
-  bool isVisible() const { return visible_; }
+  bool isRevealed() const { return visible_; }
 
   /**
    * @brief Check if tile has been seen at least once. Persists once true,
@@ -70,16 +70,26 @@ struct Tile
   bool isExplored() const { return explored_; }
 
   /**
-   * @brief Mark this tile as currently visible, and — unless it is a Void
-   * tile — permanently explored.
+   * @brief Set whether this tile is currently visible, and — unless it is a
+   * Void tile — mark it permanently explored when becoming visible.
+   *
+   * @param visible True to reveal the tile, false to clear its visibility.
    */
-  void reveal();
+  void toggleReveal(bool visible);
 
   /**
-   * @brief Clear the currently-visible flag. Does not affect the explored
-   * flag.
+   * @brief Set whether this tile is currently occupied.
+   *
+   * @param occupied True if the tile is occupied, false otherwise.
    */
-  void clearVisible() { visible_ = false; }
+  void toggleOccupied(bool occupied) { occupied_ = occupied; }
+
+  /**
+   * @brief Check if tile is currently occupied.
+   *
+   * @return True if the tile is currently occupied.
+   */
+  bool isOccupied() const { return occupied_; }
 
   /**
    * @brief Convert symbol to tile type.
@@ -95,6 +105,7 @@ struct Tile
   Coordinate position_;
   bool visible_ = false;
   bool explored_ = false;
+  bool occupied_ = false;
 
   // static lookup table for tile attributes based on TileType.
   static const std::unordered_map<int, TileAttributes> typeAttributes_;

@@ -1,27 +1,28 @@
-#include "systems/loader/enemy_spawner.h"
+#include "preload/room_generator.h"
 
 #include <algorithm>
 #include <memory>
 #include <random>
 
+#include "game/level_data.h"
 #include "game/logger.h"
 #include "game/services.h"
 #include "objects/entities/enemy.h"
 #include "objects/room/room.h"
-#include "objects/room/room_types.h"
-#include "systems/loader/enemy_catalog.h"
+#include "preload/enemy_catalog.h"
 
 namespace
 {
 
 // rolls a fresh set of enemies for a room from its spawn table.
-std::vector<std::unique_ptr<Enemy>> rollForRoom(
-    const Room& room, const std::vector<EnemySpawnConfig>& spawnTable,
+std::vector<std::unique_ptr<Enemy>> spawnEnemies(
+    const Room& room, const std::vector<Coordinate>& enemySpawns,
+    const std::vector<EnemySpawnConfig>& spawnTable,
     const EnemyCatalog& catalog, GameServices& services)
 {
   std::vector<std::unique_ptr<Enemy>> enemies;
 
-  std::vector<Coordinate> shuffledSpawns = room.enemySpawns;
+  std::vector<Coordinate> shuffledSpawns = enemySpawns;
   std::shuffle(shuffledSpawns.begin(), shuffledSpawns.end(), services.rng);
 
   std::size_t nextIdx = 0;
@@ -29,7 +30,7 @@ std::vector<std::unique_ptr<Enemy>> rollForRoom(
   {
     if (nextIdx >= shuffledSpawns.size())
     {
-      LOG_ERR("Room " + std::to_string(room.roomID) +
+      LOG_ERR("Room " + std::to_string(room.getRoomID()) +
               ": spawn table exceeds available spawn points; dropping "
               "remaining entries from '" +
               entry.name + "'");
@@ -39,7 +40,7 @@ std::vector<std::unique_ptr<Enemy>> rollForRoom(
     const EnemyTierAttributes* attrs = catalog.find(entry.name, entry.tier);
     if (attrs == nullptr)
     {
-      LOG_ERR("Room " + std::to_string(room.roomID) +
+      LOG_ERR("Room " + std::to_string(room.getRoomID()) +
               ": unknown enemy name/tier '" + entry.name + "'/" +
               std::to_string(entry.tier) + "; skipping");
       continue;
@@ -49,7 +50,7 @@ std::vector<std::unique_ptr<Enemy>> rollForRoom(
     int upper = entry.range[1];
     if (lower > upper)
     {
-      LOG_ERR("Room " + std::to_string(room.roomID) + ": '" + entry.name +
+      LOG_ERR("Room " + std::to_string(room.getRoomID()) + ": '" + entry.name +
               "' has an inverted range; swapping");
       std::swap(lower, upper);
     }
@@ -69,18 +70,25 @@ std::vector<std::unique_ptr<Enemy>> rollForRoom(
 
 }  // namespace
 
-namespace enemy_spawner
+namespace room_generator
 {
 
-void ensureSpawned(Room& room, const std::vector<EnemySpawnConfig>& spawnTable,
-                   const EnemyCatalog& catalog, GameServices& services)
+RoomObjects generate(Room& room, const std::vector<Coordinate>& enemySpawns,
+                     const std::vector<Coordinate>& /*lootSpawns*/,
+                     const std::vector<Coordinate>& /*itemSpawns*/,
+                     const std::vector<EnemySpawnConfig>& spawnTable,
+                     const EnemyCatalog& catalog, GameServices& services)
 {
-  if (room.enemiesSpawned)
+  // lootSpawns/itemSpawns are unused for now -- a seam for a future
+  // loot/item spawn system.
+  RoomObjects objects;
+  objects.enemies =
+      spawnEnemies(room, enemySpawns, spawnTable, catalog, services);
+  for (const auto& enemy : objects.enemies)
   {
-    return;
+    room.toggleOccupied(enemy->getPosition(), true);
   }
-  room.enemiesSpawned = true;
-  room.enemies = rollForRoom(room, spawnTable, catalog, services);
+  return objects;
 }
 
-}  // namespace enemy_spawner
+}  // namespace room_generator

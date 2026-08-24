@@ -11,7 +11,7 @@ void recompute(Room& room, Coordinate origin, const FOV& fov)
   room.clearVisible();
   for (const Coordinate& pos : fov.absoluteFOV(origin))
   {
-    room.reveal(pos.x, pos.y);
+    room.toggleReveal(pos, true);
   }
 }
 

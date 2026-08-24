@@ -5,7 +5,6 @@
 #include <memory>
 
 #include "objects/coordinate.h"
-#include "objects/damage/damage.h"
 #include "objects/entities/entity_symbol.h"
 #include "objects/fovs/fov.h"
 
@@ -33,6 +32,13 @@ class Entity
    * @return const int
    */
   int getHealth() const { return health_; };
+
+  /**
+   * @brief Set the entity health.
+   *
+   * @param health New health value.
+   */
+  void setHealth(int health) { health_ = health; }
 
   /**
    * @brief Get the entities symbol.
@@ -90,8 +96,16 @@ class Entity
    */
   void setActionState(EntityActionState state) { actionState_ = state; };
 
-  // abstract methods.
-  virtual void takeDamage(Damage damage) = 0;
+  /**
+   * @brief Check whether a position is within this entity's field of view.
+   *
+   * @param position The position to check.
+   * @return True when the position is within this entity's FoV.
+   */
+  bool inFOV(Coordinate position) const
+  {
+    return fov_->in(position_, position);
+  }
 
  protected:
   Coordinate position_;

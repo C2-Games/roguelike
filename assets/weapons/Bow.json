@@ -1,0 +1,19 @@
+{
+    "type": "Ranged",
+    "name": "bow",
+    "damage": 10,
+    "speed": 5,
+    "range": 15,
+    "tier": {
+        "tier_1": {
+            "damage": 15,
+            "speed": 7,
+            "range": 20
+        },
+        "tier_2": {
+            "damage": 20,
+            "speed": 9,
+            "range": 25
+        }
+    }
+}

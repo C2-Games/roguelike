@@ -1,6 +1,10 @@
 #include "systems/combat/projectile_movement.h"
 
+#include <algorithm>
+
+#include "objects/entities/enemy.h"
 #include "objects/entities/entity.h"
+#include "objects/entities/player.h"
 #include "objects/room/room.h"
 #include "objects/weapons/projectile.h"
 #include "systems/combat/damage_application.h"
@@ -8,22 +12,17 @@
 namespace combat
 {
 
-void advanceProjectile(Projectile& projectile, Room& room, Player& player)
+void advanceProjectile(Projectile& projectile, const Room& room,
+                       const std::vector<std::unique_ptr<Enemy>>& enemies,
+                       Player& player)
 {
   for (int i = 0; i < projectile.getTilesPerTick(); ++i)
   {
     Coordinate candidate = projectile.getPosition() + projectile.getDirection();
 
-    // check before touching tile.
-    if (candidate.x < 0 || candidate.x >= Room::WIDTH || candidate.y < 0 ||
-        candidate.y >= Room::HEIGHT)
-    {
-      projectile.deactivate();
-      return;
-    }
-
-    // isWalkable() stops the projectile.
-    if (!room.tiles[candidate.x][candidate.y].isWalkable())
+    // isWalkable() stops the projectile (also covers out-of-bounds, since
+    // Room::isWalkable treats anything outside the grid as unwalkable).
+    if (!room.isWalkable(candidate))
     {
       projectile.deactivate();
       return;
@@ -31,11 +30,26 @@ void advanceProjectile(Projectile& projectile, Room& room, Player& player)
 
     // stop on the first live entity (enemy or player) standing on the
     // candidate tile.
-    if (Entity* target = room.entityAt(candidate, player))
+    if (room.isOccupied(candidate))
     {
       projectile.moveTo(candidate);
       projectile.deactivate();
-      applyDamage(*target, projectile.getDamage());
+
+      auto hit = std::find_if(
+          enemies.begin(), enemies.end(),
+          [&candidate](const std::unique_ptr<Enemy>& enemy) {
+            return enemy->isAlive() && enemy->getPosition() == candidate;
+          });
+      Entity* target = hit != enemies.end() ? hit->get() : nullptr;
+      if (target == nullptr && player.isAlive() &&
+          player.getPosition() == candidate)
+      {
+        target = &player;
+      }
+      if (target != nullptr)
+      {
+        applyDamage(*target, projectile.getDamage());
+      }
       return;
     }
 

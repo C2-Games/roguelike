@@ -2,37 +2,22 @@
 #define ROOM_H
 
 #include <map>
-#include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "objects/coordinate.h"
-#include "objects/entities/enemy.h"
-#include "objects/room/room_types.h"
+#include "objects/room/room_dimensions.h"
 #include "objects/tiles/tile.h"
+#include "objects/tiles/tile_type.h"
 
-class Entity;
-class Player;
+// door number based on the order of doors in the room's template file.
+using DoorNumber = int;
 
 struct Room
 {
-  static constexpr int WIDTH = 175;
-  static constexpr int HEIGHT = 50;
-
-  int roomID;
-  std::string name;
-  std::vector<std::vector<Tile>> tiles;
-
-  // The doors map is keyed by the door's authored label (DoorNumber)
-  // and contains the grid position of that door tile.
-  std::map<DoorNumber, Coordinate> doors;
-
-  std::vector<Coordinate> enemySpawns;
-  std::vector<Coordinate> lootSpawns;
-  std::vector<Coordinate> itemSpawns;
-
-  bool enemiesSpawned = false;
-  std::vector<std::unique_ptr<Enemy>> enemies;
+  static constexpr int WIDTH = ROOM_WIDTH;
+  static constexpr int HEIGHT = ROOM_HEIGHT;
 
   /**
    * @brief Construct an empty Room filled with default Wall tiles.
@@ -42,85 +27,149 @@ struct Room
   explicit Room(int id);
 
   /**
-   * @brief Look up the grid position of one of this room's doors.
+   * @brief Get the room's unique identifier.
    *
-   * @param number The door's authored label from the room's .txt grid.
-   * @return The door tile's coordinate.
-   * @throws std::runtime_error if this room has no door with that label.
+   * @return The room ID.
    */
-  Coordinate doorAt(DoorNumber number) const;
+  int getRoomID() const { return roomID_; }
 
   /**
-   * @brief Compute the tile one step inward from a door position on the
-   * room's boundary — the landing tile used both for door-transition
-   * arrival and for marking EntryWay at load time. If the position isn't
-   * on a room edge, it is returned unchanged.
+   * @brief Get the room's display name.
    *
-   * @param doorPos The door's grid position.
-   * @return The tile one step inward from the door.
+   * @return The room name.
    */
-  static Coordinate inwardOfDoor(Coordinate doorPos);
+  const std::string& getName() const { return name_; }
+
+  /**
+   * @brief Set the room's display name.
+   *
+   * @param name The new room name.
+   */
+  void setName(std::string name) { name_ = std::move(name); }
+
+  /**
+   * @brief Get every door this room has, keyed by authored label.
+   *
+   * @return The door number to grid position map.
+   */
+  const std::map<DoorNumber, Coordinate>& getDoors() const { return doors_; }
+
+  /**
+   * @brief Register a door at a grid position.
+   *
+   * @param number The door's authored label from the room's .txt grid.
+   * @param pos The door tile's grid position.
+   */
+  void addDoor(DoorNumber number, Coordinate pos)
+  {
+    doors_.emplace(number, pos);
+  }
+
+  /**
+   * @brief Bounds-checked tile write. No-op if `pos` is outside the room.
+   *
+   * @param pos Grid position to write.
+   * @param tile Tile to place at `pos`.
+   */
+  void setTile(Coordinate pos, Tile tile);
+
+  /**
+   * @brief Bounds-checked visibility query.
+   *
+   * @param pos Grid position to test.
+   * @return True if the tile is inside the current FoV. False if out of
+   * bounds.
+   */
+  bool isVisible(Coordinate pos) const;
+
+  /**
+   * @brief Bounds-checked explored query.
+   *
+   * @param pos Grid position to test.
+   * @return True if the tile has been seen at least once. False if out of
+   * bounds.
+   */
+  bool isExplored(Coordinate pos) const;
+
+  /**
+   * @brief Set whether a tile is currently visible. No-op if `pos` is
+   * outside the room.
+   *
+   * @param pos Grid position to update.
+   * @param visible True to reveal the tile, false to clear its visibility.
+   */
+  void toggleReveal(Coordinate pos, bool visible);
+
+  /**
+   * @brief Bounds-checked occupied query.
+   *
+   * @param pos Grid position to test.
+   * @return True if the tile is occupied. False if out of bounds.
+   */
+  bool isOccupied(Coordinate pos) const;
+
+  /**
+   * @brief Set whether a tile is currently occupied. No-op if `pos` is
+   * outside the room.
+   *
+   * @param pos Grid position to update.
+   * @param occupied True if the tile is occupied, false otherwise.
+   */
+  void toggleOccupied(Coordinate pos, bool occupied);
+
+  /**
+   * @brief Bounds-checked walkable query.
+   *
+   * @param pos Grid position to test.
+   * @return True if the tile is walkable. False if out of bounds.
+   */
+  bool isWalkable(Coordinate pos) const;
+
+  /**
+   * @brief Bounds-checked tile type query.
+   *
+   * @param pos Grid position to test.
+   * @return The tile's type, or TileType::Wall if out of bounds.
+   */
+  TileType getTileType(Coordinate pos) const;
+
+  /**
+   * @brief Bounds-checked tile symbol query.
+   *
+   * @param pos Grid position to test.
+   * @return The tile's display symbol, or ' ' if out of bounds.
+   */
+  char getTileSymbol(Coordinate pos) const;
 
   /** @brief Reset every cell in the visible grid to false. */
   void clearVisible();
 
   /**
-   * @brief Bounds-checked visibility query.
+   * @brief Check whether a grid position lies within the room's bounds.
    *
-   * @param x Column.
-   * @param y Row.
-   * @return bool True if the tile is inside the current FoV. False if out
-   * of bounds.
+   * @param position Grid position to test.
+   * @return True if the position is inside [0, WIDTH) x [0, HEIGHT).
    */
-  bool isVisible(int x, int y) const;
-
-  /**
-   * @brief Bounds-checked explored query.
-   *
-   * @param x Column.
-   * @param y Row.
-   * @return bool True if the tile has been seen at least once. False if
-   * out of bounds.
-   */
-  bool isExplored(int x, int y) const;
-
-  /**
-   * @brief Mark a tile as currently visible and permanently explored.
-   *
-   * @param x Column.
-   * @param y Row.
-   */
-  void reveal(int x, int y);
-
-  /**
-   * @brief Find the live enemy standing on `pos`. Stays a Room member (unlike
-   * the spawn/reap logic that lives outside Room) because `systems/movement/`
-   * and `systems/combat/` call it directly on a live Room; moving it out from
-   * under Room would make Room depend on `systems/`, inverting the
-   * dependency direction rule 6 requires.
-   *
-   * @param pos Tile to test.
-   * @param exclude Enemy skipped by pointer identity. Null considers every
-   * enemy.
-   * @return The enemy on `pos`, or nullptr when none is there.
-   */
-  Enemy* enemyAt(Coordinate pos, const Enemy* exclude = nullptr) const;
-
-  /**
-   * @brief Find the live entity (enemy or the player) standing on `pos`.
-   *
-   * @param pos Tile to test.
-   * @param player The player to consider alongside this room's enemies.
-   * @return The entity on `pos`, or nullptr when none is there.
-   */
-  Entity* entityAt(Coordinate pos, Player& player) const;
-  const Entity* entityAt(Coordinate pos, const Player& player) const;
+  bool inBounds(Coordinate position) const
+  {
+    return position.x >= 0 && position.x < WIDTH && position.y >= 0 &&
+           position.y < HEIGHT;
+  }
 
   Room(Room&&) = default;
   Room& operator=(Room&&) = default;
 
   Room(const Room&) = delete;
   Room& operator=(const Room&) = delete;
+
+ private:
+  int roomID_;
+  std::string name_;
+  std::vector<std::vector<Tile>> tiles_;
+
+  // the doors map is keyed by the door's authored label (DoorNumber)
+  // and contains the grid position of that door tile.
+  std::map<DoorNumber, Coordinate> doors_;
 };
 
 #endif

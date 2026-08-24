@@ -1,12 +1,12 @@
-#ifndef LOADER_H
-#define LOADER_H
+#ifndef LEVEL_LOADER_H
+#define LEVEL_LOADER_H
 
 #include <filesystem>
 
-class Level;
+struct LevelData;
 struct GameServices;
 
-namespace loader
+namespace preload
 {
 
 /**
@@ -20,13 +20,14 @@ namespace loader
  *                  the enemy catalog and room templates.
  * @param services Shared services; used transiently to roll each room's
  *                 enemy spawns.
- * @return A fully-built Level.
+ * @return A fully-built LevelData.
  * @throws std::runtime_error if the enemy catalog or any level file is
  *         missing/malformed.
  */
-Level loadLevel(const std::filesystem::path& levelDir,
-                const std::filesystem::path& assetsDir, GameServices& services);
+LevelData loadLevel(const std::filesystem::path& levelDir,
+                    const std::filesystem::path& assetsDir,
+                    GameServices& services);
 
-}  // namespace loader
+}  // namespace preload
 
 #endif

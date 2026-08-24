@@ -1,0 +1,19 @@
+{
+    "type": "Melee",
+    "name": "fisticuff",
+    "damage": 5,
+    "speed": 10,
+    "range": 1,
+    "tier": {
+        "tier_1": {
+            "damage": 7,
+            "speed": 12,
+            "range": 1
+        },
+        "tier_2": {
+            "damage": 10,
+            "speed": 15,
+            "range": 1
+        }
+    }
+}

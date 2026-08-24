@@ -8,14 +8,15 @@
 
 class Entity;
 class Enemy;
+struct Room;
 
 namespace combat
 {
-// Apply Damage to a defending entity.
+// apply damage to a defending entity.
 void applyDamage(Entity& target, Damage damage);
 
-// drop dead enemies from `active`.
-void reapDead(std::vector<std::unique_ptr<Enemy>>& active);
+// drop dead enemies from `active`, clearing their room occupancy first.
+void reapDead(Room& room, std::vector<std::unique_ptr<Enemy>>& active);
 }  // namespace combat
 
 #endif

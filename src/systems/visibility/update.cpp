@@ -1,4 +1,4 @@
-#include "systems/visibility/visibility.h"
+#include "systems/visibility/update.h"
 
 #include "systems/visibility/delta.h"
 #include "systems/visibility/recompute.h"

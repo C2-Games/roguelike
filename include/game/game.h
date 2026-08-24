@@ -4,9 +4,8 @@
 #include <chrono>
 #include <cstdint>
 #include <memory>
-#include <vector>
 
-#include "game/level.h"
+#include "game/level_data.h"
 #include "game/services.h"
 #include "io/output/render_state.h"
 #include "objects/entities/player.h"
@@ -14,7 +13,6 @@
 #include "objects/fovs/fov.h"
 #include "objects/weapons/projectile.h"
 #include "systems/combat/combat.h"
-#include "systems/loader/loader.h"
 #include "systems/movement/movement.h"
 #include "systems/visibility/visibility.h"
 
@@ -64,9 +62,9 @@ class Game
   double currentFps_ = 0.0;
   GameServices services_;
   Player player_;
-  Level level_;
+  LevelData levelData_;
+  int currentRoomID_;
   GoalMapCache goalMapCache_;
-  std::vector<std::unique_ptr<Projectile>> projectiles_;
 
   GameState state_ = GameState::Play;
   UIManager& uiManager_;
@@ -83,6 +81,36 @@ class Game
    * @return std::chrono::milliseconds
    */
   auto getDuration() const { return std::chrono::milliseconds(1000 / fps_); };
+
+  /** @brief Const access to the room the player currently occupies. */
+  const Room& currentRoom() const
+  {
+    return levelData_.rooms.at(currentRoomID_);
+  }
+
+  /**
+   * @brief Mutable access to the room the player currently occupies, for
+   * systems that update per-frame Room state (e.g. visibility, occupancy).
+   *
+   * @return The current room.
+   */
+  Room& currentRoom() { return levelData_.rooms.at(currentRoomID_); }
+
+  /** @brief Const access to the current room's live enemies/projectiles. */
+  const RoomObjects& currentRoomObjects() const
+  {
+    return levelData_.roomData.at(currentRoomID_);
+  }
+
+  /**
+   * @brief Mutable access to the current room's live enemies/projectiles.
+   *
+   * @return The current room's enemies and projectiles.
+   */
+  RoomObjects& currentRoomObjects()
+  {
+    return levelData_.roomData.at(currentRoomID_);
+  }
 
   /** @brief Handles user input for player movement and game controls. */
   void handleInput();
