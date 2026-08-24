@@ -64,6 +64,11 @@ add_executable(roguelike ${SOURCES})
 # include directories.
 target_include_directories(roguelike PRIVATE
     ${PROJECT_SOURCE_DIR}/include
+)
+
+# third-party include dirs marked SYSTEM so clang-tidy's checks skip
+# analyzing them entirely, instead of only hiding their diagnostics.
+target_include_directories(roguelike SYSTEM PRIVATE
     ${CURSES_INCLUDE_DIRS}
 )
 
@@ -71,6 +76,10 @@ target_include_directories(roguelike PRIVATE
 target_link_libraries(roguelike PRIVATE
     ${CURSES_LIBRARIES}
     nlohmann_json::nlohmann_json
+)
+
+target_include_directories(roguelike SYSTEM PRIVATE
+    $<TARGET_PROPERTY:nlohmann_json::nlohmann_json,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
 # expose the wide-char ncurses API for macOS/Homebrew builds.
