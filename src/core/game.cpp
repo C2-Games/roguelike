@@ -98,7 +98,8 @@ void Game::run()
 void Game::handleInput()
 {
   GameCommand command = uiManager_.pollInput();
-  Coordinate newPlayerPos = player_.getPosition();
+  Coordinate direction(0, 0);
+  bool isMoveCommand = false;
 
   switch (command)
   {
@@ -108,20 +109,20 @@ void Game::handleInput()
       // exhaustive over GameCommand.
       break;
     case GameCommand::MoveUp:
-      newPlayerPos.y -= 1;
-      player_.setLastDirection(Coordinate(0, -1));
+      direction = Coordinate(0, -1);
+      isMoveCommand = true;
       break;
     case GameCommand::MoveDown:
-      newPlayerPos.y += 1;
-      player_.setLastDirection(Coordinate(0, 1));
+      direction = Coordinate(0, 1);
+      isMoveCommand = true;
       break;
     case GameCommand::MoveLeft:
-      newPlayerPos.x -= 1;
-      player_.setLastDirection(Coordinate(-1, 0));
+      direction = Coordinate(-1, 0);
+      isMoveCommand = true;
       break;
     case GameCommand::MoveRight:
-      newPlayerPos.x += 1;
-      player_.setLastDirection(Coordinate(1, 0));
+      direction = Coordinate(1, 0);
+      isMoveCommand = true;
       break;
     case GameCommand::Attack:
     {
@@ -143,28 +144,32 @@ void Game::handleInput()
     case GameCommand::None:
       break;
   }
-  if (newPlayerPos.x >= 0 && newPlayerPos.x < Room::WIDTH &&
-      newPlayerPos.y >= 0 && newPlayerPos.y < Room::HEIGHT &&
-      level_.getCurrentRoom()
-          .tiles[newPlayerPos.x][newPlayerPos.y]
-          .isWalkable() &&
-      level_.getCurrentRoom().enemyAt(newPlayerPos) == nullptr)
+
+  if (!isMoveCommand)
   {
-    // Check for a linked door before applying normal movement.
-    if (level_.getCurrentRoom()
-            .tiles[newPlayerPos.x][newPlayerPos.y]
-            .getType() == TileType::Door)
+    // safe to skip movement/door resolution entirely here: the player's own
+    // tile is always in-bounds, walkable, and unoccupied, and re-resolving a
+    // door connection at a fixed (room, position) pair is idempotent.
+    return;
+  }
+
+  player_.setLastDirection(direction);
+
+  movement::PlayerStepOutcome outcome =
+      movement::stepPlayer(player_, level_.getCurrentRoom(), direction);
+  if (outcome.kind == movement::PlayerStepKind::AtDoor)
+  {
+    const DoorConnection* conn =
+        level_.getDoorConnection(level_.getCurrentRoomID(), outcome.doorPos);
+    if (conn != nullptr)
     {
-      const DoorConnection* conn =
-          level_.getDoorConnection(level_.getCurrentRoomID(), newPlayerPos);
-      if (conn != nullptr)
-      {
-        player_.moveTo(level_.transitionRoom(*conn));
-        player_.setActionState(EntityActionState::TransRoom);
-        return;
-      }
+      player_.moveTo(level_.transitionRoom(*conn));
+      player_.setActionState(EntityActionState::TransRoom);
     }
-    player_.moveTo(newPlayerPos);
+    else
+    {
+      player_.moveTo(outcome.doorPos);
+    }
   }
 }
 
@@ -219,14 +224,15 @@ void Game::update()
                      projectiles_.end());
 
   // reap before the movement pass so every enemy iterated below is alive: a
-  // projectile can drop one to 0 hp above, and moveTowardPlayer() doesn't
+  // projectile can drop one to 0 hp above, and advanceEnemy() doesn't
   // guard isAlive() itself.
   room_enemy_logic::reap(currentRoom.enemies);
 
   // move enemies toward player or attack.
   for (auto& enemy : currentRoom.enemies)
   {
-    if (enemy->moveTowardPlayer(frame, goalMapCache_, services_))
+    if (movement::advanceEnemy(*enemy, player_, currentRoom, goalMapCache_,
+                               services_))
     {
       player_.takeDamage(enemy->getAttackDamage());
       playerHitFlashFramesRemaining_ = HIT_FLASH_FRAMES;
