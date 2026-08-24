@@ -16,17 +16,15 @@ void applyDamage(Entity& target, Damage damage)
 
 void reapDead(Room& room, std::vector<std::unique_ptr<Enemy>>& active)
 {
-  for (const auto& enemy : active)
-  {
-    if (!enemy->isAlive())
-    {
-      room.toggleOccupied(enemy->getPosition(), false);
-    }
-  }
-  active.erase(std::remove_if(active.begin(), active.end(),
-                              [](const std::unique_ptr<Enemy>& enemy) {
-                                return !enemy->isAlive();
-                              }),
-               active.end());
+active.erase(std::remove_if(active.begin(), active.end(),
+                             [&room](const std::unique_ptr<Enemy>& enemy) {
+                               if (enemy->isAlive())
+                               {
+                                 return false;
+                               }
+                               room.toggleOccupied(enemy->getPosition(), false);
+                               return true;
+                             }),
+             active.end());
 }
 }  // namespace combat
