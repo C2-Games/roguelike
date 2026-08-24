@@ -14,6 +14,7 @@
 #include "objects/weapons/projectile.h"
 #include "systems/combat/combat.h"
 #include "systems/loader/loader.h"
+#include "systems/visibility/visibility.h"
 
 namespace
 {
@@ -185,12 +186,12 @@ void Game::update()
     Room& room = level_.getCurrentRoom();
     if (sameRoomAndShape)
     {
-      room.updateVisibility(lastVisibilityPos_, player_.getPosition(),
-                            player_.getFOV());
+      visibility::update(room, lastVisibilityPos_, player_.getPosition(),
+                         player_.getFOV());
     }
     else
     {
-      room.updateVisibility(player_.getPosition(), player_.getFOV());
+      visibility::update(room, player_.getPosition(), player_.getFOV());
     }
     lastVisibilityPos_ = player_.getPosition();
     lastVisibilityRoomID_ = level_.getCurrentRoomID();
