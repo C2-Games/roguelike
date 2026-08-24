@@ -16,12 +16,19 @@
 > `reap()`; it stays a stopgap home for that one piece of cross-object logic
 > until the rest of `systems/` exists. `Level` moved to `game/level.h`
 > (flagged as likely temporary — may be absorbed once the rest of #219
-> lands). `movement.h`, `visibility.h`, and `combat.h` still don't exist.
-> `Room::enemyAt`/`entityAt` and `updateVisibility` still intentionally reach
-> into `Enemy`/`Player`/`FOV` — that coupling is deferred to #205 (Enemy↔Room)
-> and the rest of the `systems/` batch (#224–#226), not fixed by #222/#223.
-> Treat the file tree and module map below as the destination, not the
-> current state, until the rest of the #219 batch lands.
+> lands). `movement.h` and `visibility.h` still don't exist. `systems/combat/`
+> is the second `systems/` directory to land (#226): it holds free functions
+> under a `combat` namespace, split across `damage_source.h` (`weaponDamage`,
+> `meleeDamage` — turning a `Weapon` or a raw melee amount into a `Damage`)
+> and `damage_application.h` (`applyDamage`, calling `Entity::takeDamage`),
+> aggregated for callers by `combat.h`. `objects/damage/` (`damage.h`,
+> `damage_type.h`) landed alongside it — `Entity::takeDamage` now takes a
+> `Damage` instead of a raw `int`. `Room::enemyAt`/`entityAt` and
+> `updateVisibility` still intentionally reach into `Enemy`/`Player`/`FOV` —
+> that coupling is deferred to #205 (Enemy↔Room) and the rest of the
+> `systems/` batch (#224–#225), not fixed by #222/#223/#226. Treat the file
+> tree and module map below as the destination, not the current state, until
+> the rest of the #219 batch lands.
 
 ## Reference: current file tree
  
@@ -30,7 +37,8 @@ include
   game/            game.h, services.h, logger.h, level.h
   systems/
     loader/        loader.h, enemy_catalog.h, room_loader.h, enemy_spawner.h
-    combat.h, movement.h, visibility.h
+    combat/        combat.h, damage_source.h, damage_application.h
+    movement.h, visibility.h
   objects/
     fovs/          fov.h, ellipse_fov.h
     entities/      enemy.h, entity_symbol.h, entity.h, player.h

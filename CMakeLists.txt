@@ -48,6 +48,8 @@ set(SOURCES
     src/systems/loader/loader.cpp
     src/systems/loader/enemy_catalog.cpp
     src/systems/loader/enemy_spawner.cpp
+    src/systems/combat/damage_source.cpp
+    src/systems/combat/damage_application.cpp
     src/objects/tiles/tile.cpp
     src/objects/weapons/weapon.cpp
     src/objects/weapons/projectile.cpp

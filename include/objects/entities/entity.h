@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "objects/coordinate.h"
+#include "objects/damage/damage.h"
 #include "objects/entities/entity_symbol.h"
 #include "objects/fovs/fov.h"
 
@@ -90,7 +91,7 @@ class Entity
   void setActionState(EntityActionState state) { actionState_ = state; };
 
   // abstract methods.
-  virtual void takeDamage(int damage) = 0;
+  virtual void takeDamage(Damage damage) = 0;
 
  protected:
   Coordinate position_;

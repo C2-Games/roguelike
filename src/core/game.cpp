@@ -12,6 +12,7 @@
 #include "objects/entities/enemy.h"
 #include "objects/entities/entity.h"
 #include "objects/weapons/projectile.h"
+#include "systems/combat/combat.h"
 #include "systems/loader/loader.h"
 
 namespace
@@ -133,7 +134,7 @@ void Game::handleInput()
       const Weapon& weapon = player_.getWeapon();
 
       projectiles_.push_back(std::make_unique<Projectile>(
-          spawnPos, dir, weapon.getDamage(), weapon.getSpeed(),
+          spawnPos, dir, combat::weaponDamage(weapon), weapon.getSpeed(),
           weapon.getRange(), weapon.getColor()));
       player_.setActionState(EntityActionState::Attack);
       return;
@@ -208,7 +209,7 @@ void Game::update()
         if (Entity* target =
                 currentRoom.entityAt(projectile->getPosition(), player_))
         {
-          target->takeDamage(projectile->getDamage());
+          combat::applyDamage(*target, projectile->getDamage());
         }
       }
     }
@@ -229,7 +230,8 @@ void Game::update()
   {
     if (enemy->moveTowardPlayer(frame, goalMapCache_, services_))
     {
-      player_.takeDamage(enemy->getAttackDamage());
+      combat::applyDamage(player_,
+                          combat::meleeDamage(enemy->getAttackDamage()));
       playerHitFlashFramesRemaining_ = HIT_FLASH_FRAMES;
     }
   }
