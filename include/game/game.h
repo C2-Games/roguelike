@@ -6,8 +6,9 @@
 #include <memory>
 #include <vector>
 
-#include "core/services.h"
 #include "game/level.h"
+#include "game/services.h"
+#include "io/output/render_state.h"
 #include "objects/entities/player.h"
 #include "objects/fovs/ellipse_fov.h"
 #include "objects/fovs/fov.h"
@@ -99,6 +100,14 @@ class Game
    * @return True when the field of view is stale and needs recomputing.
    */
   bool playerMoved() const;
+
+  /**
+   * @brief Snapshot the live game object graph into a stateless RenderState
+   * for the io/output/ render layers to consume.
+   *
+   * @return A render-ready snapshot of the current frame's world state.
+   */
+  RenderState buildRenderState() const;
 
   /**
    * @brief Renders the game state. Draws the player, enemies, and UI elements

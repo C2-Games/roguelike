@@ -28,10 +28,8 @@ endif()
 # source files.
 set(SOURCES
     src/main.cpp
-    src/core/game.cpp
-    src/core/logger.cpp
-    src/core/render_state_builder.cpp
-    src/core/room_enemy_logic.cpp
+    src/game/game.cpp
+    src/game/logger.cpp
     src/objects/entities/entity.cpp
     src/objects/entities/player.cpp
     src/objects/entities/enemy.cpp
@@ -54,6 +52,8 @@ set(SOURCES
     src/systems/movement/movement.cpp
     src/systems/combat/damage_application.cpp
     src/systems/combat/damage_source.cpp
+    src/systems/combat/projectile_movement.cpp
+    src/systems/combat/projectile_spawn.cpp
     src/systems/visibility/delta.cpp
     src/systems/visibility/recompute.cpp
     src/systems/visibility/visibility.cpp

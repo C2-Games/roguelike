@@ -12,9 +12,7 @@
 > `Game`'s old raw `EnemyCatalog` with a `loader_` member) plus the
 > `enemy_catalog`/`room_loader`/`enemy_spawner` files that back it —
 > `enemy_spawner` folds in what used to be `core/enemy_factory` and
-> `room_enemy_logic::ensureSpawned`. `core/room_enemy_logic.h` now holds only
-> `reap()`; it stays a stopgap home for that one piece of cross-object logic
-> until the rest of `systems/` exists. `Level` moved to `game/level.h`
+> `room_enemy_logic::ensureSpawned`. `Level` moved to `game/level.h`
 > (flagged as likely temporary — may be absorbed once the rest of #219
 > lands). `systems/movement/` has landed too (#224, folding in #205's problem
 > statement using this issue's design rather than #205's proposed
@@ -29,10 +27,21 @@
 > `Game::handleInput()`'s bounds/walkable/door-transition block is now
 > `movement::stepPlayer`; `Game` still resolves the door connection itself,
 > since `Level` lives under `game/`, which `systems/` may not depend on.
-> `visibility.h` and `combat.h` still don't exist. `Room::enemyAt`/`entityAt`
-> and `updateVisibility` still intentionally reach into `Enemy`/`Player`/`FOV`
-> — that coupling is separate from what #205/#224 addressed and is left to
-> #225/#226 or a later issue.
+> `Room::enemyAt`/`entityAt` and `updateVisibility` still intentionally reach
+> into `Enemy`/`Player`/`FOV` — that coupling is separate from what #205/#224
+> addressed and is left to a later issue. `systems/visibility/` and
+> `systems/combat/` have both landed as directories with facade headers
+> (`visibility.h`, `combat.h`), matching `systems/loader/` and
+> `systems/movement/`. `core/` is now fully retired (#227): its contents
+> moved to `game/` — `game.h`, `services.h`, `logger.h`, alongside the
+> pre-existing `level.h`. `render_state_builder` folded into `Game` as a
+> private `buildRenderState()` method. `frame_state.h` is gone; `Projectile`
+> no longer references `Room`/`Player` at all — its flight/hit resolution
+> moved to `systems/combat/projectile_movement.h`
+> (`combat::advanceProjectile`), and its construction from a `Player`'s
+> weapon moved to `systems/combat/projectile_spawn.h`
+> (`combat::spawnProjectile`). `room_enemy_logic` is retired; its `reap()`
+> is now `combat::reapDead` in `systems/combat/damage_application.h`.
 > Treat the file tree and module map below as the destination, not the
 > current state, until the rest of the #219 batch lands.
 
@@ -44,7 +53,9 @@ include
   systems/
     loader/        loader.h, enemy_catalog.h, room_loader.h, enemy_spawner.h
     movement/      movement.h, pathfinding.h, goal_map_cache.h
-    combat.h, visibility.h
+    combat/        combat.h, damage_application.h, damage_source.h,
+                    projectile_movement.h, projectile_spawn.h
+    visibility/    visibility.h, delta.h, recompute.h
   objects/
     fovs/          fov.h, ellipse_fov.h
     entities/      enemy.h, entity_symbol.h, entity.h, player.h
@@ -57,7 +68,7 @@ include
     input/         game_commands.h, handle_input.h
     output/
       layers/       debug_layer.h, entity_layer.h, hud_layer.h, map_layer.h
-      colors.h, render_stack.h
+      colors.h, render_stack.h, render_state.h, window_position.h
     ui_manager.h
 ```
  
@@ -100,7 +111,14 @@ hanging off these six rules.
    `io/input → game → systems → objects`, `game → io/output`, and
    `io/output → objects` (data objects only). Nothing downstream ever
    calls back upstream, and `ui` never reaches into `systems/` or a class
-   in `objects/`.
+   in `objects/`. **One accepted exception:** `systems/` `.cpp` files that
+   need `GameServices` (RNG streams) `#include "game/services.h"` directly,
+   since `game/` is where it's defined. This is a one-way, read-only handle
+   to a shared service passed down by `game/` at every call site (`Game`
+   always supplies the `GameServices&`; no `systems/` file constructs or
+   reaches for one on its own) — not a call back upstream — but it is a
+   genuine `#include` from `systems/` into `game/`, so it's called out here
+   rather than left silently contradicting the rule.
 ## 2. Dependency Diagram
  
 ```mermaid
@@ -205,8 +223,9 @@ sequenceDiagram
 - **Depends on:** `systems/` (calls each one), `io/` (polls input, triggers
   render).
 - **Depended on by:** nothing — this is the composition root.
-- **Key files:** `game.h` (loop/state), `services.h` (*likely a
-  wiring/service-locator point — confirm what this actually holds*),
+- **Key files:** `game.h` (loop/state), `services.h` (two seeded
+  `std::mt19937` RNG streams — one for spawn/level generation, one for enemy
+  movement, offset by one seed so the streams don't start identical),
   `logger.h` (cross-cutting, usable from anywhere).
 
 ### `io/` — input & output only

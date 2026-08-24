@@ -1,16 +1,12 @@
-#include "core/game.h"
+#include "game/game.h"
 
 #include <algorithm>
 #include <chrono>
 #include <thread>
 
-#include "core/frame_state.h"
-#include "core/render_state_builder.h"
-#include "core/room_enemy_logic.h"
 #include "io/input/game_commands.h"
 #include "io/ui_manager.h"
 #include "objects/entities/enemy.h"
-#include "objects/entities/entity.h"
 #include "objects/weapons/projectile.h"
 #include "systems/combat/combat.h"
 #include "systems/loader/loader.h"
@@ -127,19 +123,9 @@ void Game::handleInput()
       isMoveCommand = true;
       break;
     case GameCommand::Attack:
-    {
-      // "fire" a projectile in the player's last-faced direction starting
-      // on the player's own tile.
-      Coordinate dir = player_.getLastDirection();  // acts as an offset.
-      const Coordinate spawnPos = player_.getPosition();
-      const Weapon& weapon = player_.getWeapon();
-
-      projectiles_.push_back(std::make_unique<Projectile>(
-          spawnPos, dir, combat::weaponDamage(weapon), weapon.getSpeed(),
-          weapon.getRange(), weapon.getColor()));
+      projectiles_.push_back(combat::spawnProjectile(player_));
       player_.setActionState(EntityActionState::Attack);
       return;
-    }
     case GameCommand::Quit:
       setState(GameState::End);
       break;
@@ -200,23 +186,12 @@ void Game::update()
 
   Room& currentRoom = level_.getCurrentRoom();
 
-  // Build the per-frame context once and reuse across every enemy/projectile.
-  FrameState frame{player_, currentRoom};
-
   // advance projectiles, apply hits, and drop any that expired.
   for (auto& projectile : projectiles_)
   {
     if (projectile->isActive())
     {
-      bool hitEntity = projectile->update(frame);
-      if (hitEntity)
-      {
-        if (Entity* target =
-                currentRoom.entityAt(projectile->getPosition(), player_))
-        {
-          combat::applyDamage(*target, projectile->getDamage());
-        }
-      }
+      combat::advanceProjectile(*projectile, currentRoom, player_);
     }
   }
   projectiles_.erase(std::remove_if(projectiles_.begin(), projectiles_.end(),
@@ -228,7 +203,7 @@ void Game::update()
   // reap before the movement pass so every enemy iterated below is alive: a
   // projectile can drop one to 0 hp above, and advanceEnemy() doesn't
   // guard isAlive() itself.
-  room_enemy_logic::reap(currentRoom.enemies);
+  combat::reapDead(currentRoom.enemies);
 
   // move enemies toward player or attack.
   for (auto& enemy : currentRoom.enemies)
@@ -254,9 +229,74 @@ bool Game::playerMoved() const
          level_.getCurrentRoomID() != lastVisibilityRoomID_;
 }
 
-void Game::render()
+RenderState Game::buildRenderState() const
 {
-  uiManager_.render(
-      render_state_builder::build(player_, level_, projectiles_, currentFps_,
-                                  playerHitFlashFramesRemaining_ > 0));
+  RenderState state;
+
+  const Room& room = level_.getCurrentRoom();
+  for (int x = 0; x < Room::WIDTH; ++x)
+  {
+    for (int y = 0; y < Room::HEIGHT; ++y)
+    {
+      TileView& tile = state.map.tiles[x][y];
+      tile.symbol = room.tiles[x][y].getSymbol();
+
+      if (room.isVisible(x, y))
+      {
+        tile.visibility = TileVisibility::Visible;
+      }
+      else if (room.isExplored(x, y))
+      {
+        tile.visibility = TileVisibility::Explored;
+      }
+      else
+      {
+        tile.visibility = TileVisibility::Unseen;
+      }
+    }
+  }
+
+  // an empty symbol draws nothing: render() can still run once on the frame
+  // the player dies
+  state.entity.player =
+      EntityView{player_.getPosition(),
+                 player_.isAlive() ? player_.getSymbol() : EntitySymbol{},
+                 playerHitFlashFramesRemaining_ > 0, ColorPair::PlayerHit};
+
+  for (const auto& enemy : room.enemies)
+  {
+    const Coordinate& position = enemy->getPosition();
+    if (enemy->isAlive() && room.isVisible(position.x, position.y))
+    {
+      state.entity.enemies.push_back(
+          EntityView{position, enemy->getSymbol(), false, ColorPair::Default});
+    }
+  }
+
+  for (const auto& projectile : projectiles_)
+  {
+    const Coordinate& position = projectile->getPosition();
+    if (projectile->isActive() && room.isVisible(position.x, position.y))
+    {
+      state.entity.projectiles.push_back(
+          ProjectileView{position, projectile->getColor()});
+    }
+  }
+
+  state.hud.playerHealth = player_.getHealth();
+  state.hud.playerMaxHealth = player_.getMaxHealth();
+  state.hud.roomIndex = level_.getCurrentRoomID();
+  state.hud.roomCount = level_.getRoomCount();
+
+  const Weapon& weapon = player_.getWeapon();
+  state.hud.weapon =
+      WeaponView{weapon.getName(), weapon.getDamage(), weapon.getSpeed(),
+                 weapon.getRange(), weapon.getColor()};
+
+  state.debug.playerPosition = player_.getPosition();
+  state.debug.fps = currentFps_;
+
+  return state;
 }
+
+void Game::render() { uiManager_.render(buildRenderState()); }
