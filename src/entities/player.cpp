@@ -2,9 +2,9 @@
 
 #include <algorithm>
 
-#include "core/coordinate.h"
 #include "entities/ellipse_fov.h"
 #include "entities/entity.h"
+#include "objects/coordinate.h"
 
 Player::Player(Coordinate position, int health, int speed)
     : Entity(position, EntitySymbol{{'@'}}, health, speed,

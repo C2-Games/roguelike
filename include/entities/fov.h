@@ -6,7 +6,7 @@
 #include <set>
 #include <vector>
 
-#include "core/coordinate.h"
+#include "objects/coordinate.h"
 
 struct FOV
 {

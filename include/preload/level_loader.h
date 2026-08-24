@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "world/map/room_types.h"
+#include "objects/room/room_types.h"
 
 // one door-to-door link between two rooms, currently bidirectional
 // (fromRoom->toRoom and toRoom->fromRoom)

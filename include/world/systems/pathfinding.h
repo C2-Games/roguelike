@@ -4,7 +4,7 @@
 #include <limits>
 #include <vector>
 
-#include "core/coordinate.h"
+#include "objects/coordinate.h"
 
 struct Room;
 

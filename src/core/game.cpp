@@ -10,8 +10,8 @@
 #include "entities/entity.h"
 #include "io/input/game_commands.h"
 #include "io/ui_manager.h"
+#include "objects/weapons/projectile.h"
 #include "preload/level_loader.h"
-#include "world/objects/projectile.h"
 
 namespace
 {

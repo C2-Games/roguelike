@@ -4,8 +4,8 @@
 #include <memory>
 #include <set>
 
-#include "core/coordinate.h"
 #include "entities/fov.h"
+#include "objects/coordinate.h"
 
 struct EllipseFOV : public FOV
 {

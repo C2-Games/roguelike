@@ -6,9 +6,9 @@
 #include <string>
 #include <vector>
 
-#include "core/colors.h"
-#include "core/coordinate.h"
-#include "entities/entity_symbol.h"
+#include "objects/colors.h"
+#include "objects/coordinate.h"
+#include "objects/entities/entity_symbol.h"
 #include "world/map/room.h"
 
 enum class TileVisibility : std::uint8_t

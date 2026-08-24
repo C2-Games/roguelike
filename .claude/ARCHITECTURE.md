@@ -2,11 +2,15 @@
 
 > **Migration in progress.** This doc describes the target module layout
 > (`objects/`/`systems/`/`game/`/`io/`) tracked by #219. The tree does not
-> match it yet — `objects/`, `systems/`, and `game/` don't exist as
-> directories yet, and code still lives under the pre-migration layout
-> (`core/`, `entities/`, `world/`, `io/`, `preload/`). Treat the file tree
-> and module map below as the destination, not the current state, until the
-> rest of the #219 batch lands.
+> match it yet. `objects/` now exists (#221), but only holds the
+> behavior-free data structs moved there so far (`coordinate.h`, `colors.h`,
+> `tiles/`, `room/room_types.h`, `weapons/`, `entities/entity_symbol.h`);
+> `systems/` and `game/` don't exist as directories yet, and the
+> game-object classes (`Room`, `Entity`, `Player`, `Enemy`, `FOV`, etc.)
+> still live in their pre-migration locations under `core/`, `entities/`,
+> `world/map/` pending #222. Treat the file tree and module map below as
+> the destination, not the current state, until the rest of the #219
+> batch lands.
 
 ## Reference: current file tree
  

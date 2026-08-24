@@ -1,4 +1,4 @@
-#include "world/objects/projectile.h"
+#include "objects/weapons/projectile.h"
 
 #include "core/frame_state.h"
 #include "world/map/room.h"
@@ -43,7 +43,7 @@ bool Projectile::update(const FrameState& frame)
       return true;
     }
 
-    // Advance and check remaining range.
+    // advance and check remaining range.
     position_ = candidate;
     --remainingRange_;
     if (remainingRange_ <= 0)
