@@ -137,9 +137,12 @@ health_ = std::min(health_ + healAmount, maxHealth_);
 
 ## Docstrings
 
-Use `/** */`-style Doxygen block docstrings — **only** on class methods
-and constructors. Never add one to a class declaration, struct
-declaration, or an enum declaration. If a struct/class/enum carrying a
+Use `/** */`-style Doxygen block docstrings — never `///`. This covers
+class methods and constructors (public **or** private) and standalone
+free functions alike; visibility and namespace scope don't change
+whether a docstring belongs, only the declaration itself does. Never add
+one to a class declaration, struct declaration, or an enum declaration.
+If a struct/class/enum carrying a
 Doxygen block gets relocated (e.g. into a new header during a refactor),
 convert its docstring to a plain `//` comment (or drop it if the block was
 pure restatement) rather than carrying the `/** @brief */` block over
@@ -208,17 +211,39 @@ class Enemy : public Entity
 
   /** @brief Reset the enemy back to its starting position and full health. */
   void resetToSpawn();
+
+ private:
+  /**
+   * @brief Recompute this frame's AI state from FoV and chase-memory data.
+   *
+   * @param inFoV Whether the player is currently in this enemy's FoV.
+   * @param playerPos The player's current position.
+   */
+  void transitionState(bool inFoV, Coordinate playerPos);
 };
+
+/**
+ * @brief Convert a room-file legend character into its tile type.
+ *
+ * @param ch The character read from the room's ASCII grid.
+ * @return The tile type that character represents.
+ */
+TileType charToRoomTile(char ch);
 ```
 
 This matches the existing codebase's docstring style already — no
-special-casing needed between old and new code.
+special-casing needed between old and new code, and none between public
+and private methods, or between a method and a free function.
 
 ## Common mistakes
 
 - Attached braces (`if (x) {`) — this style always breaks before `{`.
-- Docstring on a class/struct/enum declaration — docstrings are
-  method/constructor-only.
+- Docstring on a class/struct/enum declaration — docstrings belong on
+  the method/constructor/free-function declaration, never the type.
+- A `//` comment on a private method or a standalone function where a
+  `/** @brief */` docstring belongs — private and free functions are not
+  exempt.
+- `///`-style docstrings — this codebase only uses `/** */` blocks.
 - `@return int` / `@return bool` — restates the signature; describe what
   the value *means* instead.
 - Collapsing to a single-line `/** @brief ... */` when the method
