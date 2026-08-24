@@ -12,6 +12,7 @@
 #include "objects/fovs/ellipse_fov.h"
 #include "objects/fovs/fov.h"
 #include "objects/weapons/projectile.h"
+#include "systems/combat/combat.h"
 #include "systems/loader/loader.h"
 #include "systems/movement/movement.h"
 
