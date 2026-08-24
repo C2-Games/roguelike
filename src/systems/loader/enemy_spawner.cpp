@@ -1,6 +1,7 @@
-#include "core/enemy_factory.h"
+#include "systems/loader/enemy_spawner.h"
 
 #include <algorithm>
+#include <memory>
 #include <random>
 
 #include "core/logger.h"
@@ -8,11 +9,12 @@
 #include "objects/entities/enemy.h"
 #include "objects/room/room.h"
 #include "objects/room/room_types.h"
-#include "preload/enemy_catalog.h"
+#include "systems/loader/enemy_catalog.h"
 
-namespace enemy_factory
+namespace
 {
 
+// rolls a fresh set of enemies for a room from its spawn table.
 std::vector<std::unique_ptr<Enemy>> rollForRoom(
     const Room& room, const std::vector<EnemySpawnConfig>& spawnTable,
     const EnemyCatalog& catalog, GameServices& services)
@@ -65,4 +67,20 @@ std::vector<std::unique_ptr<Enemy>> rollForRoom(
   return enemies;
 }
 
-}  // namespace enemy_factory
+}  // namespace
+
+namespace enemy_spawner
+{
+
+void ensureSpawned(Room& room, const std::vector<EnemySpawnConfig>& spawnTable,
+                   const EnemyCatalog& catalog, GameServices& services)
+{
+  if (room.enemiesSpawned)
+  {
+    return;
+  }
+  room.enemiesSpawned = true;
+  room.enemies = rollForRoom(room, spawnTable, catalog, services);
+}
+
+}  // namespace enemy_spawner

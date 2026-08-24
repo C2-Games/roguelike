@@ -1,19 +1,50 @@
-#include "preload/level_loader.h"
+#include "systems/loader/loader.h"
 
 #include <algorithm>
 #include <fstream>
 #include <iterator>
+#include <map>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
+#include <string>
 #include <utility>
 #include <vector>
 
-#include "core/room_enemy_logic.h"
-#include "preload/room_loader.h"
-#include "world/map/level.h"
+#include "game/level.h"
+#include "objects/room/room_types.h"
+#include "systems/loader/enemy_catalog.h"
+#include "systems/loader/enemy_spawner.h"
+#include "systems/loader/room_loader.h"
 
 namespace
 {
+
+// one door-to-door link between two rooms, currently bidirectional
+// (fromRoom->toRoom and toRoom->fromRoom).
+struct RoomAdjacency
+{
+  int fromRoom;
+  DoorNumber fromDoor;
+  int toRoom;
+  DoorNumber toDoor;
+};
+
+// one room's metadata, parsed from room_<id>.json.
+struct RoomConfig
+{
+  int id;
+  std::string name;
+  std::string ref;  // filename under assets/rooms/
+  std::vector<EnemySpawnConfig> enemies;
+};
+
+// fully parsed contents of a level directory.
+struct LevelConfig
+{
+  LevelMeta meta;
+  std::vector<RoomAdjacency> adjacency;  // from map.json
+  std::map<int, RoomConfig> rooms;       // id -> per-room config
+};
 
 nlohmann::json readJson(const std::filesystem::path& path)
 {
@@ -167,8 +198,8 @@ void sealUnlinkedDoors(std::map<int, Room>& rooms,
   }
 }
 
-// Load and cross-validate an entire level directory (level.json, map.json,
-// and every room_<id>.json map.json references). Throws std::runtime_error
+// load and cross-validate an entire level directory (level.json, map.json,
+// and every room_<id>.json map.json references). throws std::runtime_error
 // on any missing file, malformed JSON, or cross-reference mismatch (id
 // mismatches, room-count mismatches).
 LevelConfig loadLevelConfig(const std::filesystem::path& levelDir)
@@ -213,25 +244,25 @@ LevelConfig loadLevelConfig(const std::filesystem::path& levelDir)
 
 }  // namespace
 
-namespace level_loader
+namespace loader
 {
 
-Level loadLevel(const std::filesystem::path& levelDir, GameServices& services,
-                const EnemyCatalog& catalog)
+Level loadLevel(const std::filesystem::path& levelDir,
+                const std::filesystem::path& assetsDir, GameServices& services)
 {
+  EnemyCatalog catalog(assetsDir / "enemies");
+  std::filesystem::path roomsDir = assetsDir / "rooms";
+
   LevelConfig config = loadLevelConfig(levelDir);
 
   std::map<int, Room> rooms;
   for (const auto& [id, roomCfg] : config.rooms)
   {
     auto roomEntry =
-        rooms
-            .insert({id, room_loader::loadRoom(
-                             id, std::filesystem::path("assets/rooms") /
-                                     roomCfg.ref)})
+        rooms.insert({id, room_loader::loadRoom(id, roomsDir / roomCfg.ref)})
             .first;
-    room_enemy_logic::ensureSpawned(roomEntry->second, roomCfg.enemies, catalog,
-                                    services);
+    enemy_spawner::ensureSpawned(roomEntry->second, roomCfg.enemies, catalog,
+                                 services);
   }
 
   // each edge is authored once and wired both ways, so the graph cannot be
@@ -250,4 +281,4 @@ Level loadLevel(const std::filesystem::path& levelDir, GameServices& services,
   return Level(config.meta, std::move(rooms), std::move(doorConnections));
 }
 
-}  // namespace level_loader
+}  // namespace loader
