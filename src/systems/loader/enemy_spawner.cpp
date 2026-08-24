@@ -4,8 +4,8 @@
 #include <memory>
 #include <random>
 
-#include "core/logger.h"
-#include "core/services.h"
+#include "game/logger.h"
+#include "game/services.h"
 #include "objects/entities/enemy.h"
 #include "objects/room/room.h"
 #include "objects/room/room_types.h"
