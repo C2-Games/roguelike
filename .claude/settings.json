@@ -25,7 +25,9 @@
       "Bash(gh issue list*)",
       "Bash(gh issue view*)",
       "Bash(gh issue status*)",
-      "Bash(gh search issues*)"
+      "Bash(gh search issues*)",
+      "Bash(gh issue create*)",
+      "Bash(gh issue edit*)"
     ]
   },
   "hooks": {

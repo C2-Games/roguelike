@@ -1,6 +1,7 @@
 # Working in this repo
 
-Four rules hold here, and all four are enforced mechanically rather than by convention.
+Five rules hold here. The first four are enforced mechanically; the fifth is enforced by an agent's
+judgement for now, with a mechanical backstop deferred until #219 lands (see below).
 
 ## 1. No change without a GitHub issue
 
@@ -98,6 +99,32 @@ impossible to answer by editing the file.
 
 ---
 
+## 5. Architecture is checked before implementation, not after
+
+`.claude/ARCHITECTURE.md`'s six Coupling Rules are the actual architecture — everything else in
+that file is detail hanging off them. A naturally phrased request breaks them easily (e.g. "have
+`Enemy` ask `Room` whether a tile is walkable" breaks rule 1; "have the HUD read `Player`'s health
+directly" breaks rule 5), and nothing caught that before this rule existed: `reviewer` judges
+structure only inside `/check`, after the code already exists; `issue_gate.py` gates on whether an
+issue is recorded, not on design.
+
+**Enforcement:** the `architecture-checker` agent (`.claude/agents/architecture-checker.md`) is
+dispatched once per plan during `/start-issue`'s plan step, before `ExitPlanMode`, whenever the
+plan touches `src/` or `include/` — the same skip condition `reviewer` uses for `/check`. It reads
+the plan's proposed changes against the six Coupling Rules and hands back any violation, why the
+rule holds, and a concrete architecture-preserving alternative. `AskUserQuestion` is unavailable
+inside subagents, so — like `issue-drafter` — it hands the finding back instead of asking; the main
+agent asks the developer which way to go, including proceeding as planned and updating
+`ARCHITECTURE.md` instead, and folds the answer into the plan before presenting it for approval.
+
+This is judgement-only for now, not a mechanical backstop: a deterministic `PreToolUse` hook that
+catches coarse `#include`-boundary violations textually is deferred until the `objects/`/`systems/`
+migration (#219) lands and those paths exist to check against — writing it against today's
+transitional tree would mean rewriting it as each of #221–#227 lands. File that hook as its own
+issue once #219 completes.
+
+---
+
 ## Style: what the tools check, and what the skill checks
 
 Rule 2 covers everything a linter can decide. The rest — naming, commenting, where a docstring
@@ -130,8 +157,13 @@ flowchart TD
     Trivial -- "yes, skip plan mode" --> Implementer
     Trivial -- "no" --> Plan["plan"]
  
+    Plan --> ArchCheck{"architecture-checker:<br/>src/include touched?"}
+    ArchCheck -- "no" --> Implementer["implementer agent(s)<br/>one per Task: id + Depends on + Subagent<br/>edit + update CLAUDE.md<br/><i>gated by issue_gate.py</i>"]
+    ArchCheck -- "yes, no violations" --> Implementer
+    ArchCheck -- "yes, violation found" --> Resolve["ask developer: alternative,<br/>proceed + update ARCHITECTURE.md,<br/>or revise plan"]
+    Resolve --> Plan
+
     subgraph Loop["Review Loop"]
-        Plan --> Implementer["implementer agent(s)<br/>one per Task: id + Depends on + Subagent<br/>edit + update CLAUDE.md<br/><i>gated by issue_gate.py</i>"]
         Implementer --> Check["/check<br/>(format, sweep, review)<br/><i>stamps .last-check</i>"]
         Check -- "reviewer found issues" --> Plan
     end
@@ -149,7 +181,7 @@ flowchart TD
     classDef worktreeMode fill:#d1fae5,stroke:#059669,stroke-width:2px,color:#065f46
     classDef hookGate fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#78350f
  
-    class StartIssue,Plan,WorktreeCheck,Trivial planMode
+    class StartIssue,Plan,WorktreeCheck,Trivial,ArchCheck,Resolve planMode
     class Implementer,Check,DevReview,PR,CommitPush autoMode
     class EnterWT,ExitWT worktreeMode
     class DocDrift hookGate

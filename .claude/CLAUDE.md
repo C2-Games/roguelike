@@ -32,20 +32,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    types, a changed convention, or a placeholder becoming real; no for renames, small refactors and
    bugfixes. As a backstop, a `Stop` hook (`.claude/hooks/doc_drift.py`) lists any workflow-defining
    file that changed while this one did not, once per distinct set of changes.
+5. **A plan that would break `ARCHITECTURE.md` is flagged before code is written, not after.**
+   During `/start-issue`'s plan step, the `architecture-checker` agent (dispatched once per plan,
+   only when the plan touches `src/`/`include/`) reads the plan against `ARCHITECTURE.md`'s six
+   Coupling Rules and hands back any violation plus an architecture-preserving alternative; the
+   main agent asks the developer which to take — including proceeding as planned and updating
+   `ARCHITECTURE.md` instead — before `ExitPlanMode`. A deterministic `PreToolUse` hook enforcing
+   the same boundaries mechanically is deferred until the `objects/`/`systems/` migration (#219)
+   lands and those paths are real; today this rule is agent-judgement only.
 
 Commands: `/issues`, `/new-issue`, `/start-issue`, `/check`, `/build`, `/run`, `/pr`. The `cpp-style`
 skill (`.claude/skills/cpp-style/SKILL.md`) carries the conventions no linter can check — naming,
 comment voice, and where a Doxygen docstring is allowed to go — and applies to all C++ work here.
-Three project agents back issue filing, implementation, and review: `.claude/agents/issue-drafter.md`
+Four project agents back issue filing, implementation, review, and pre-implementation architecture
+checks: `.claude/agents/issue-drafter.md`
 drafts and files GitHub issues (dispatched by `/new-issue` and by any direct change request with no
 issue on record); since `AskUserQuestion` is unavailable inside subagents, it does not ask its own
 follow-ups on implementation approach, whether to split into multiple issues, parent/sub-issue
 linkage, and milestone — it gathers the data those questions need, hands it back with the draft(s),
 and the main agent asks the user and resumes `issue-drafter` with the answers before it creates
 anything; `.claude/agents/implementer.md` executes one isolated plan task at a time (dispatched in parallel
-when tasks are independent); and `.claude/agents/reviewer.md` gives `/check` a read-only
+when tasks are independent); `.claude/agents/reviewer.md` gives `/check` a read-only
 structure/efficiency/isolation/style pass over `src/`/`include/` changes, grounded in the
-originating issue. Plan-mode task breakdowns are also logged as tracked tasks
+originating issue; and `.claude/agents/architecture-checker.md` reads a not-yet-implemented plan against
+`ARCHITECTURE.md`'s coupling rules before `ExitPlanMode`, handing back violations and
+alternatives the same way `issue-drafter` hands back open questions. Plan-mode task breakdowns are also logged as tracked tasks
 (`TaskCreate`/`TaskUpdate`: `owner` = subagent, `addBlockedBy` = dependencies) before
 calling `ExitPlanMode` — see `/start-issue` step 7 for the mechanics.
 

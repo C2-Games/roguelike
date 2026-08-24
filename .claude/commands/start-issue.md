@@ -103,6 +103,18 @@ denies those edits outright. Run this first, every time.
    the pseudo-code level — and the plan's job is to implement that precisely, not to invent
    architecture unprompted. Plans in this repo are made collaboratively, not unilaterally.
 
+   **Check the plan against architecture before presenting it.** Once the plan's tasks are drafted,
+   if any of them touch `src/` or `include/`, dispatch the `architecture-checker` agent
+   (`.claude/agents/architecture-checker.md`) with the plan's task list before calling
+   `ExitPlanMode`. It reads the plan against `ARCHITECTURE.md`'s six Coupling Rules and hands back
+   any violation plus an architecture-preserving alternative — since `AskUserQuestion` is
+   unavailable inside subagents, it hands the finding back rather than asking. If it reports a
+   violation, ask the developer via `AskUserQuestion` which way to go: adopt the alternative,
+   proceed as planned and note the `ARCHITECTURE.md` update this will require, or revise the plan —
+   then fold the answer in before continuing. If it reports no violations, say so in one line and
+   continue. Skip this step entirely when the plan touches neither directory (config-only work like
+   doc or `.claude/` changes).
+
    The plan should name the specific files and symbols to change, follow the conventions in
    `CLAUDE.md` (trailing-underscore privates, `#ifndef` guards, forward declarations), and
    **must end with `/check`**. Nothing is formatted or analysed while you write — there is no
