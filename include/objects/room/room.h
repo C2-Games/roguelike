@@ -12,7 +12,6 @@
 #include "objects/tiles/tile.h"
 
 class Entity;
-class FOV;
 class Player;
 
 struct Room
@@ -61,24 +60,6 @@ struct Room
    * @return The tile one step inward from the door.
    */
   static Coordinate inwardOfDoor(Coordinate doorPos);
-
-  /**
-   * @brief Recompute this room's per-tile visibility from a viewer position.
-   *
-   * @param origin World position of the viewer (typically the player).
-   * @param fov Precomputed FoV mask defining which offsets are lit.
-   */
-  void updateVisibility(Coordinate origin, const FOV& fov);
-
-  /**
-   * @brief Update visibility for a step, falling back to a full recompute.
-   *
-   * @param previousOrigin Viewer position before the step.
-   * @param origin Viewer position after the step.
-   * @param fov FoV mask, unchanged since the previous frame.
-   */
-  void updateVisibility(Coordinate previousOrigin, Coordinate origin,
-                        const FOV& fov);
 
   /** @brief Reset every cell in the visible grid to false. */
   void clearVisible();
@@ -140,19 +121,6 @@ struct Room
 
   Room(const Room&) = delete;
   Room& operator=(const Room&) = delete;
-
- private:
-  /**
-   * @brief Incrementally update visibility for a single unit-cardinal step.
-   *
-   * @param previousOrigin Viewer position before the step.
-   * @param origin Viewer position after the step.
-   * @param fov FoV mask, unchanged since the previous frame.
-   * @return bool True if applied; false if the step wasn't a precomputed unit
-   * cardinal move, meaning the caller must fall back to updateVisibility().
-   */
-  bool updateVisibilityDelta(Coordinate previousOrigin, Coordinate origin,
-                             const FOV& fov);
 };
 
 #endif
