@@ -6,60 +6,8 @@
 
 #include "objects/entities/enemy.h"
 #include "objects/entities/player.h"
-#include "objects/fovs/fov.h"
 
 Room::Room(int id) : roomID(id), tiles(WIDTH, std::vector<Tile>(HEIGHT)) {}
-
-void Room::updateVisibility(Coordinate origin, const FOV& fov)
-{
-  clearVisible();
-  for (const Coordinate& pos : fov.absoluteFOV(origin))
-  {
-    reveal(pos.x, pos.y);
-  }
-}
-
-bool Room::updateVisibilityDelta(Coordinate previousOrigin, Coordinate origin,
-                                 const FOV& fov)
-{
-  Coordinate dir = origin - previousOrigin;
-  const std::vector<Coordinate>* leaving = fov.leavingOffsets(dir);
-  const std::vector<Coordinate>* entering =
-      fov.leavingOffsets(Coordinate(-dir.x, -dir.y));
-  if (leaving == nullptr || entering == nullptr)
-  {
-    return false;
-  }
-
-  for (const Coordinate& offset : *leaving)
-  {
-    Coordinate pos = previousOrigin + offset;
-    if (pos.x < 0 || pos.x >= WIDTH || pos.y < 0 || pos.y >= HEIGHT)
-    {
-      continue;
-    }
-    // No bounds-checked equivalent of reveal() exists for clearing a single
-    // tile, so this open-codes the same bounds check reveal() does.
-    tiles[pos.x][pos.y].clearVisible();
-  }
-
-  for (const Coordinate& offset : *entering)
-  {
-    Coordinate pos = origin + offset;
-    reveal(pos.x, pos.y);
-  }
-
-  return true;
-}
-
-void Room::updateVisibility(Coordinate previousOrigin, Coordinate origin,
-                            const FOV& fov)
-{
-  if (!updateVisibilityDelta(previousOrigin, origin, fov))
-  {
-    updateVisibility(origin, fov);
-  }
-}
 
 void Room::clearVisible()
 {
