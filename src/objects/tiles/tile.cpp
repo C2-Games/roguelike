@@ -1,10 +1,10 @@
-#include "world/map/tile.h"
+#include "objects/tiles/tile.h"
 
 Tile::Tile(TileType type, Coordinate position)
     : type_(type), position_(position)
 {}
 
-// Define all tile types and their attributes in ONE place
+// define all tile types and their attributes in one place.
 const std::unordered_map<int, TileAttributes> Tile::typeAttributes_ = {
     {static_cast<int>(TileType::Wall), {'#', false}},
     {static_cast<int>(TileType::Floor), {'.', true}},
@@ -27,7 +27,7 @@ bool Tile::isWalkable() const
 void Tile::reveal()
 {
   visible_ = true;
-  // Only mark explored if the tile is not Void.
+  // only mark explored if the tile is not Void.
   if (type_ != TileType::Void)
   {
     explored_ = true;

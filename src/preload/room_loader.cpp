@@ -7,8 +7,8 @@
 #include <stdexcept>
 #include <string>
 
+#include "objects/room/room_types.h"
 #include "world/map/room.h"
-#include "world/map/room_types.h"
 
 namespace
 {

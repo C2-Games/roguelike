@@ -1,8 +1,8 @@
 #ifndef MAP_LAYER_H
 #define MAP_LAYER_H
 
-#include "core/colors.h"
 #include "io/output/render_stack.h"
+#include "objects/colors.h"
 
 struct MapLayerPacket;
 

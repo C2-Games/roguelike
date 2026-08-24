@@ -1,8 +1,8 @@
 #ifndef PROJECTILE_H
 #define PROJECTILE_H
 
-#include "core/colors.h"
-#include "core/coordinate.h"
+#include "objects/colors.h"
+#include "objects/coordinate.h"
 
 struct FrameState;
 
