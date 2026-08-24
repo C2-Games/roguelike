@@ -1,4 +1,4 @@
-#include "entities/enemy.h"
+#include "objects/entities/enemy.h"
 
 #include <algorithm>
 #include <array>
@@ -8,11 +8,11 @@
 
 #include "core/frame_state.h"
 #include "core/services.h"
-#include "entities/player.h"
 #include "objects/coordinate.h"
+#include "objects/entities/player.h"
+#include "objects/room/room.h"
 #include "objects/tiles/tile.h"
 #include "objects/tiles/tile_type.h"
-#include "world/map/room.h"
 #include "world/systems/goal_map_cache.h"
 #include "world/systems/pathfinding.h"
 

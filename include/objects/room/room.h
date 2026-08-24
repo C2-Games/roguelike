@@ -5,12 +5,11 @@
 #include <string>
 #include <vector>
 
-#include "entities/room_enemy_state.h"
 #include "objects/coordinate.h"
+#include "objects/room/room_enemy_state.h"
 #include "objects/room/room_types.h"
 #include "objects/tiles/tile.h"
 
-class EnemyCatalog;
 class Entity;
 class FOV;
 class Player;
@@ -110,27 +109,25 @@ struct Room
    */
   void reveal(int x, int y);
 
-  std::vector<std::unique_ptr<Enemy>>& enemies()
-  {
-    return enemyState.enemies();
-  }
+  std::vector<std::unique_ptr<Enemy>>& enemies() { return enemyState.enemies; }
   const std::vector<std::unique_ptr<Enemy>>& enemies() const
   {
-    return enemyState.enemies();
+    return enemyState.enemies;
   }
 
   /**
-   * @brief Find the live enemy standing on `pos`.
+   * @brief Find the live enemy standing on `pos`. Stays a Room member (unlike
+   * the spawn/reap logic stripped off RoomEnemyState) because Enemy and
+   * Projectile, both game-object classes in their own right, call it
+   * directly; moving it out from under Room would make those classes reach
+   * upward into core/ instead of sideways into Room.
    *
    * @param pos Tile to test.
    * @param exclude Enemy skipped by pointer identity. Null considers every
    * enemy.
    * @return The enemy on `pos`, or nullptr when none is there.
    */
-  Enemy* enemyAt(Coordinate pos, const Enemy* exclude = nullptr) const
-  {
-    return enemyState.enemyAt(pos, exclude);
-  }
+  Enemy* enemyAt(Coordinate pos, const Enemy* exclude = nullptr) const;
 
   /**
    * @brief Find the live entity (enemy or the player) standing on `pos`.
@@ -141,19 +138,6 @@ struct Room
    */
   Entity* entityAt(Coordinate pos, Player& player) const;
   const Entity* entityAt(Coordinate pos, const Player& player) const;
-
-  /**
-   * @brief Roll this room's enemies on first call; a no-op after.
-   *
-   * @param spawnTable The room's authored enemy entries.
-   * @param catalog    Resolves each entry's name/tier to stats.
-   * @param services   RNG source for the factory roll.
-   */
-  void ensureEnemiesSpawned(const std::vector<EnemySpawnConfig>& spawnTable,
-                            const EnemyCatalog& catalog, GameServices& services)
-  {
-    enemyState.ensureSpawned(*this, spawnTable, catalog, services);
-  }
 
   Room(Room&&) = default;
   Room& operator=(Room&&) = default;

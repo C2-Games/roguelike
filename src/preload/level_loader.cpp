@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "core/room_enemy_logic.h"
 #include "preload/room_loader.h"
 #include "world/map/level.h"
 
@@ -229,7 +230,8 @@ Level loadLevel(const std::filesystem::path& levelDir, GameServices& services,
                              id, std::filesystem::path("assets/rooms") /
                                      roomCfg.ref)})
             .first;
-    roomEntry->second.ensureEnemiesSpawned(roomCfg.enemies, catalog, services);
+    room_enemy_logic::ensureSpawned(roomEntry->second, roomCfg.enemies, catalog,
+                                    services);
   }
 
   // each edge is authored once and wired both ways, so the graph cannot be

@@ -2,15 +2,20 @@
 
 > **Migration in progress.** This doc describes the target module layout
 > (`objects/`/`systems/`/`game/`/`io/`) tracked by #219. The tree does not
-> match it yet. `objects/` now exists (#221), but only holds the
-> behavior-free data structs moved there so far (`coordinate.h`, `colors.h`,
-> `tiles/`, `room/room_types.h`, `weapons/`, `entities/entity_symbol.h`);
-> `systems/` and `game/` don't exist as directories yet, and the
-> game-object classes (`Room`, `Entity`, `Player`, `Enemy`, `FOV`, etc.)
-> still live in their pre-migration locations under `core/`, `entities/`,
-> `world/map/` pending #222. Treat the file tree and module map below as
-> the destination, not the current state, until the rest of the #219
-> batch lands.
+> match it yet. `objects/` now holds both the behavior-free data structs
+> (#221: `coordinate.h`, `colors.h`, `tiles/`, `room/room_types.h`,
+> `weapons/`) and the game-object classes (#222: `entities/` — `Entity`,
+> `Player`, `Enemy`; `fovs/` — `FOV`, `EllipseFOV`; `room/room.h` — `Room`).
+> `systems/` and `game/` still don't exist as directories. `RoomEnemyState`
+> (`objects/room/room_enemy_state.h`) is now plain data (`spawned`,
+> `enemies`); the spawn/reap logic that used to live on it, plus
+> `enemy_factory`, moved to `core/room_enemy_logic.h` and `core/enemy_factory.h`
+> — a stopgap home for cross-object logic until `systems/` exists (#223–#226).
+> `Room::enemyAt`/`entityAt` and `updateVisibility` still intentionally reach
+> into `Enemy`/`Player`/`FOV` — that coupling is deferred to #205 (Enemy↔Room)
+> and the `systems/` batch (#223–#226), not fixed by #222. Treat the file tree
+> and module map below as the destination, not the current state, until the
+> rest of the #219 batch lands.
 
 ## Reference: current file tree
  
@@ -22,7 +27,7 @@ include
     fovs/          fov.h, ellipse_fov.h
     entities/      enemy.h, entity_symbol.h, entity.h, player.h
     tiles/         tile_type.h, tile.h
-    room/          room.h, room_types.h
+    room/          room.h, room_types.h, room_enemy_state.h
     weapons/       weapon.h, weapon_attributes.h, weapon_type.h, projectile.h
     damage/        damage.h, damage_type.h
     coordinate.h, colors.h

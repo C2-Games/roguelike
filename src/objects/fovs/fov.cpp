@@ -1,4 +1,4 @@
-#include "entities/fov.h"
+#include "objects/fovs/fov.h"
 
 #include <algorithm>
 #include <iterator>

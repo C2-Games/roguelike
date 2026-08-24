@@ -6,8 +6,8 @@
 #include <memory>
 #include <string>
 
-#include "entities/fov.h"
 #include "objects/entities/entity_symbol.h"
+#include "objects/fovs/fov.h"
 
 /** @brief Resolved per-tier stats for one named enemy. */
 struct EnemyTierAttributes

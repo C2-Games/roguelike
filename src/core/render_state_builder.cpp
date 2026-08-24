@@ -1,11 +1,11 @@
 #include "core/render_state_builder.h"
 
-#include "entities/enemy.h"
-#include "entities/player.h"
+#include "objects/entities/enemy.h"
+#include "objects/entities/player.h"
+#include "objects/room/room.h"
 #include "objects/weapons/projectile.h"
 #include "objects/weapons/weapon.h"
 #include "world/map/level.h"
-#include "world/map/room.h"
 
 namespace render_state_builder
 {

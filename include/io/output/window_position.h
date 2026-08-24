@@ -3,7 +3,7 @@
 
 #include <algorithm>
 
-#include "world/map/room.h"
+#include "objects/room/room.h"
 
 struct WindowPosition
 {

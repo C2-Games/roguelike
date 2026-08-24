@@ -2,9 +2,9 @@
 
 #include <queue>
 
+#include "objects/room/room.h"
 #include "objects/tiles/tile.h"
 #include "objects/tiles/tile_type.h"
-#include "world/map/room.h"
 
 namespace
 {

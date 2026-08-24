@@ -1,14 +1,14 @@
-#include "entities/enemy_factory.h"
+#include "core/enemy_factory.h"
 
 #include <algorithm>
 #include <random>
 
 #include "core/logger.h"
 #include "core/services.h"
-#include "entities/enemy.h"
+#include "objects/entities/enemy.h"
+#include "objects/room/room.h"
 #include "objects/room/room_types.h"
 #include "preload/enemy_catalog.h"
-#include "world/map/room.h"
 
 namespace enemy_factory
 {

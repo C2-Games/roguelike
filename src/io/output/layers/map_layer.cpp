@@ -5,7 +5,7 @@
 #include "io/output/colors.h"
 #include "io/output/render_state.h"
 #include "io/output/window_position.h"
-#include "world/map/room.h"
+#include "objects/room/room.h"
 
 MapLayer::MapLayer(int h, int w, int y, int x) : RenderStack(h, w, y, x) {}
 
