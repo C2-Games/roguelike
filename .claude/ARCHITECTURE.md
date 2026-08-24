@@ -16,10 +16,23 @@
 > `reap()`; it stays a stopgap home for that one piece of cross-object logic
 > until the rest of `systems/` exists. `Level` moved to `game/level.h`
 > (flagged as likely temporary — may be absorbed once the rest of #219
-> lands). `movement.h`, `visibility.h`, and `combat.h` still don't exist.
-> `Room::enemyAt`/`entityAt` and `updateVisibility` still intentionally reach
-> into `Enemy`/`Player`/`FOV` — that coupling is deferred to #205 (Enemy↔Room)
-> and the rest of the `systems/` batch (#224–#226), not fixed by #222/#223.
+> lands). `systems/movement/` has landed too (#224, folding in #205's problem
+> statement using this issue's design rather than #205's proposed
+> Room-middleware API): like `systems/loader/`, it's a directory —
+> `pathfinding.h`/`goal_map_cache.h` (moved here from the now-retired
+> `world/systems/`) plus `movement.h`, the facade `Game` includes, declaring
+> `movement::advanceEnemy` and `movement::stepPlayer`. `Enemy`'s old
+> `inBounds`/`stepDownGradient`/`pickWanderTile` helpers moved into
+> `movement.cpp` and lost their `const Room&` parameter; `Enemy` now exposes
+> `canSeePlayer`/`planMove`/`resolveMove` instead of `moveTowardPlayer`, and no
+> longer includes anything from `objects/room/` or `core/`.
+> `Game::handleInput()`'s bounds/walkable/door-transition block is now
+> `movement::stepPlayer`; `Game` still resolves the door connection itself,
+> since `Level` lives under `game/`, which `systems/` may not depend on.
+> `visibility.h` and `combat.h` still don't exist. `Room::enemyAt`/`entityAt`
+> and `updateVisibility` still intentionally reach into `Enemy`/`Player`/`FOV`
+> — that coupling is separate from what #205/#224 addressed and is left to
+> #225/#226 or a later issue.
 > Treat the file tree and module map below as the destination, not the
 > current state, until the rest of the #219 batch lands.
 
@@ -30,7 +43,8 @@ include
   game/            game.h, services.h, logger.h, level.h
   systems/
     loader/        loader.h, enemy_catalog.h, room_loader.h, enemy_spawner.h
-    combat.h, movement.h, visibility.h
+    movement/      movement.h, pathfinding.h, goal_map_cache.h
+    combat.h, visibility.h
   objects/
     fovs/          fov.h, ellipse_fov.h
     entities/      enemy.h, entity_symbol.h, entity.h, player.h

@@ -49,13 +49,14 @@ set(SOURCES
     src/systems/loader/room_loader.cpp
     src/systems/loader/enemy_catalog.cpp
     src/systems/loader/enemy_spawner.cpp
+    src/systems/movement/pathfinding.cpp
+    src/systems/movement/goal_map_cache.cpp
+    src/systems/movement/movement.cpp
     src/objects/tiles/tile.cpp
     src/objects/weapons/weapon.cpp
     src/objects/weapons/projectile.cpp
     src/objects/room/room.cpp
     src/game/level.cpp
-    src/world/systems/pathfinding.cpp
-    src/world/systems/goal_map_cache.cpp
 )
 
 # executable.

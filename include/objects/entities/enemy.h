@@ -9,10 +9,6 @@
 #include "objects/entities/entity.h"
 #include "objects/fovs/fov.h"
 
-struct FrameState;
-class GoalMapCache;
-struct GameServices;
-
 enum class AIState : std::uint8_t
 {
   Sentry,  // stationary/patrol default: never spotted the player, or gave up
@@ -60,17 +56,43 @@ class Enemy : public Entity
   void takeDamage(int damage) override;
 
   /**
-   * @brief Advance enemy behavior one frame using wall-aware pathfinding.
+   * @brief Whether the player, standing at `playerPos`, is currently inside
+   * this enemy's field of view.
    *
-   * @param frame Per-frame world state (player and current room).
-   * @param cache Goal-map cache used to path toward the chase target.
-   * @param services RNG source used for movement tiebreaks and wandering.
+   * @param playerPos The player's current position.
+   * @return True when the player is within this enemy's FoV.
+   */
+  bool canSeePlayer(Coordinate playerPos) const
+  {
+    return fov_->in(position_, playerPos);
+  }
+
+  /**
+   * @brief Refresh this enemy's AI state for the frame and report the tile
+   * it wants to path toward.
+   *
+   * @param inFoV Whether the player is currently in this enemy's FoV.
+   * @param playerPos The player's current position.
+   * @return The tile to path toward this frame, or std::nullopt when the
+   * enemy has no target and should wander instead.
+   */
+  std::optional<Coordinate> planMove(bool inFoV, Coordinate playerPos);
+
+  /**
+   * @brief Apply the tile chosen for this frame and resolve the resulting
+   * attack/cooldown outcome.
+   *
+   * @param nextTile Tile chosen by the movement system to step onto (equal
+   * to the enemy's current position when it didn't move).
+   * @param inFoV Whether the player was in FoV this frame, driving chase
+   * memory countdown.
+   * @param wouldAttackPlayer Whether the movement system's step chose the
+   * player's own tile as the best target.
    * @return bool True when the enemy attacks the player this frame (melee
    * currently always connects; this is the attack attempt, not a hit-chance
    * outcome).
    */
-  bool moveTowardPlayer(const FrameState& frame, const GoalMapCache& cache,
-                        GameServices& services);
+  bool resolveMove(Coordinate nextTile, bool inFoV, bool wouldAttackPlayer);
 
  private:
   int attackDamage_;
