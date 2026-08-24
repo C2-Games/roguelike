@@ -3,7 +3,7 @@
 #include "core/frame_state.h"
 #include "objects/room/room.h"
 
-Projectile::Projectile(Coordinate position, Coordinate direction, int damage,
+Projectile::Projectile(Coordinate position, Coordinate direction, Damage damage,
                        int tilesPerTick, int range, ColorPair color)
     : position_(position),
       direction_(direction),

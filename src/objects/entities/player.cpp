@@ -12,9 +12,9 @@ Player::Player(Coordinate position, int health, int speed)
       maxHealth_(health)
 {}
 
-void Player::takeDamage(int damage)
+void Player::takeDamage(Damage damage)
 {
-  health_ -= damage;
+  health_ -= damage.amount;
   health_ = std::max(health_, 0);
   setActionState(EntityActionState::Damaged);
 }
