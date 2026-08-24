@@ -7,7 +7,7 @@
 #include <utility>
 #include <vector>
 
-#include "core/services.h"
+#include "game/services.h"
 #include "objects/entities/enemy.h"
 #include "objects/entities/player.h"
 #include "objects/room/room.h"
