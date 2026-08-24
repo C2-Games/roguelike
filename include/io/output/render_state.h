@@ -9,7 +9,7 @@
 #include "objects/colors.h"
 #include "objects/coordinate.h"
 #include "objects/entities/entity_symbol.h"
-#include "world/map/room.h"
+#include "objects/room/room.h"
 
 enum class TileVisibility : std::uint8_t
 {

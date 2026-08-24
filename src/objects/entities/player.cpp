@@ -1,10 +1,10 @@
-#include "entities/player.h"
+#include "objects/entities/player.h"
 
 #include <algorithm>
 
-#include "entities/ellipse_fov.h"
-#include "entities/entity.h"
 #include "objects/coordinate.h"
+#include "objects/entities/entity.h"
+#include "objects/fovs/ellipse_fov.h"
 
 Player::Player(Coordinate position, int health, int speed)
     : Entity(position, EntitySymbol{{'@'}}, health, speed,

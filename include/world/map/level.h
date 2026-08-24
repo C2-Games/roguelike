@@ -5,8 +5,8 @@
 #include <utility>
 
 #include "objects/coordinate.h"
+#include "objects/room/room.h"
 #include "preload/level_loader.h"
-#include "world/map/room.h"
 
 struct DoorConnection
 {

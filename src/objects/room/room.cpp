@@ -1,11 +1,12 @@
-#include "world/map/room.h"
+#include "objects/room/room.h"
 
+#include <algorithm>
 #include <stdexcept>
 #include <string>
 
-#include "entities/enemy.h"
-#include "entities/fov.h"
-#include "entities/player.h"
+#include "objects/entities/enemy.h"
+#include "objects/entities/player.h"
+#include "objects/fovs/fov.h"
 
 Room::Room(int id) : roomID(id), tiles(WIDTH, std::vector<Tile>(HEIGHT)) {}
 
@@ -129,6 +130,16 @@ Coordinate Room::inwardOfDoor(Coordinate doorPos)
     inward.y = Room::HEIGHT - 2;
   }
   return inward;
+}
+
+Enemy* Room::enemyAt(Coordinate pos, const Enemy* exclude) const
+{
+  auto hit = std::find_if(enemyState.enemies.begin(), enemyState.enemies.end(),
+                          [&](const std::unique_ptr<Enemy>& enemy) {
+                            return enemy.get() != exclude && enemy->isAlive() &&
+                                   enemy->getPosition() == pos;
+                          });
+  return hit != enemyState.enemies.end() ? hit->get() : nullptr;
 }
 
 const Entity* Room::entityAt(Coordinate pos, const Player& player) const

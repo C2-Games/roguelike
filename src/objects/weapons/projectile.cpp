@@ -1,7 +1,7 @@
 #include "objects/weapons/projectile.h"
 
 #include "core/frame_state.h"
-#include "world/map/room.h"
+#include "objects/room/room.h"
 
 Projectile::Projectile(Coordinate position, Coordinate direction, int damage,
                        int tilesPerTick, int range, ColorPair color)
