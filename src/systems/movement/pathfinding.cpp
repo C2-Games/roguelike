@@ -1,4 +1,4 @@
-#include "world/systems/pathfinding.h"
+#include "systems/movement/pathfinding.h"
 
 #include <queue>
 
@@ -25,7 +25,7 @@ GoalMap computeGoalMap(const Room& room, Coordinate goal)
 {
   GoalMap map(Room::WIDTH, std::vector<int>(Room::HEIGHT, kUnreachable));
 
-  // Reject out-of-bounds or blocking goal tiles up front. Returning the
+  // reject out-of-bounds or blocking goal tiles up front. returning the
   // all-kUnreachable map is a well-defined "no reachable path" result the
   // caller can treat uniformly.
   if (goal.x < 0 || goal.x >= Room::WIDTH || goal.y < 0 ||
@@ -52,7 +52,7 @@ GoalMap computeGoalMap(const Room& room, Coordinate goal)
     frontier.pop();
     int nextDist = map[current.x][current.y] + 1;
 
-    // Explore 4-connected neighbors of the current tile.
+    // explore 4-connected neighbors of the current tile.
     for (int i = 0; i < 4; ++i)
     {
       int nx = current.x + kDx[i];
@@ -63,10 +63,10 @@ GoalMap computeGoalMap(const Room& room, Coordinate goal)
       }
       if (map[nx][ny] != kUnreachable)
       {
-        continue;  // already visited
+        continue;  // already visited.
       }
       map[nx][ny] = nextDist;
-      // Push the neighbor onto the frontier for further exploration.
+      // push the neighbor onto the frontier for further exploration.
       frontier.push(Coordinate(nx, ny));
     }
   }

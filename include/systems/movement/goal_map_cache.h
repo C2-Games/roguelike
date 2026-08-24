@@ -6,7 +6,7 @@
 #include <utility>
 
 #include "objects/coordinate.h"
-#include "world/systems/pathfinding.h"
+#include "systems/movement/pathfinding.h"
 
 struct Room;
 
@@ -28,6 +28,8 @@ class GoalMapCache
 
   /**
    * @brief Number of goal maps currently cached (for tests / inspection).
+   *
+   * @return Count of currently cached goal maps.
    */
   std::size_t size() const { return cache_.size(); }
 

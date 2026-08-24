@@ -13,7 +13,7 @@
 #include "objects/fovs/fov.h"
 #include "objects/weapons/projectile.h"
 #include "systems/loader/loader.h"
-#include "world/systems/goal_map_cache.h"
+#include "systems/movement/movement.h"
 
 class UIManager;
 
