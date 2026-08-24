@@ -15,6 +15,7 @@
 #include "systems/combat/combat.h"
 #include "systems/loader/loader.h"
 #include "systems/movement/movement.h"
+#include "systems/visibility/visibility.h"
 
 class UIManager;
 

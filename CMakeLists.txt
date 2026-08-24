@@ -54,6 +54,9 @@ set(SOURCES
     src/systems/movement/movement.cpp
     src/systems/combat/damage_application.cpp
     src/systems/combat/damage_source.cpp
+    src/systems/visibility/delta.cpp
+    src/systems/visibility/recompute.cpp
+    src/systems/visibility/visibility.cpp
     src/objects/tiles/tile.cpp
     src/objects/weapons/weapon.cpp
     src/objects/weapons/projectile.cpp
