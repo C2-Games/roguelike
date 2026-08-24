@@ -52,6 +52,8 @@ set(SOURCES
     src/systems/movement/pathfinding.cpp
     src/systems/movement/goal_map_cache.cpp
     src/systems/movement/movement.cpp
+    src/systems/combat/damage_application.cpp
+    src/systems/combat/damage_source.cpp
     src/objects/tiles/tile.cpp
     src/objects/weapons/weapon.cpp
     src/objects/weapons/projectile.cpp
