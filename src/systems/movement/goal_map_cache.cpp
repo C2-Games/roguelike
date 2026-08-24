@@ -7,7 +7,7 @@
 const GoalMap& GoalMapCache::getOrCompute(const Room& room,
                                           Coordinate goal) const
 {
-  auto key = std::make_pair(room.roomID, goal);
+  auto key = std::make_pair(room.getRoomID(), goal);
   auto cachedEntry = cache_.find(key);
   if (cachedEntry != cache_.end())
   {

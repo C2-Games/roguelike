@@ -9,7 +9,7 @@
 #include "objects/colors.h"
 #include "objects/coordinate.h"
 #include "objects/entities/entity_symbol.h"
-#include "objects/room/room.h"
+#include "objects/room/room_dimensions.h"
 
 enum class TileVisibility : std::uint8_t
 {
@@ -47,7 +47,7 @@ struct WeaponView
 
 struct MapLayerPacket
 {
-  std::array<std::array<TileView, Room::HEIGHT>, Room::WIDTH> tiles;
+  std::array<std::array<TileView, ROOM_HEIGHT>, ROOM_WIDTH> tiles;
 };
 
 struct EntityLayerPacket

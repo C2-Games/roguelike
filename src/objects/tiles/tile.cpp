@@ -24,11 +24,11 @@ bool Tile::isWalkable() const
   return typeAttributes_.at(static_cast<int>(type_)).walkable;
 }
 
-void Tile::reveal()
+void Tile::toggleReveal(bool visible)
 {
-  visible_ = true;
+  visible_ = visible;
   // only mark explored if the tile is not Void.
-  if (type_ != TileType::Void)
+  if (visible_ && type_ != TileType::Void)
   {
     explored_ = true;
   }

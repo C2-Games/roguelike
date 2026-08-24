@@ -1,4 +1,4 @@
-#include "systems/loader/room_loader.h"
+#include "preload/room_loader.h"
 
 #include <algorithm>
 #include <cstdint>
@@ -7,8 +7,8 @@
 #include <stdexcept>
 #include <string>
 
-#include "objects/room/room.h"
-#include "objects/room/room_types.h"
+#include "objects/tiles/tile.h"
+#include "objects/tiles/tile_type.h"
 
 namespace
 {
@@ -109,7 +109,7 @@ void parseRoomHeader(std::ifstream& in, Room& room,
 
     if (key == "name")
     {
-      room.name = value;
+      room.setName(value);
     }
     // other keys (levels, author, ...) are parsed by the library layer or
     // silently ignored here for forward compatibility.
@@ -121,7 +121,10 @@ void parseRoomHeader(std::ifstream& in, Room& room,
 // parse the ASCII grid following the header, populating tiles, doors, and
 // spawn points. throws if the row count doesn't match Room::HEIGHT.
 void parseRoomGrid(std::ifstream& in, Room& room,
-                   const std::filesystem::path& path)
+                   const std::filesystem::path& path,
+                   std::vector<Coordinate>& enemySpawns,
+                   std::vector<Coordinate>& lootSpawns,
+                   std::vector<Coordinate>& itemSpawns)
 {
   std::string line;
   int y = 0;
@@ -158,26 +161,25 @@ void parseRoomGrid(std::ifstream& in, Room& room,
     {
       char c = line[x];
       TileType type = charToRoomTile(c);
-      room.tiles[x][y] = Tile(type, Coordinate(x, y));
+      room.setTile(Coordinate(x, y), Tile(type, Coordinate(x, y)));
       if (type == TileType::Door)
       {
         DoorNumber label = c - '0';
-        const bool inserted =
-            room.doors.emplace(label, Coordinate{x, y}).second;
-        if (!inserted)
+        if (room.getDoors().find(label) != room.getDoors().end())
         {
           throw std::runtime_error("Duplicate door label '" +
                                    std::string(1, c) + "' in " + path.string());
         }
+        room.addDoor(label, Coordinate{x, y});
       }
       switch (charToSpawnKind(c))
       {
         case SpawnKind::Enemy:
-          room.enemySpawns.push_back(Coordinate(x, y));
+          enemySpawns.push_back(Coordinate(x, y));
           break;
         case SpawnKind::LootOrItem:
-          room.lootSpawns.push_back(Coordinate(x, y));
-          room.itemSpawns.push_back(Coordinate(x, y));
+          lootSpawns.push_back(Coordinate(x, y));
+          itemSpawns.push_back(Coordinate(x, y));
           break;
         case SpawnKind::None:
           break;
@@ -199,7 +201,42 @@ void parseRoomGrid(std::ifstream& in, Room& room,
 namespace room_loader
 {
 
-Room loadRoom(int roomID, const std::filesystem::path& path)
+Coordinate doorAt(const Room& room, DoorNumber number)
+{
+  const auto& doors = room.getDoors();
+  auto doorEntry = doors.find(number);
+  if (doorEntry == doors.end())
+  {
+    throw std::runtime_error("room " + std::to_string(room.getRoomID()) + " (" +
+                             room.getName() + ") has no door " +
+                             std::to_string(number));
+  }
+  return doorEntry->second;
+}
+
+Coordinate inwardOfDoor(Coordinate doorPos)
+{
+  Coordinate inward = doorPos;
+  if (doorPos.x == 0)
+  {
+    inward.x = 1;
+  }
+  else if (doorPos.x == Room::WIDTH - 1)
+  {
+    inward.x = Room::WIDTH - 2;
+  }
+  else if (doorPos.y == 0)
+  {
+    inward.y = 1;
+  }
+  else if (doorPos.y == Room::HEIGHT - 1)
+  {
+    inward.y = Room::HEIGHT - 2;
+  }
+  return inward;
+}
+
+ParsedRoom loadRoom(int roomID, const std::filesystem::path& path)
 {
   std::ifstream in(path);
   if (!in)
@@ -208,16 +245,20 @@ Room loadRoom(int roomID, const std::filesystem::path& path)
   }
 
   Room room(roomID);
+  std::vector<Coordinate> enemySpawns;
+  std::vector<Coordinate> lootSpawns;
+  std::vector<Coordinate> itemSpawns;
   parseRoomHeader(in, room, path);
-  parseRoomGrid(in, room, path);
+  parseRoomGrid(in, room, path, enemySpawns, lootSpawns, itemSpawns);
 
-  for (const auto& [number, doorPos] : room.doors)
+  for (const auto& [number, doorPos] : room.getDoors())
   {
-    Coordinate entry = Room::inwardOfDoor(doorPos);
-    room.tiles[entry.x][entry.y] = Tile(TileType::EntryWay, entry);
+    Coordinate entry = inwardOfDoor(doorPos);
+    room.setTile(entry, Tile(TileType::EntryWay, entry));
   }
 
-  return room;
+  return ParsedRoom{std::move(room), std::move(enemySpawns),
+                    std::move(lootSpawns), std::move(itemSpawns)};
 }
 
 }  // namespace room_loader

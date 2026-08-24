@@ -3,37 +3,26 @@
 #include <queue>
 
 #include "objects/room/room.h"
-#include "objects/tiles/tile.h"
 #include "objects/tiles/tile_type.h"
 
 namespace
 {
 
-bool isBlocking(const Room& room, int x, int y)
+bool isBlocking(const Room& room, Coordinate pos)
 {
-  if (x < 0 || x >= Room::WIDTH || y < 0 || y >= Room::HEIGHT)
-  {
-    return true;
-  }
-  TileType type = room.tiles[x][y].getType();
-  return type != TileType::Floor;
+  return room.getTileType(pos) != TileType::Floor;
 }
 
 }  // namespace
 
 GoalMap computeGoalMap(const Room& room, Coordinate goal)
 {
-  GoalMap map(Room::WIDTH, std::vector<int>(Room::HEIGHT, kUnreachable));
+  GoalMap map(Room::WIDTH, std::vector<int>(Room::HEIGHT, UNREACHABLE));
 
   // reject out-of-bounds or blocking goal tiles up front. returning the
-  // all-kUnreachable map is a well-defined "no reachable path" result the
+  // all-UNREACHABLE map is a well-defined "no reachable path" result the
   // caller can treat uniformly.
-  if (goal.x < 0 || goal.x >= Room::WIDTH || goal.y < 0 ||
-      goal.y >= Room::HEIGHT)
-  {
-    return map;
-  }
-  if (isBlocking(room, goal.x, goal.y))
+  if (isBlocking(room, goal))
   {
     return map;
   }
@@ -43,8 +32,8 @@ GoalMap computeGoalMap(const Room& room, Coordinate goal)
   frontier.push(goal);
 
   // 4-connected neighbor offsets (N, E, S, W).
-  static constexpr int kDx[4] = {0, 1, 0, -1};
-  static constexpr int kDy[4] = {-1, 0, 1, 0};
+  static constexpr int DX[4] = {0, 1, 0, -1};
+  static constexpr int DY[4] = {-1, 0, 1, 0};
 
   while (!frontier.empty())
   {
@@ -55,19 +44,18 @@ GoalMap computeGoalMap(const Room& room, Coordinate goal)
     // explore 4-connected neighbors of the current tile.
     for (int i = 0; i < 4; ++i)
     {
-      int nx = current.x + kDx[i];
-      int ny = current.y + kDy[i];
-      if (isBlocking(room, nx, ny))
+      Coordinate neighbor(current.x + DX[i], current.y + DY[i]);
+      if (isBlocking(room, neighbor))
       {
         continue;
       }
-      if (map[nx][ny] != kUnreachable)
+      if (map[neighbor.x][neighbor.y] != UNREACHABLE)
       {
         continue;  // already visited.
       }
-      map[nx][ny] = nextDist;
+      map[neighbor.x][neighbor.y] = nextDist;
       // push the neighbor onto the frontier for further exploration.
-      frontier.push(Coordinate(nx, ny));
+      frontier.push(neighbor);
     }
   }
 

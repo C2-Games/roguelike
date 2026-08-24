@@ -1,109 +1,97 @@
 #include "objects/room/room.h"
 
-#include <algorithm>
-#include <stdexcept>
-#include <string>
+#include <utility>
 
-#include "objects/entities/enemy.h"
-#include "objects/entities/player.h"
+Room::Room(int id) : roomID_(id), tiles_(WIDTH, std::vector<Tile>(HEIGHT)) {}
 
-Room::Room(int id) : roomID(id), tiles(WIDTH, std::vector<Tile>(HEIGHT)) {}
-
-void Room::clearVisible()
+void Room::setTile(Coordinate pos, Tile tile)
 {
-  for (auto& col : tiles)
-  {
-    for (auto& tile : col)
-    {
-      tile.clearVisible();
-    }
-  }
-}
-
-bool Room::isVisible(int x, int y) const
-{
-  if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT)
-  {
-    return false;
-  }
-  return tiles[x][y].isVisible();
-}
-
-bool Room::isExplored(int x, int y) const
-{
-  if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT)
-  {
-    return false;
-  }
-  return tiles[x][y].isExplored();
-}
-
-void Room::reveal(int x, int y)
-{
-  if (x < 0 || x >= WIDTH || y < 0 || y >= HEIGHT)
+  if (!inBounds(pos))
   {
     return;
   }
-  tiles[x][y].reveal();
+  tiles_[pos.x][pos.y] = std::move(tile);
 }
 
-Coordinate Room::doorAt(DoorNumber number) const
+bool Room::isVisible(Coordinate pos) const
 {
-  auto doorEntry = doors.find(number);
-  if (doorEntry == doors.end())
+  if (!inBounds(pos))
   {
-    throw std::runtime_error("room " + std::to_string(roomID) + " (" + name +
-                             ") has no door " + std::to_string(number));
+    return false;
   }
-  return doorEntry->second;
+  return tiles_[pos.x][pos.y].isRevealed();
 }
 
-Coordinate Room::inwardOfDoor(Coordinate doorPos)
+bool Room::isExplored(Coordinate pos) const
 {
-  Coordinate inward = doorPos;
-  if (doorPos.x == 0)
+  if (!inBounds(pos))
   {
-    inward.x = 1;
+    return false;
   }
-  else if (doorPos.x == Room::WIDTH - 1)
-  {
-    inward.x = Room::WIDTH - 2;
-  }
-  else if (doorPos.y == 0)
-  {
-    inward.y = 1;
-  }
-  else if (doorPos.y == Room::HEIGHT - 1)
-  {
-    inward.y = Room::HEIGHT - 2;
-  }
-  return inward;
+  return tiles_[pos.x][pos.y].isExplored();
 }
 
-Enemy* Room::enemyAt(Coordinate pos, const Enemy* exclude) const
+void Room::toggleReveal(Coordinate pos, bool visible)
 {
-  auto hit = std::find_if(enemies.begin(), enemies.end(),
-                          [&](const std::unique_ptr<Enemy>& enemy) {
-                            return enemy.get() != exclude && enemy->isAlive() &&
-                                   enemy->getPosition() == pos;
-                          });
-  return hit != enemies.end() ? hit->get() : nullptr;
+  if (!inBounds(pos))
+  {
+    return;
+  }
+  tiles_[pos.x][pos.y].toggleReveal(visible);
 }
 
-const Entity* Room::entityAt(Coordinate pos, const Player& player) const
+bool Room::isOccupied(Coordinate pos) const
 {
-  if (Enemy* enemy = enemyAt(pos))
+  if (!inBounds(pos))
   {
-    return enemy;
+    return false;
   }
-  if (player.isAlive() && player.getPosition() == pos)
-  {
-    return &player;
-  }
-  return nullptr;
+  return tiles_[pos.x][pos.y].isOccupied();
 }
 
-Entity* Room::entityAt(Coordinate pos, Player& player) const
+void Room::toggleOccupied(Coordinate pos, bool occupied)
 {
-  return const_cast<Entity*>(entityAt(pos, const_cast<const Player&>(player)));
+  if (!inBounds(pos))
+  {
+    return;
+  }
+  tiles_[pos.x][pos.y].toggleOccupied(occupied);
+}
+
+bool Room::isWalkable(Coordinate pos) const
+{
+  if (!inBounds(pos))
+  {
+    return false;
+  }
+  return tiles_[pos.x][pos.y].isWalkable();
+}
+
+TileType Room::getTileType(Coordinate pos) const
+{
+  if (!inBounds(pos))
+  {
+    return TileType::Wall;
+  }
+  return tiles_[pos.x][pos.y].getType();
+}
+
+char Room::getTileSymbol(Coordinate pos) const
+{
+  if (!inBounds(pos))
+  {
+    return ' ';
+  }
+  return tiles_[pos.x][pos.y].getSymbol();
+}
+
+void Room::clearVisible()
+{
+  for (auto& col : tiles_)
+  {
+    for (auto& tile : col)
+    {
+      tile.toggleReveal(false);
+    }
+  }
 }

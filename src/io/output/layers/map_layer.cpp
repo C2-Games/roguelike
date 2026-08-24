@@ -5,15 +5,15 @@
 #include "io/output/colors.h"
 #include "io/output/render_state.h"
 #include "io/output/window_position.h"
-#include "objects/room/room.h"
+#include "objects/room/room_dimensions.h"
 
 MapLayer::MapLayer(int h, int w, int y, int x) : RenderStack(h, w, y, x) {}
 
 void MapLayer::drawMap(const MapLayerPacket& data)
 {
-  for (int x = 0; x < Room::WIDTH; ++x)
+  for (int x = 0; x < ROOM_WIDTH; ++x)
   {
-    for (int y = 0; y < Room::HEIGHT; ++y)
+    for (int y = 0; y < ROOM_HEIGHT; ++y)
     {
       const TileView& tile = data.tiles[x][y];
 
