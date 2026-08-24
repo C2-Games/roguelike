@@ -94,10 +94,10 @@ struct Room
 
   /**
    * @brief Find the live enemy standing on `pos`. Stays a Room member (unlike
-   * the spawn/reap logic that lives outside Room) because Enemy and
-   * Projectile, both game-object classes in their own right, call it
-   * directly; moving it out from under Room would make those classes reach
-   * upward into core/ instead of sideways into Room.
+   * the spawn/reap logic that lives outside Room) because `systems/movement/`
+   * and `systems/combat/` call it directly on a live Room; moving it out from
+   * under Room would make Room depend on `systems/`, inverting the
+   * dependency direction rule 6 requires.
    *
    * @param pos Tile to test.
    * @param exclude Enemy skipped by pointer identity. Null considers every
