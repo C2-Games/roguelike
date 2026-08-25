@@ -150,7 +150,7 @@ struct Room
    * @param position Grid position to test.
    * @return True if the position is inside [0, WIDTH) x [0, HEIGHT).
    */
-  bool inBounds(Coordinate position) const
+  static bool inBounds(Coordinate position)
   {
     return position.x >= 0 && position.x < WIDTH && position.y >= 0 &&
            position.y < HEIGHT;

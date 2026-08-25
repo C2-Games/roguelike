@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "objects/direction.h"
 #include "objects/entities/enemy.h"
 #include "objects/entities/entity.h"
 #include "objects/entities/player.h"
@@ -18,7 +19,8 @@ void advanceProjectile(Projectile& projectile, const Room& room,
 {
   for (int i = 0; i < projectile.getTilesPerTick(); ++i)
   {
-    Coordinate candidate = projectile.getPosition() + projectile.getDirection();
+    Coordinate candidate =
+        projectile.getPosition() + toOffset(projectile.getDirection());
 
     // isWalkable() stops the projectile (also covers out-of-bounds, since
     // Room::isWalkable treats anything outside the grid as unwalkable).

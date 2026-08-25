@@ -2,6 +2,7 @@
 #define PLAYER_H
 
 #include "objects/coordinate.h"
+#include "objects/direction.h"
 #include "objects/entities/entity.h"
 #include "objects/weapons/weapon.h"
 
@@ -36,16 +37,16 @@ class Player : public Entity
   /**
    * @brief Get the direction the player last faced (from movement input).
    *
-   * @return Coordinate
+   * @return Direction
    */
-  Coordinate getLastDirection() const { return lastDirection_; }
+  Direction getLastDirection() const { return lastDirection_; }
 
   /**
    * @brief Set the direction the player last faced.
    *
    * @param dir New facing direction.
    */
-  void setLastDirection(Coordinate dir) { lastDirection_ = dir; }
+  void setLastDirection(Direction dir) { lastDirection_ = dir; }
 
   /**
    * @brief Get the player's currently equipped weapon.
@@ -56,7 +57,7 @@ class Player : public Entity
 
  private:
   int maxHealth_;
-  Coordinate lastDirection_ = Coordinate(1, 0);
+  Direction lastDirection_ = Direction::East;
   Weapon weapon_;
 };
 

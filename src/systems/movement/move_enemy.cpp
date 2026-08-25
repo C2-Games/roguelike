@@ -1,13 +1,13 @@
 #include "systems/movement/move_enemy.h"
 
 #include <algorithm>
-#include <array>
 #include <optional>
 #include <random>
 #include <utility>
 #include <vector>
 
 #include "game/services.h"
+#include "objects/direction.h"
 #include "objects/entities/enemy.h"
 #include "objects/entities/player.h"
 #include "objects/room/room.h"
@@ -16,11 +16,6 @@
 
 namespace
 {
-
-// 4-connected neighbor offsets (N, E, S, W). matches the offsets used inside
-// pathfinding.cpp so enemy movement stays consistent with the goal map.
-constexpr std::array<int, 4> DX = {0, 1, 0, -1};
-constexpr std::array<int, 4> DY = {-1, 0, 1, 0};
 
 // frames of cooldown between an enemy's melee attack attempts.
 constexpr int ATTACK_COOLDOWN_FRAMES = 30;
@@ -56,9 +51,9 @@ GradientStep stepDownGradient(Coordinate pos, const GoalMap& map,
   std::vector<Cand> candidates;
   candidates.reserve(4);
 
-  for (int i = 0; i < 4; ++i)
+  for (Direction direction : ALL_DIRECTIONS)
   {
-    Coordinate neighbor(pos.x + DX[i], pos.y + DY[i]);
+    Coordinate neighbor = pos + toOffset(direction);
     if (!room.inBounds(neighbor))
     {
       continue;
@@ -105,9 +100,9 @@ Coordinate pickWanderTile(Coordinate pos, const Room& room,
 {
   std::vector<Coordinate> candidates;
   candidates.reserve(4);
-  for (int i = 0; i < 4; ++i)
+  for (Direction direction : ALL_DIRECTIONS)
   {
-    Coordinate neighbor(pos.x + DX[i], pos.y + DY[i]);
+    Coordinate neighbor = pos + toOffset(direction);
     if (room.getTileType(neighbor) != TileType::Floor)
     {
       continue;

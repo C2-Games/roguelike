@@ -1,5 +1,6 @@
 #include "systems/combat/projectile_spawn.h"
 
+#include "objects/direction.h"
 #include "objects/entities/player.h"
 #include "objects/weapons/projectile.h"
 #include "systems/combat/damage_source.h"
@@ -11,7 +12,7 @@ std::unique_ptr<Projectile> spawnProjectile(const Player& player)
 {
   // "fire" a projectile in the player's last-faced direction starting on
   // the player's own tile.
-  Coordinate direction = player.getLastDirection();  // acts as an offset.
+  Direction direction = player.getLastDirection();
   const Coordinate spawnPos = player.getPosition();
   const Weapon& weapon = player.getWeapon();
 
