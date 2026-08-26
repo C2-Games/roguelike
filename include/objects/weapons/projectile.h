@@ -4,6 +4,7 @@
 #include "objects/colors.h"
 #include "objects/coordinate.h"
 #include "objects/damage/damage.h"
+#include "objects/direction.h"
 
 struct Projectile
 {
@@ -14,13 +15,13 @@ struct Projectile
    * @param position Spawn tile -- the firing entity's own tile. Advancing
    * moves into the adjacent tile as its first candidate, so an entity
    * standing there is checked like any other tile in the projectile's path.
-   * @param direction Unit step direction, e.g. (1,0)/(-1,0)/(0,1)/(0,-1).
+   * @param direction Direction the projectile travels in.
    * @param damage Damage dealt to the first entity hit.
    * @param tilesPerTick Tiles advanced per Game::update() call.
    * @param range Max tiles traveled before the projectile expires.
    * @param color Color used to render the projectile's orb.
    */
-  Projectile(Coordinate position, Coordinate direction, Damage damage,
+  Projectile(Coordinate position, Direction direction, Damage damage,
              int tilesPerTick, int range, ColorPair color);
 
   /**
@@ -33,9 +34,9 @@ struct Projectile
   /**
    * @brief Get the projectile's direction of travel.
    *
-   * @return Unit step offset, e.g. (1,0)/(-1,0)/(0,1)/(0,-1).
+   * @return The projectile's direction of travel.
    */
-  Coordinate getDirection() const { return direction_; }
+  Direction getDirection() const { return direction_; }
 
   /**
    * @brief Get the projectile's render color.
@@ -87,7 +88,7 @@ struct Projectile
 
  private:
   Coordinate position_;
-  Coordinate direction_;
+  Direction direction_;
   Damage damage_;
   int tilesPerTick_;
   int remainingRange_;

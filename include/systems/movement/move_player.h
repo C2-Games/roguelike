@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "objects/coordinate.h"
+#include "objects/direction.h"
 
 class Player;
 struct Room;
@@ -30,12 +31,12 @@ struct PlayerStepOutcome
  *
  * @param player Player to move.
  * @param room Room the player occupies, for wall/occupancy queries.
- * @param direction Unit offset to attempt to move by.
+ * @param direction Direction to attempt to move the player in.
  * @return Blocked (no-op), Moved (player already relocated), or AtDoor
  * (player left on their current tile; the caller resolves the room
  * transition, or calls player.moveTo() itself for an unlinked door).
  */
-PlayerStepOutcome stepPlayer(Player& player, Room& room, Coordinate direction);
+PlayerStepOutcome stepPlayer(Player& player, Room& room, Direction direction);
 
 }  // namespace movement
 

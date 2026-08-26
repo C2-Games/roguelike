@@ -29,7 +29,7 @@ include
     room/          room.h, room_dimensions.h
     weapons/       weapon.h, weapon_attributes.h, weapon_type.h, projectile.h
     damage/        damage.h, damage_type.h
-    coordinate.h, colors.h, map.h, door_connections.h
+    coordinate.h, direction.h, colors.h, map.h, door_connections.h
   io/
     input/         game_commands.h, handle_input.h
     output/

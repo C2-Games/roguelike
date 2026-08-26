@@ -33,6 +33,7 @@ set(SOURCES
     src/objects/entities/entity.cpp
     src/objects/entities/player.cpp
     src/objects/entities/enemy.cpp
+    src/objects/direction.cpp
     src/objects/fovs/fov.cpp
     src/objects/fovs/ellipse_fov.cpp
     src/io/ui_manager.cpp

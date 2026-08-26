@@ -2,6 +2,7 @@
 
 #include <queue>
 
+#include "objects/direction.h"
 #include "objects/room/room.h"
 #include "objects/tiles/tile_type.h"
 
@@ -31,10 +32,6 @@ GoalMap computeGoalMap(const Room& room, Coordinate goal)
   map[goal.x][goal.y] = 0;
   frontier.push(goal);
 
-  // 4-connected neighbor offsets (N, E, S, W).
-  static constexpr int DX[4] = {0, 1, 0, -1};
-  static constexpr int DY[4] = {-1, 0, 1, 0};
-
   while (!frontier.empty())
   {
     Coordinate current = frontier.front();
@@ -42,9 +39,9 @@ GoalMap computeGoalMap(const Room& room, Coordinate goal)
     int nextDist = map[current.x][current.y] + 1;
 
     // explore 4-connected neighbors of the current tile.
-    for (int i = 0; i < 4; ++i)
+    for (Direction direction : ALL_DIRECTIONS)
     {
-      Coordinate neighbor(current.x + DX[i], current.y + DY[i]);
+      Coordinate neighbor = current + toOffset(direction);
       if (isBlocking(room, neighbor))
       {
         continue;

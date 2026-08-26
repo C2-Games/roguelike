@@ -1,6 +1,6 @@
 #include "objects/weapons/projectile.h"
 
-Projectile::Projectile(Coordinate position, Coordinate direction, Damage damage,
+Projectile::Projectile(Coordinate position, Direction direction, Damage damage,
                        int tilesPerTick, int range, ColorPair color)
     : position_(position),
       direction_(direction),

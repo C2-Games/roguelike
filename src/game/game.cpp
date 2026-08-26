@@ -2,10 +2,12 @@
 
 #include <algorithm>
 #include <chrono>
+#include <optional>
 #include <thread>
 
 #include "io/input/game_commands.h"
 #include "io/ui_manager.h"
+#include "objects/direction.h"
 #include "objects/entities/enemy.h"
 #include "objects/weapons/projectile.h"
 #include "preload/level_loader.h"
@@ -101,8 +103,7 @@ void Game::run()
 void Game::handleInput()
 {
   GameCommand command = uiManager_.pollInput();
-  Coordinate direction(0, 0);
-  bool isMoveCommand = false;
+  std::optional<Direction> direction;
 
   switch (command)
   {
@@ -112,20 +113,16 @@ void Game::handleInput()
       // exhaustive over GameCommand.
       break;
     case GameCommand::MoveUp:
-      direction = Coordinate(0, -1);
-      isMoveCommand = true;
+      direction = Direction::North;
       break;
     case GameCommand::MoveDown:
-      direction = Coordinate(0, 1);
-      isMoveCommand = true;
+      direction = Direction::South;
       break;
     case GameCommand::MoveLeft:
-      direction = Coordinate(-1, 0);
-      isMoveCommand = true;
+      direction = Direction::West;
       break;
     case GameCommand::MoveRight:
-      direction = Coordinate(1, 0);
-      isMoveCommand = true;
+      direction = Direction::East;
       break;
     case GameCommand::Attack:
       currentRoomObjects().projectiles.push_back(
@@ -139,7 +136,7 @@ void Game::handleInput()
       break;
   }
 
-  if (!isMoveCommand)
+  if (!direction.has_value())
   {
     // safe to skip movement/door resolution entirely here: the player's own
     // tile is always in-bounds, walkable, and unoccupied, and re-resolving a
@@ -147,10 +144,10 @@ void Game::handleInput()
     return;
   }
 
-  player_.setLastDirection(direction);
+  player_.setLastDirection(*direction);
 
   movement::PlayerStepOutcome outcome =
-      movement::stepPlayer(player_, currentRoom(), direction);
+      movement::stepPlayer(player_, currentRoom(), *direction);
   if (outcome.kind == movement::PlayerStepKind::AtDoor)
   {
     auto connEntry = levelData_.roomConnections.find(
