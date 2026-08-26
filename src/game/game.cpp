@@ -22,6 +22,10 @@ namespace
 constexpr std::mt19937::result_type DEFAULT_SEED = 80085;
 // duration, in frames, that the player's hit-flash stays visible.
 constexpr int HIT_FLASH_FRAMES = 8;
+// how far short of the frame deadline the coarse sleep stops, leaving the
+// remainder to the spin-wait tail; covers sleep_for's scheduler-dependent
+// overshoot.
+constexpr auto SLEEP_MARGIN = std::chrono::microseconds(1000);
 }  // namespace
 
 Game::Game(UIManager& uiManager, int fps)
@@ -40,31 +44,52 @@ void Game::run()
 {
   UIManager::showStartScreen();
 
-  const auto frame_duration = getDuration();
+  const auto frame_duration =
+      std::chrono::duration_cast<std::chrono::steady_clock::duration>(
+          getDuration());
+  auto next_frame_time = std::chrono::steady_clock::now();
 
   while (state_ != GameState::End)
   {
     while (state_ == GameState::Play)
     {
       // -------- Frame start --------
-      auto start = std::chrono::high_resolution_clock::now();
+      auto start = std::chrono::steady_clock::now();
       handleInput();
       update();
       render();
 
       // -------- Frame end --------
-      auto end = std::chrono::high_resolution_clock::now();
-      auto elapsed =
-          std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+      // deadline accumulator: next_frame_time advances by the exact frame
+      // duration each iteration (not recomputed from now()), so per-frame
+      // scheduler error doesn't accumulate into long-term drift. steady_clock
+      // (not high_resolution_clock, which may alias system_clock and jump
+      // backward) so the accumulated deadline can't be corrupted by a clock
+      // step across the session.
+      next_frame_time += frame_duration;
 
-      if (elapsed < frame_duration)
+      auto now = std::chrono::steady_clock::now();
+      if (now > next_frame_time + frame_duration)
       {
-        std::this_thread::sleep_for(frame_duration - elapsed);
+        // fell behind by more than a full frame (debugger pause, minimized
+        // window, or sustained per-frame work exceeding the budget) —
+        // resync to now with no added delay, instead of bursting instant
+        // catch-up frames or inflating pacing by a further frame_duration.
+        next_frame_time = now;
+      }
+      else if (now < next_frame_time - SLEEP_MARGIN)
+      {
+        std::this_thread::sleep_for(next_frame_time - now - SLEEP_MARGIN);
+      }
+
+      // spin-wait the remaining slop for exact deadline alignment.
+      while (std::chrono::steady_clock::now() < next_frame_time)
+      {
       }
 
       // for debug window.
       std::chrono::duration<double, std::milli> totalFrame =
-          std::chrono::high_resolution_clock::now() - start;
+          std::chrono::steady_clock::now() - start;
 
       currentFps_ =
           totalFrame.count() > 0.0 ? 1000.0 / totalFrame.count() : 0.0;
