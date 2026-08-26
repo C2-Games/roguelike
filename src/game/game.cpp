@@ -22,9 +22,7 @@ namespace
 constexpr std::mt19937::result_type DEFAULT_SEED = 80085;
 // duration, in frames, that the player's hit-flash stays visible.
 constexpr int HIT_FLASH_FRAMES = 8;
-// how far short of the frame deadline the coarse sleep stops, leaving the
-// remainder to the spin-wait tail; covers sleep_for's scheduler-dependent
-// overshoot.
+// how far short of the frame deadline the coarse sleep stops.
 constexpr auto SLEEP_MARGIN = std::chrono::microseconds(1000);
 }  // namespace
 
@@ -60,21 +58,13 @@ void Game::run()
       render();
 
       // -------- Frame end --------
-      // deadline accumulator: next_frame_time advances by the exact frame
-      // duration each iteration (not recomputed from now()), so per-frame
-      // scheduler error doesn't accumulate into long-term drift. steady_clock
-      // (not high_resolution_clock, which may alias system_clock and jump
-      // backward) so the accumulated deadline can't be corrupted by a clock
-      // step across the session.
-      next_frame_time += frame_duration;
+      next_frame_time += frame_duration;  // deadline accumulator
 
       auto now = std::chrono::steady_clock::now();
       if (now > next_frame_time + frame_duration)
       {
-        // fell behind by more than a full frame (debugger pause, minimized
-        // window, or sustained per-frame work exceeding the budget) —
-        // resync to now with no added delay, instead of bursting instant
-        // catch-up frames or inflating pacing by a further frame_duration.
+        // fell behind by more than a full frame  — resync to now with no
+        // added delay.
         next_frame_time = now;
       }
       else if (now < next_frame_time - SLEEP_MARGIN)
