@@ -20,29 +20,30 @@ enum class TileVisibility : std::uint8_t
 
 struct TileView
 {
-  char symbol;
-  TileVisibility visibility;
+  char symbol = ' ';
+  TileVisibility visibility = TileVisibility::Unseen;
 };
 
 struct EntityView
 {
   Coordinate position;
   EntitySymbol symbol;
-  bool tinted;          // whether to apply tintColor over the symbol this frame
-  ColorPair tintColor;  // meaningful only when tinted == true
+  bool tinted = false;  // whether to apply tintColor over the symbol this frame
+  ColorPair tintColor =
+      ColorPair::Default;  // meaningful only when tinted == true
 };
 
 struct ProjectileView
 {
   Coordinate position;
-  ColorPair color;
+  ColorPair color = ColorPair::Default;
 };
 
 struct WeaponView
 {
   std::string name;
-  int damage, speed, range;
-  ColorPair color;
+  int damage = 0, speed = 0, range = 0;
+  ColorPair color = ColorPair::Default;
 };
 
 struct MapLayerPacket
@@ -60,15 +61,15 @@ struct EntityLayerPacket
 
 struct HUDLayerPacket
 {
-  int playerHealth, playerMaxHealth;
-  int roomIndex, roomCount;
+  int playerHealth = 0, playerMaxHealth = 0;
+  int roomIndex = 0, roomCount = 0;
   WeaponView weapon;
 };
 
 struct DebugLayerPacket
 {
   Coordinate playerPosition;
-  double fps;
+  double fps = 0.0;
 };
 
 struct RenderState

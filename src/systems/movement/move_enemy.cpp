@@ -23,9 +23,9 @@ constexpr int ATTACK_COOLDOWN_FRAMES = 30;
 // outcome of a single down-gradient step attempt.
 struct GradientStep
 {
-  Coordinate nextTile;     // pos unchanged if no move (blocked or attacking).
-  bool wouldAttackPlayer;  // true when the best down-gradient neighbor is the
-                           // player's tile.
+  Coordinate nextTile;  // pos unchanged if no move (blocked or attacking).
+  bool wouldAttackPlayer = false;  // true when the best down-gradient neighbor
+                                   // is the player's tile.
 };
 
 // pick a strictly-decreasing goal-map neighbor to step onto.
@@ -46,7 +46,7 @@ GradientStep stepDownGradient(Coordinate pos, const GoalMap& map,
   struct Cand
   {
     Coordinate coord;
-    int dist;
+    int dist = 0;
   };
   std::vector<Cand> candidates;
   candidates.reserve(4);

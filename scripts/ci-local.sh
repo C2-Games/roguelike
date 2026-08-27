@@ -61,7 +61,10 @@ section "clang-tidy"
 # real findings print, that's a lot of console noise for warnings nothing here
 # fails the build on -- write them to the log (fd 3) instead of the console
 # for now, until they're triaged.
-find src -name "*.cpp" -print0 | xargs -0 -n1 -P "$(nproc)" clang-tidy-19 -p build --quiet >&3 2>&3
+# getconf _NPROCESSORS_ONLN is portable across Linux and macOS; nproc is
+# GNU-coreutils-only and absent on a stock macOS toolchain.
+find src -name "*.cpp" -print0 |
+  xargs -0 -n1 -P "$(getconf _NPROCESSORS_ONLN)" clang-tidy-19 -p build --quiet >&3 2>&3
 warning_count=$(grep -c "warning:" "$LOG_FILE" || true)
 printf 'clang-tidy: %s warning(s) found -- see %s\n' "$warning_count" "$LOG_FILE"
 
