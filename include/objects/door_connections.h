@@ -6,7 +6,7 @@
 // one door's link to the door on the other side, in another room.
 struct DoorConnection
 {
-  int roomID;
+  int roomID = 0;
   Coordinate doorPosition;
 
   bool operator<(const DoorConnection& other) const

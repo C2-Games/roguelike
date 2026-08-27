@@ -16,8 +16,8 @@ class EnemyCatalog;
 struct EnemySpawnConfig
 {
   std::string name;
-  int tier;
-  std::array<int, 2> range;
+  int tier = 0;
+  std::array<int, 2> range{};
 };
 
 namespace room_generator

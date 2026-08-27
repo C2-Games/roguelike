@@ -33,7 +33,7 @@ struct RoomAdjacency
 // one room's metadata, parsed from room_<id>.json.
 struct RoomConfig
 {
-  int id;
+  int id = 0;
   std::string name;
   std::string ref;  // filename under assets/rooms/
   std::vector<EnemySpawnConfig> enemies;
