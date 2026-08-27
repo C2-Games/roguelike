@@ -13,11 +13,11 @@
 struct EnemyTierAttributes
 {
   EntitySymbol symbol;
-  int health;
-  int attackDamage;
+  int health = 0;
+  int attackDamage = 0;
   std::unique_ptr<FOV> fov;
-  int chaseMemoryDuration;
-  int speed;
+  int chaseMemoryDuration = 0;
+  int speed = 0;
 };
 
 // loads every enemy JSON file in a directory into an in-memory lookup of

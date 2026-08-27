@@ -22,7 +22,7 @@ enum class PlayerStepKind : std::uint8_t
 
 struct PlayerStepOutcome
 {
-  PlayerStepKind kind;
+  PlayerStepKind kind = PlayerStepKind::Blocked;
   Coordinate doorPos;  // valid only when kind == AtDoor.
 };
 

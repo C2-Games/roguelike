@@ -6,12 +6,12 @@
 // level-wide metadata, parsed from level.json.
 struct LevelMeta
 {
-  int id;
+  int id = 0;
   std::string name;
   std::string description;
-  int roomCount;
-  int startRoomID;
-  int bossRoomID;
+  int roomCount = 0;
+  int startRoomID = 0;
+  int bossRoomID = 0;
 };
 
 #endif
