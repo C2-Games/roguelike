@@ -1,8 +1,10 @@
 #include "preload/room_loader.h"
 
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <fstream>
+#include <iomanip>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -21,35 +23,142 @@ std::string trim(std::string s)
   return s;
 }
 
-TileType charToRoomTile(char c)
+// decode a UTF-8 byte string into its codepoints. the room grids are authored
+// in Unicode box-drawing glyphs, so a 175-column row can run to ~500 bytes;
+// callers must iterate codepoints, not bytes. hand-rolled rather than using
+// mbrtowc because preload runs before ui_manager.cpp calls setlocale.
+std::vector<char32_t> decodeUtf8(const std::string& line,
+                                 const std::filesystem::path& path, int row)
 {
-  if (c == '#')
+  auto fail = [&](unsigned char offending, const std::string& reason) {
+    std::ostringstream oss;
+    oss << "Malformed UTF-8 in row " << row << " of " << path.string() << " ("
+        << reason << "): byte 0x" << std::hex << std::uppercase << std::setw(2)
+        << std::setfill('0') << static_cast<unsigned int>(offending);
+    throw std::runtime_error(oss.str());
+  };
+
+  auto byteAt = [&](std::size_t index) {
+    return static_cast<unsigned char>(line[index]);
+  };
+
+  std::vector<char32_t> codepoints;
+  const std::size_t size = line.size();
+  for (std::size_t i = 0; i < size;)
   {
-    return TileType::Wall;
+    const unsigned char lead = byteAt(i);
+    char32_t codepoint = 0;
+    std::size_t continuationBytes = 0;
+    if (lead < 0x80)
+    {
+      codepoint = lead;
+    }
+    else if ((lead & 0xE0) == 0xC0)
+    {
+      codepoint = static_cast<char32_t>(lead & 0x1F);
+      continuationBytes = 1;
+    }
+    else if ((lead & 0xF0) == 0xE0)
+    {
+      codepoint = static_cast<char32_t>(lead & 0x0F);
+      continuationBytes = 2;
+    }
+    else if ((lead & 0xF8) == 0xF0)
+    {
+      codepoint = static_cast<char32_t>(lead & 0x07);
+      continuationBytes = 3;
+    }
+    else
+    {
+      fail(lead, "invalid lead byte");
+    }
+
+    if (i + continuationBytes >= size)
+    {
+      fail(lead, "truncated multi-byte sequence");
+    }
+    for (std::size_t k = 1; k <= continuationBytes; ++k)
+    {
+      const unsigned char continuation = byteAt(i + k);
+      if ((continuation & 0xC0) != 0x80)
+      {
+        fail(continuation, "expected continuation byte");
+      }
+      codepoint =
+          static_cast<char32_t>((codepoint << 6) | (continuation & 0x3F));
+    }
+
+    // reject a codepoint encoded in more bytes than its minimum: the
+    // per-length floors are the well-known UTF-8 bounds 0x80 / 0x800 /
+    // 0x10000.
+    if ((continuationBytes == 1 && codepoint < 0x80) ||
+        (continuationBytes == 2 && codepoint < 0x800) ||
+        (continuationBytes == 3 && codepoint < 0x10000))
+    {
+      fail(lead, "overlong encoding");
+    }
+    // reject values past the last Unicode codepoint (0x10FFFF) and the
+    // UTF-16 surrogate block (0xD800-0xDFFF), which is never valid UTF-8.
+    if (codepoint > 0x10FFFF || (codepoint >= 0xD800 && codepoint <= 0xDFFF))
+    {
+      fail(lead, "codepoint out of range");
+    }
+
+    codepoints.push_back(codepoint);
+    i += continuationBytes + 1;
   }
-  if (c == '.')
+  return codepoints;
+}
+
+// double-line box-drawing glyphs authored around a door opening; the single
+// stub on one side marks the doorway.
+constexpr std::array<char32_t, 10> DOOR_CAP_CODEPOINTS = {
+    U'╒', U'╓', U'╕', U'╖', U'╘', U'╙', U'╛', U'╜', U'╥', U'╨'};
+
+// double-line box-drawing straight / corner / junction glyphs, all Wall.
+constexpr std::array<char32_t, 11> WALL_CODEPOINTS = {
+    U'═', U'║', U'╔', U'╗', U'╚', U'╝', U'╠', U'╣', U'╦', U'╩', U'╬'};
+
+template <std::size_t N>
+bool inSet(const std::array<char32_t, N>& set, char32_t c)
+{
+  return std::find(set.begin(), set.end(), c) != set.end();
+}
+
+TileType codepointToRoomTile(char32_t c, const std::filesystem::path& path)
+{
+  if (c == U'.')
   {
     return TileType::Floor;
   }
-  if (c == 'o')
+  if (c == U'o')
   {
     return TileType::Pillar;
   }
-  if (c == ' ')
+  if (c == U' ')
   {
     return TileType::Void;
   }
-  if (c == 'E' || c == 'L')
+  if (c == U'E' || c == U'L')
   {
     return TileType::Floor;
   }
-  if (c >= '0' && c <= '9')
+  if (c >= U'0' && c <= U'9')
   {
     return TileType::Door;
   }
+  if (inSet(DOOR_CAP_CODEPOINTS, c))
+  {
+    return TileType::DoorCap;
+  }
+  if (inSet(WALL_CODEPOINTS, c))
+  {
+    return TileType::Wall;
+  }
   std::ostringstream oss;
-  oss << "Unrecognized room-file character: '" << c << "' (0x" << std::hex
-      << static_cast<int>(static_cast<unsigned char>(c)) << ")";
+  oss << "Unrecognized room-file character: U+" << std::hex << std::uppercase
+      << std::setw(4) << std::setfill('0') << static_cast<std::uint32_t>(c)
+      << " in " << path.string();
   throw std::runtime_error(oss.str());
 }
 
@@ -60,13 +169,13 @@ enum class SpawnKind : std::uint8_t
   LootOrItem
 };
 
-SpawnKind charToSpawnKind(char c)
+SpawnKind codepointToSpawnKind(char32_t c)
 {
   switch (c)
   {
-    case 'E':
+    case U'E':
       return SpawnKind::Enemy;
-    case 'L':
+    case U'L':
       return SpawnKind::LootOrItem;
     default:
       return SpawnKind::None;
@@ -118,6 +227,47 @@ void parseRoomHeader(std::ifstream& in, Room& room,
   }
 }
 
+// place one decoded grid cell: its tile (keeping the authored glyph for the
+// visual-only wall/cap variants), plus any door label or spawn point it marks.
+void applyGridCell(Room& room, char32_t cp, Coordinate at,
+                   const std::filesystem::path& path,
+                   std::vector<Coordinate>& enemySpawns,
+                   std::vector<Coordinate>& lootSpawns,
+                   std::vector<Coordinate>& itemSpawns)
+{
+  const TileType type = codepointToRoomTile(cp, path);
+  Tile tile(type, at);
+  if (type == TileType::Wall || type == TileType::DoorCap)
+  {
+    tile.setSymbol(static_cast<wchar_t>(cp));
+  }
+  room.setTile(at, tile);
+
+  if (type == TileType::Door)
+  {
+    const DoorNumber label = static_cast<DoorNumber>(cp - U'0');
+    if (room.getDoors().contains(label))
+    {
+      throw std::runtime_error("Duplicate door label '" +
+                               std::to_string(label) + "' in " + path.string());
+    }
+    room.addDoor(label, at);
+  }
+
+  switch (codepointToSpawnKind(cp))
+  {
+    case SpawnKind::Enemy:
+      enemySpawns.push_back(at);
+      break;
+    case SpawnKind::LootOrItem:
+      lootSpawns.push_back(at);
+      itemSpawns.push_back(at);
+      break;
+    case SpawnKind::None:
+      break;
+  }
+}
+
 // parse the ASCII grid following the header, populating tiles, doors, and
 // spawn points. throws if the row count doesn't match Room::HEIGHT.
 void parseRoomGrid(std::ifstream& in, Room& room,
@@ -143,47 +293,29 @@ void parseRoomGrid(std::ifstream& in, Room& room,
                                " (expected " + std::to_string(Room::HEIGHT) +
                                ")");
     }
+
+    // the grid is authored in multi-byte box-drawing glyphs, so work in
+    // codepoints from here on.
+    std::vector<char32_t> cps = decodeUtf8(line, path, y);
+
     // pad short lines with spaces (Void) but reject over-long lines to catch
     // authoring mistakes.
-    if (static_cast<int>(line.size()) > Room::WIDTH)
+    if (static_cast<int>(cps.size()) > Room::WIDTH)
     {
       throw std::runtime_error(
           "Row " + std::to_string(y) + " in " + path.string() +
-          " is too wide: " + std::to_string(line.size()) + " chars (expected " +
+          " is too wide: " + std::to_string(cps.size()) + " chars (expected " +
           std::to_string(Room::WIDTH) + ")");
     }
-    if (static_cast<int>(line.size()) < Room::WIDTH)
+    if (static_cast<int>(cps.size()) < Room::WIDTH)
     {
-      line.append(Room::WIDTH - line.size(), ' ');
+      cps.resize(static_cast<std::size_t>(Room::WIDTH), U' ');
     }
 
     for (int x = 0; x < Room::WIDTH; ++x)
     {
-      char c = line[x];
-      TileType type = charToRoomTile(c);
-      room.setTile(Coordinate(x, y), Tile(type, Coordinate(x, y)));
-      if (type == TileType::Door)
-      {
-        DoorNumber label = c - '0';
-        if (room.getDoors().find(label) != room.getDoors().end())
-        {
-          throw std::runtime_error("Duplicate door label '" +
-                                   std::string(1, c) + "' in " + path.string());
-        }
-        room.addDoor(label, Coordinate{x, y});
-      }
-      switch (charToSpawnKind(c))
-      {
-        case SpawnKind::Enemy:
-          enemySpawns.push_back(Coordinate(x, y));
-          break;
-        case SpawnKind::LootOrItem:
-          lootSpawns.push_back(Coordinate(x, y));
-          itemSpawns.push_back(Coordinate(x, y));
-          break;
-        case SpawnKind::None:
-          break;
-      }
+      applyGridCell(room, cps[x], Coordinate(x, y), path, enemySpawns,
+                    lootSpawns, itemSpawns);
     }
     ++y;
   }
@@ -214,26 +346,25 @@ Coordinate doorAt(const Room& room, DoorNumber number)
   return doorEntry->second;
 }
 
-Coordinate inwardOfDoor(Coordinate doorPos)
+Coordinate inwardOfDoor(const Room& room, Coordinate doorPos)
 {
-  Coordinate inward = doorPos;
-  if (doorPos.x == 0)
+  // a door sits in a wall run; of its four orthogonal neighbours exactly one
+  // is walkable interior floor (the others are wall, cap, or outside the
+  // room), so step onto that one. edge position isn't reliable — the
+  // re-authored rooms inset their walls.
+  const std::array<Coordinate, 4> neighbours = {
+      Coordinate{doorPos.x, doorPos.y + 1},
+      Coordinate{doorPos.x, doorPos.y - 1},
+      Coordinate{doorPos.x + 1, doorPos.y},
+      Coordinate{doorPos.x - 1, doorPos.y}};
+  for (const Coordinate& neighbour : neighbours)
   {
-    inward.x = 1;
+    if (room.isWalkable(neighbour))
+    {
+      return neighbour;
+    }
   }
-  else if (doorPos.x == Room::WIDTH - 1)
-  {
-    inward.x = Room::WIDTH - 2;
-  }
-  else if (doorPos.y == 0)
-  {
-    inward.y = 1;
-  }
-  else if (doorPos.y == Room::HEIGHT - 1)
-  {
-    inward.y = Room::HEIGHT - 2;
-  }
-  return inward;
+  return doorPos;
 }
 
 ParsedRoom loadRoom(int roomID, const std::filesystem::path& path)
@@ -253,7 +384,7 @@ ParsedRoom loadRoom(int roomID, const std::filesystem::path& path)
 
   for (const auto& [number, doorPos] : room.getDoors())
   {
-    Coordinate entry = inwardOfDoor(doorPos);
+    Coordinate entry = inwardOfDoor(room, doorPos);
     room.setTile(entry, Tile(TileType::EntryWay, entry));
   }
 
