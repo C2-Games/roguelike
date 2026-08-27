@@ -1,0 +1,74 @@
+Room-file character legend
+===========================
+Every character that appears in the assets/rooms/*.txt grids (outside the
+@name/@levels header lines), grouped by role. Unicode box-drawing glyphs are
+double-line ('═'/'║' family) with mixed single/double variants used only at
+door caps, where the single-line stub marks the door opening.
+
+Structural
+----------
+.   U+002E  FULL STOP                      floor (walkable)
+(sp) U+0020 SPACE                          void (outside the room)
+
+Straight walls / corners (no door)
+-----------------------------------
+═   U+2550  BOX DRAWINGS DOUBLE HORIZONTAL       horizontal wall
+║   U+2551  BOX DRAWINGS DOUBLE VERTICAL         vertical wall
+╔   U+2554  BOX DRAWINGS DOUBLE DOWN AND RIGHT   corner (opens south+east)
+╗   U+2557  BOX DRAWINGS DOUBLE DOWN AND LEFT    corner (opens south+west)
+╚   U+255A  BOX DRAWINGS DOUBLE UP AND RIGHT     corner (opens north+east)
+╝   U+255D  BOX DRAWINGS DOUBLE UP AND LEFT      corner (opens north+west)
+
+Wall junctions (3- or 4-way, no door)
+--------------------------------------
+╠   U+2560  BOX DRAWINGS DOUBLE VERTICAL AND RIGHT     T opening east
+╣   U+2563  BOX DRAWINGS DOUBLE VERTICAL AND LEFT      T opening west
+╦   U+2566  BOX DRAWINGS DOUBLE DOWN AND HORIZONTAL    T opening south
+╩   U+2569  BOX DRAWINGS DOUBLE UP AND HORIZONTAL      T opening north
+╬   U+256C  BOX DRAWINGS DOUBLE VERTICAL AND HORIZONTAL  4-way cross
+
+Door caps (corner-shaped: wall continues one way, door is the other)
+------------------------------------------------------------------------
+╛   U+255B  BOX DRAWINGS UP SINGLE AND LEFT DOUBLE     door's left cap, top wall
+╘   U+2558  BOX DRAWINGS UP SINGLE AND RIGHT DOUBLE    door's right cap, top wall
+╕   U+2555  BOX DRAWINGS DOWN SINGLE AND LEFT DOUBLE   door's left cap, bottom wall
+╒   U+2552  BOX DRAWINGS DOWN SINGLE AND RIGHT DOUBLE  door's right cap, bottom wall
+╜   U+255C  BOX DRAWINGS UP DOUBLE AND LEFT SINGLE     door's top cap, left wall
+╙   U+2559  BOX DRAWINGS UP DOUBLE AND RIGHT SINGLE    door's top cap, right wall
+╖   U+2556  BOX DRAWINGS DOWN DOUBLE AND LEFT SINGLE   door's bottom cap, left wall
+╓   U+2553  BOX DRAWINGS DOWN DOUBLE AND RIGHT SINGLE  door's bottom cap, right wall
+
+Wall caps (T-junction-shaped: a wall junction cap)
+---------------------------------------------------------------------
+╥   U+2565  BOX DRAWINGS DOWN DOUBLE AND HORIZONTAL SINGLE  horizontal wall run
+╨   U+2568  BOX DRAWINGS UP DOUBLE AND HORIZONTAL SINGLE    horizontal wall run
+
+Doors
+-----
+1 2 3 4     door number/label, sits between its two caps (e.g. ╛1╘).
+            By convention across these files: 1=north, 2=east, 3=south,
+            4=west, though the number is just an id read by the room
+            loader, not a compass direction.
+
+Spawns (sit on floor tiles)
+----------------------------
+E   enemy spawn point
+L   loot/item spawn point
+o   pillar (blocks movement, floor-like otherwise)
+
+Notes
+-----
+- The room loader (src/preload/room_loader.cpp) now recognizes the
+  double-line box-drawing wall glyphs (straight / corner / junction) as
+  Wall tiles, and the single/double door-cap glyphs (both the corner-shaped
+  set and the T-junction-shaped ╥/╨) as DoorCap tiles. Each tile keeps its
+  authored glyph; '#' is no longer used in room grids.
+- Locked doors: the TileType::DoorLocked variant and its '⚿' (U+26BF)
+  rendering exist, but nothing marks a door locked yet -- the planned
+  trigger is a per-level flag in the level's map.json. '⚿' is never
+  authored in the room .txt grids, so it does not appear among the grid
+  characters above.
+- scripts/convert-room-walls.py mechanically converts plain '#'-wall room
+  files into the straight/corner/junction and corner-shaped door-cap glyphs
+  above. It does not emit the T-junction-shaped door caps (╥/╨); those were
+  added by hand where a door sits on a wall junction.

@@ -76,11 +76,11 @@ TileType Room::getTileType(Coordinate pos) const
   return tiles_[pos.x][pos.y].getType();
 }
 
-char Room::getTileSymbol(Coordinate pos) const
+wchar_t Room::getTileSymbol(Coordinate pos) const
 {
   if (!inBounds(pos))
   {
-    return ' ';
+    return L' ';
   }
   return tiles_[pos.x][pos.y].getSymbol();
 }

@@ -88,4 +88,12 @@ There is no test suite in this repo (no `tests/` directory, no CTest/GoogleTest/
 
 ## Architecture
 
+**Tiles & map rendering:** map tiles carry an explicit authored wide glyph
+(`wchar_t`, set by the room loader from the room asset file) in addition to the
+per-`TileType` default — a tile with no explicit glyph falls back to its
+`TileType`'s default symbol. `MapLayer` renders the map through the wide-char
+ncurses path (`setcchar` / `mvwadd_wch`), like the entity and HUD layers.
+`TileType` gained `DoorCap` (door edge caps) and `DoorLocked` (a static
+locked-door visual, `⚿` — no lock/unlock gameplay yet).
+
 @.claude/ARCHITECTURE.md

@@ -9,7 +9,7 @@
 
 struct TileAttributes
 {
-  char symbol;
+  wchar_t symbol;
   bool walkable;
 };
 
@@ -27,11 +27,19 @@ struct Tile
                 Coordinate position = Coordinate(0, 0));
 
   /**
+   * @brief Set the tile's explicit display symbol, overriding the TileType
+   * default.
+   *
+   * @param symbol The wide-char glyph to display.
+   */
+  void setSymbol(wchar_t symbol) { symbol_ = symbol; }
+
+  /**
    * @brief Get the tile symbol.
    *
-   * @return char
+   * @return The tile's explicit symbol, or the TileType default if unset.
    */
-  char getSymbol() const;
+  wchar_t getSymbol() const;
 
   /**
    * @brief Check if tile is walkable.
@@ -91,18 +99,10 @@ struct Tile
    */
   bool isOccupied() const { return occupied_; }
 
-  /**
-   * @brief Convert symbol to tile type.
-   *
-   * @param ch The character for tile.
-   *
-   * @return TileType
-   */
-  static TileType charToTileType(char ch);
-
  private:
   TileType type_;
   Coordinate position_;
+  wchar_t symbol_ = 0;
   bool visible_ = false;
   bool explored_ = false;
   bool occupied_ = false;

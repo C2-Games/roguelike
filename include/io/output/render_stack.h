@@ -3,6 +3,8 @@
 
 #include <ncurses.h>
 
+#include "objects/colors.h"
+
 class RenderStack
 {
  public:
@@ -80,6 +82,17 @@ class RenderStack
    * @param x New column of the window's top-left corner. By default, 0.
    */
   void reshape(int h, int w, int y = 0, int x = 0);
+
+  /**
+   * @brief Draw one wide (multi-byte Unicode) glyph into this window,
+   * skipping any glyph that fails to encode.
+   *
+   * @param y Row within the window.
+   * @param x Column within the window.
+   * @param glyph The wide glyph to draw.
+   * @param pair Colour pair to draw it in.
+   */
+  void addWideGlyph(int y, int x, wchar_t glyph, ColorPair pair);
 
   WINDOW* win_;
   int height_;

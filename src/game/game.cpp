@@ -157,7 +157,8 @@ void Game::handleInput()
       const DoorConnection& conn = connEntry->second;
       currentRoom().toggleOccupied(player_.getPosition(), false);
       currentRoomID_ = conn.roomID;
-      Coordinate landing = room_loader::inwardOfDoor(conn.doorPosition);
+      Coordinate landing =
+          room_loader::inwardOfDoor(currentRoom(), conn.doorPosition);
       player_.moveTo(landing);
       currentRoom().toggleOccupied(landing, true);
       player_.setActionState(EntityActionState::TransRoom);

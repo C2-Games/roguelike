@@ -31,30 +31,16 @@ HUDLayer::HUDLayer(int h, int w, int margin)
 void HUDLayer::drawBar(int row, int col, int filled, int total, ColorPair fill,
                        std::optional<ColorPair> empty)
 {
-  // block glyphs are not plain chars, so this needs the cchar_t path rather
-  // than mvwaddch.
-  wchar_t filledGlyph[] = {FILLED_CELL, L'\0'};
-  cchar_t filledCell;
-  setcchar(&filledCell, filledGlyph, A_NORMAL, static_cast<short>(fill),
-           nullptr);
-
-  cchar_t emptyCell;
-  if (empty.has_value())
-  {
-    wchar_t emptyGlyph[] = {EMPTY_CELL, L'\0'};
-    setcchar(&emptyCell, emptyGlyph, A_NORMAL, static_cast<short>(*empty),
-             nullptr);
-  }
-
+  // block glyphs are not plain chars, so this needs the cchar_t path.
   for (int cell = 0; cell < total; ++cell)
   {
     if (cell < filled)
     {
-      mvwadd_wch(win_, row, col + cell, &filledCell);
+      addWideGlyph(row, col + cell, FILLED_CELL, fill);
     }
     else if (empty.has_value())
     {
-      mvwadd_wch(win_, row, col + cell, &emptyCell);
+      addWideGlyph(row, col + cell, EMPTY_CELL, *empty);
     }
   }
 }
