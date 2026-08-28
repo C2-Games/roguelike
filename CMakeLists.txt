@@ -48,6 +48,9 @@ set(SOURCES
     src/preload/room_loader.cpp
     src/preload/enemy_catalog.cpp
     src/preload/room_generator.cpp
+    src/preload/utils/json_io.cpp
+    src/preload/utils/text.cpp
+    src/preload/utils/tile_glyph.cpp
     src/systems/movement/pathfinding.cpp
     src/systems/movement/goal_map_cache.cpp
     src/systems/movement/move_enemy.cpp

@@ -2,16 +2,8 @@
 #ifndef TILE_H
 #define TILE_H
 
-#include <unordered_map>
-
 #include "objects/coordinate.h"
 #include "objects/tiles/tile_type.h"
-
-struct TileAttributes
-{
-  wchar_t symbol;
-  bool walkable;
-};
 
 struct Tile
 {
@@ -27,17 +19,16 @@ struct Tile
                 Coordinate position = Coordinate(0, 0));
 
   /**
-   * @brief Set the tile's explicit display symbol, overriding the TileType
-   * default.
+   * @brief Set the tile's display symbol.
    *
    * @param symbol The wide-char glyph to display.
    */
   void setSymbol(wchar_t symbol) { symbol_ = symbol; }
 
   /**
-   * @brief Get the tile symbol.
+   * @brief Get the tile's display symbol.
    *
-   * @return The tile's explicit symbol, or the TileType default if unset.
+   * @return The wide-char glyph to render for this tile.
    */
   wchar_t getSymbol() const;
 
@@ -102,13 +93,11 @@ struct Tile
  private:
   TileType type_;
   Coordinate position_;
-  wchar_t symbol_ = 0;
+  // the room loader sets this for every tile; there is no type-based fallback.
+  wchar_t symbol_ = L' ';
   bool visible_ = false;
   bool explored_ = false;
   bool occupied_ = false;
-
-  // static lookup table for tile attributes based on TileType.
-  static const std::unordered_map<int, TileAttributes> typeAttributes_;
 };
 
 #endif

@@ -16,6 +16,7 @@ include
   game/            game.h, services.h, logger.h, level_data.h
   preload/         level_loader.h, level_meta.h, room_loader.h,
                     room_generator.h, enemy_catalog.h
+    utils/         json_io.h, text.h, tile_glyph.h
   systems/
     movement/      movement.h, pathfinding.h, goal_map_cache.h,
                     move_enemy.h, move_player.h

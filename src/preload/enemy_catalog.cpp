@@ -1,11 +1,11 @@
 #include "preload/enemy_catalog.h"
 
-#include <fstream>
 #include <nlohmann/json.hpp>
 #include <stdexcept>
 #include <utility>
 
 #include "objects/fovs/ellipse_fov.h"
+#include "preload/utils/json_io.h"
 
 namespace
 {
@@ -86,14 +86,7 @@ void EnemyCatalog::loadFile(const std::filesystem::path& path)
 {
   try
   {
-    std::ifstream file(path);
-    if (!file)
-    {
-      throw std::runtime_error("could not open file");
-    }
-
-    nlohmann::json enemyJson;
-    file >> enemyJson;
+    const nlohmann::json enemyJson = preload::readJson(path);
 
     const std::string name = enemyJson.at("name").get<std::string>();
     const EntitySymbol symbol = parseSymbol(enemyJson.at("symbol"));

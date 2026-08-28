@@ -88,12 +88,18 @@ There is no test suite in this repo (no `tests/` directory, no CTest/GoogleTest/
 
 ## Architecture
 
-**Tiles & map rendering:** map tiles carry an explicit authored wide glyph
-(`wchar_t`, set by the room loader from the room asset file) in addition to the
-per-`TileType` default — a tile with no explicit glyph falls back to its
-`TileType`'s default symbol. `MapLayer` renders the map through the wide-char
-ncurses path (`setcchar` / `mvwadd_wch`), like the entity and HUD layers.
-`TileType` gained `DoorCap` (door edge caps) and `DoorLocked` (a static
-locked-door visual, `⚿` — no lock/unlock gameplay yet).
+**Tiles & map rendering:** every map tile carries its own wide glyph
+(`wchar_t`), set once by the room loader — from the room asset file for the
+box-drawing wall/cap art, otherwise from `preload::defaultGlyph(TileType)`
+(`preload/utils/tile_glyph.h`). `TileType` itself carries gameplay semantics
+only (walkability, via `Tile::typeRules_`); it holds no glyph. `MapLayer`
+renders the map through the wide-char ncurses path (`setcchar` / `mvwadd_wch`),
+like the entity and HUD layers. `TileType` gained `DoorCap` (door edge caps) and
+`DoorLocked` (a static locked-door visual, `⚿` — no lock/unlock gameplay yet).
+
+**Preload helpers:** free functions available to preload files live under
+`preload/utils/` in `namespace preload` — `readJson` (`json_io.h`), `trim` /
+`decodeUtf8` (`text.h`), `defaultGlyph` (`tile_glyph.h`). File-local parse
+helpers stay in their `.cpp`'s anonymous namespace.
 
 @.claude/ARCHITECTURE.md

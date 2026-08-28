@@ -11,104 +11,11 @@
 
 #include "objects/tiles/tile.h"
 #include "objects/tiles/tile_type.h"
+#include "preload/utils/text.h"
+#include "preload/utils/tile_glyph.h"
 
 namespace
 {
-
-std::string trim(std::string s)
-{
-  auto notSpace = [](unsigned char c) { return !std::isspace(c); };
-  s.erase(s.begin(), std::find_if(s.begin(), s.end(), notSpace));
-  s.erase(std::find_if(s.rbegin(), s.rend(), notSpace).base(), s.end());
-  return s;
-}
-
-// decode a UTF-8 byte string into its codepoints. the room grids are authored
-// in Unicode box-drawing glyphs, so a 175-column row can run to ~500 bytes;
-// callers must iterate codepoints, not bytes. hand-rolled rather than using
-// mbrtowc because preload runs before ui_manager.cpp calls setlocale.
-std::vector<char32_t> decodeUtf8(const std::string& line,
-                                 const std::filesystem::path& path, int row)
-{
-  auto fail = [&](unsigned char offending, const std::string& reason) {
-    std::ostringstream oss;
-    oss << "Malformed UTF-8 in row " << row << " of " << path.string() << " ("
-        << reason << "): byte 0x" << std::hex << std::uppercase << std::setw(2)
-        << std::setfill('0') << static_cast<unsigned int>(offending);
-    throw std::runtime_error(oss.str());
-  };
-
-  auto byteAt = [&](std::size_t index) {
-    return static_cast<unsigned char>(line[index]);
-  };
-
-  std::vector<char32_t> codepoints;
-  const std::size_t size = line.size();
-  for (std::size_t i = 0; i < size;)
-  {
-    const unsigned char lead = byteAt(i);
-    char32_t codepoint = 0;
-    std::size_t continuationBytes = 0;
-    if (lead < 0x80)
-    {
-      codepoint = lead;
-    }
-    else if ((lead & 0xE0) == 0xC0)
-    {
-      codepoint = static_cast<char32_t>(lead & 0x1F);
-      continuationBytes = 1;
-    }
-    else if ((lead & 0xF0) == 0xE0)
-    {
-      codepoint = static_cast<char32_t>(lead & 0x0F);
-      continuationBytes = 2;
-    }
-    else if ((lead & 0xF8) == 0xF0)
-    {
-      codepoint = static_cast<char32_t>(lead & 0x07);
-      continuationBytes = 3;
-    }
-    else
-    {
-      fail(lead, "invalid lead byte");
-    }
-
-    if (i + continuationBytes >= size)
-    {
-      fail(lead, "truncated multi-byte sequence");
-    }
-    for (std::size_t k = 1; k <= continuationBytes; ++k)
-    {
-      const unsigned char continuation = byteAt(i + k);
-      if ((continuation & 0xC0) != 0x80)
-      {
-        fail(continuation, "expected continuation byte");
-      }
-      codepoint =
-          static_cast<char32_t>((codepoint << 6) | (continuation & 0x3F));
-    }
-
-    // reject a codepoint encoded in more bytes than its minimum: the
-    // per-length floors are the well-known UTF-8 bounds 0x80 / 0x800 /
-    // 0x10000.
-    if ((continuationBytes == 1 && codepoint < 0x80) ||
-        (continuationBytes == 2 && codepoint < 0x800) ||
-        (continuationBytes == 3 && codepoint < 0x10000))
-    {
-      fail(lead, "overlong encoding");
-    }
-    // reject values past the last Unicode codepoint (0x10FFFF) and the
-    // UTF-16 surrogate block (0xD800-0xDFFF), which is never valid UTF-8.
-    if (codepoint > 0x10FFFF || (codepoint >= 0xD800 && codepoint <= 0xDFFF))
-    {
-      fail(lead, "codepoint out of range");
-    }
-
-    codepoints.push_back(codepoint);
-    i += continuationBytes + 1;
-  }
-  return codepoints;
-}
 
 // double-line box-drawing glyphs authored around a door opening; the single
 // stub on one side marks the doorway.
@@ -192,7 +99,7 @@ void parseRoomHeader(std::ifstream& in, Room& room,
   std::streampos gridStart = in.tellg();
   while (std::getline(in, line))
   {
-    std::string trimmed = trim(line);
+    std::string trimmed = preload::trim(line);
     if (trimmed.empty())
     {
       gridStart = in.tellg();
@@ -213,8 +120,8 @@ void parseRoomHeader(std::ifstream& in, Room& room,
       throw std::runtime_error("Malformed header (no colon) in " +
                                path.string() + ": " + trimmed);
     }
-    std::string key = trim(trimmed.substr(1, colon - 1));
-    std::string value = trim(trimmed.substr(colon + 1));
+    std::string key = preload::trim(trimmed.substr(1, colon - 1));
+    std::string value = preload::trim(trimmed.substr(colon + 1));
 
     if (key == "name")
     {
@@ -237,9 +144,16 @@ void applyGridCell(Room& room, char32_t cp, Coordinate at,
 {
   const TileType type = codepointToRoomTile(cp, path);
   Tile tile(type, at);
+  // wall and cap cells keep the authored box-drawing glyph; every other cell
+  // takes its type's default, since its authored char is a semantic marker
+  // (a door digit, a spawn letter) rather than the glyph to render.
   if (type == TileType::Wall || type == TileType::DoorCap)
   {
     tile.setSymbol(static_cast<wchar_t>(cp));
+  }
+  else
+  {
+    tile.setSymbol(preload::defaultGlyph(type));
   }
   room.setTile(at, tile);
 
@@ -296,7 +210,7 @@ void parseRoomGrid(std::ifstream& in, Room& room,
 
     // the grid is authored in multi-byte box-drawing glyphs, so work in
     // codepoints from here on.
-    std::vector<char32_t> cps = decodeUtf8(line, path, y);
+    std::vector<char32_t> cps = preload::decodeUtf8(line, path, y);
 
     // pad short lines with spaces (Void) but reject over-long lines to catch
     // authoring mistakes.
@@ -357,14 +271,10 @@ Coordinate inwardOfDoor(const Room& room, Coordinate doorPos)
       Coordinate{doorPos.x, doorPos.y - 1},
       Coordinate{doorPos.x + 1, doorPos.y},
       Coordinate{doorPos.x - 1, doorPos.y}};
-  for (const Coordinate& neighbour : neighbours)
-  {
-    if (room.isWalkable(neighbour))
-    {
-      return neighbour;
-    }
-  }
-  return doorPos;
+  const auto* const walkable = std::find_if(
+      neighbours.begin(), neighbours.end(),
+      [&](const Coordinate& neighbour) { return room.isWalkable(neighbour); });
+  return walkable != neighbours.end() ? *walkable : doorPos;
 }
 
 ParsedRoom loadRoom(int roomID, const std::filesystem::path& path)
@@ -385,7 +295,9 @@ ParsedRoom loadRoom(int roomID, const std::filesystem::path& path)
   for (const auto& [number, doorPos] : room.getDoors())
   {
     Coordinate entry = inwardOfDoor(room, doorPos);
-    room.setTile(entry, Tile(TileType::EntryWay, entry));
+    Tile entryTile(TileType::EntryWay, entry);
+    entryTile.setSymbol(preload::defaultGlyph(TileType::EntryWay));
+    room.setTile(entry, entryTile);
   }
 
   return ParsedRoom{std::move(room), std::move(enemySpawns),
