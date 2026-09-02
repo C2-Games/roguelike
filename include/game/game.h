@@ -76,11 +76,15 @@ class Game
       std::make_unique<EllipseFOV>(-1, -1);
 
   /**
-   * @brief Get the frame duraction in milliseconds.
+   * @brief Get the frame duration in milliseconds, at sub-millisecond
+   * precision.
    *
-   * @return std::chrono::milliseconds
+   * @return The frame budget, in milliseconds, at sub-millisecond precision.
    */
-  auto getDuration() const { return std::chrono::milliseconds(1000 / fps_); };
+  auto getDuration() const
+  {
+    return std::chrono::duration<double, std::milli>(1000.0 / fps_);
+  };
 
   /** @brief Const access to the room the player currently occupies. */
   const Room& currentRoom() const
