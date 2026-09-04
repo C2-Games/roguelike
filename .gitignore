@@ -89,3 +89,6 @@ __pycache__/
 .claude/.pr-body.md
 .claude/.doc-drift-ack
 .claude/.last-check
+
+# Generated data
+/game_data.db
