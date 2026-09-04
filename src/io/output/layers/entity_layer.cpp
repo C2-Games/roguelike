@@ -38,11 +38,20 @@ EntityLayer::EntityLayer(int h, int w, int y, int x) : RenderStack(h, w, y, x)
 
 void EntityLayer::drawEnemies(const EntityLayerPacket& data)
 {
-  // Hook: OR in colorAttr(ColorPair::EnemyDefault) — or a
-  // per-enemy pair — once enemy colouring is designed.
+  // per-enemy hit-flash tint is honoured below; the untinted enemy still draws
+  // in the terminal default. hook: OR in colorAttr(ColorPair::EnemyDefault) for
+  // that base case once enemy colouring is designed.
   for (const auto& enemy : data.enemies)
   {
+    if (enemy.tinted)
+    {
+      wattron(win_, colorAttr(enemy.tintColor));
+    }
     drawSymbol(win_, enemy.symbol, enemy.position);
+    if (enemy.tinted)
+    {
+      wattroff(win_, colorAttr(enemy.tintColor));
+    }
   };
 };
 
