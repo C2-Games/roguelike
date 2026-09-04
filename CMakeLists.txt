@@ -25,6 +25,20 @@ if(NOT nlohmann_json_FOUND)
     FetchContent_MakeAvailable(nlohmann_json)
 endif()
 
+find_package(SQLiteCpp QUIET)
+if(NOT SQLiteCpp_FOUND)
+    include(FetchContent)
+    # vendor sqlite3's own amalgamation so no system libsqlite3-dev is required.
+    set(SQLITECPP_INTERNAL_SQLITE ON CACHE BOOL "" FORCE)
+    FetchContent_Declare(
+        SQLiteCpp
+        GIT_REPOSITORY https://github.com/SRombauts/SQLiteCpp.git
+        GIT_TAG 3.3.3
+        GIT_SHALLOW TRUE
+    )
+    FetchContent_MakeAvailable(SQLiteCpp)
+endif()
+
 # source files.
 set(SOURCES
     src/main.cpp
@@ -114,3 +128,43 @@ install(FILES
 )
 
 install(DIRECTORY assets DESTINATION .)
+
+# game_data.db generator executable.
+add_executable(generate_db
+    src/db/main.cpp
+    src/db/generate_database.cpp
+    src/db/json_utils.cpp
+    src/db/seed_enemies.cpp
+    src/db/seed_weapons.cpp
+    src/db/seed_levels.cpp
+)
+
+target_include_directories(generate_db PRIVATE include)
+
+target_link_libraries(generate_db PRIVATE
+    SQLiteCpp
+    nlohmann_json::nlohmann_json
+)
+
+target_include_directories(generate_db SYSTEM PRIVATE
+    $<TARGET_PROPERTY:SQLiteCpp,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:nlohmann_json::nlohmann_json,INTERFACE_INCLUDE_DIRECTORIES>
+)
+
+# run generate_db at build time to produce game_data.db from db/schema.sql +
+# the enemy/weapon/level assets. independent of the roguelike target, since
+# nothing consumes the database yet.
+file(GLOB_RECURSE GAME_DATA_JSON CONFIGURE_DEPENDS
+    ${CMAKE_SOURCE_DIR}/assets/enemies/*.json
+    ${CMAKE_SOURCE_DIR}/assets/weapons/*.json
+    ${CMAKE_SOURCE_DIR}/assets/levels/*.json
+)
+set(GAME_DATA_DB ${CMAKE_SOURCE_DIR}/game_data.db)
+add_custom_command(
+    OUTPUT ${GAME_DATA_DB}
+    COMMAND generate_db ${CMAKE_SOURCE_DIR}/db/schema.sql ${CMAKE_SOURCE_DIR}/assets ${GAME_DATA_DB}
+    DEPENDS generate_db ${CMAKE_SOURCE_DIR}/db/schema.sql ${GAME_DATA_JSON}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Generating game_data.db from db/schema.sql + assets/*.json"
+)
+add_custom_target(game_db ALL DEPENDS ${GAME_DATA_DB})
