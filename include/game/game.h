@@ -68,7 +68,6 @@ class Game
 
   GameState state_ = GameState::Play;
   UIManager& uiManager_;
-  int playerHitFlashFramesRemaining_ = 0;
 
   Coordinate lastVisibilityPos_ = Coordinate(-1, -1);
   int lastVisibilityRoomID_ = -1;

@@ -23,7 +23,8 @@ enum class ColorPair : std::uint8_t
   BarEmpty = 12,        ///< Unfilled remainder of any bar.
   Shield = 13,          ///< Reserved for the shield overlay bar.
 
-  PlayerHit = 14,  ///< One-shot red flash when an enemy lands a hit.
+  EntityHit = 14,  ///< One-shot red flash on any entity (player or enemy) that
+                   ///< just took damage.
 };
 
 #endif

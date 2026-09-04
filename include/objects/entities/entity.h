@@ -97,6 +97,29 @@ class Entity
   void setActionState(EntityActionState state) { actionState_ = state; };
 
   /**
+   * @brief Whether the entity is mid hit-flash this frame.
+   *
+   * @return True while the hit-flash countdown has frames remaining.
+   */
+  bool hasHitFlash() const { return hitFlashFramesRemaining_ > 0; };
+
+  /**
+   * @brief Start the hit-flash for `frames` frames.
+   *
+   * @param frames Number of frames the hit-flash should stay active.
+   */
+  void triggerHitFlash(int frames) { hitFlashFramesRemaining_ = frames; };
+
+  /** @brief Decrement the hit-flash countdown, saturating at zero. */
+  void tickHitFlash()
+  {
+    if (hitFlashFramesRemaining_ > 0)
+    {
+      --hitFlashFramesRemaining_;
+    }
+  };
+
+  /**
    * @brief Check whether a position is within this entity's field of view.
    *
    * @param position The position to check.
@@ -115,6 +138,7 @@ class Entity
   int frameCounter_;
   std::unique_ptr<FOV> fov_;
   EntityActionState actionState_;
+  int hitFlashFramesRemaining_;
 
   /**
    * @brief Move hook that moves player to new position based on their speed.
