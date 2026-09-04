@@ -71,7 +71,7 @@ Build scripts are bash (`scripts/*.sh`) — on Windows use Git Bash or WSL.
 - Manual equivalent: `cmake -B .build/release -S . && cmake --build .build/release`
 - Run from a directory containing `assets/` (repo root, or the build output needs `assets/` alongside it): `./.build/release/roguelike`
 
-Dependencies: wide-char ncurses (`libncurses-dev` on Debian/Ubuntu/WSL, `brew install ncurses` on macOS) and `nlohmann_json` (fetched automatically via CMake `FetchContent` if not found on the system). CMake 3.16+, C++20.
+Dependencies: wide-char ncurses (`libncurses-dev` on Debian/Ubuntu/WSL, `brew install ncurses` on macOS), `nlohmann_json`, and `SQLiteCpp` (both fetched automatically via CMake `FetchContent` if not found on the system). CMake 3.16+, C++20.
 
 There is no test suite in this repo (no `tests/` directory, no CTest/GoogleTest/Catch2 wiring). CI correctness gates are formatting, static analysis, and a successful build only.
 
