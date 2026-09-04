@@ -1,7 +1,6 @@
 #include "preload/level_loader.h"
 
 #include <algorithm>
-#include <fstream>
 #include <iterator>
 #include <map>
 #include <nlohmann/json.hpp>
@@ -16,6 +15,7 @@
 #include "preload/enemy_catalog.h"
 #include "preload/room_generator.h"
 #include "preload/room_loader.h"
+#include "preload/utils/json_io.h"
 
 namespace
 {
@@ -47,19 +47,6 @@ struct LevelConfig
   std::map<int, RoomConfig> rooms;       // id -> per-room config
 };
 
-nlohmann::json readJson(const std::filesystem::path& path)
-{
-  std::ifstream in(path);
-  if (!in)
-  {
-    throw std::runtime_error("could not open file: " + path.string());
-  }
-
-  nlohmann::json j;
-  in >> j;
-  return j;
-}
-
 LevelMeta parseLevelMeta(const nlohmann::json& j)
 {
   return LevelMeta{
@@ -76,7 +63,7 @@ LevelMeta loadLevelMeta(const std::filesystem::path& path)
 {
   try
   {
-    return parseLevelMeta(readJson(path));
+    return parseLevelMeta(preload::readJson(path));
   }
   catch (const std::exception& e)
   {
@@ -121,7 +108,7 @@ MapData loadMap(const std::filesystem::path& path)
 {
   try
   {
-    return parseMap(readJson(path));
+    return parseMap(preload::readJson(path));
   }
   catch (const std::exception& e)
   {
@@ -167,7 +154,7 @@ RoomConfig loadRoomConfig(const std::filesystem::path& path, int expectedId)
 {
   try
   {
-    RoomConfig config = parseRoomConfig(readJson(path));
+    RoomConfig config = parseRoomConfig(preload::readJson(path));
     if (config.id != expectedId)
     {
       throw std::runtime_error("id " + std::to_string(config.id) +
@@ -183,6 +170,42 @@ RoomConfig loadRoomConfig(const std::filesystem::path& path, int expectedId)
   }
 }
 
+// replace a door cell and its two flanking cap cells with unbroken wall. the
+// wall the door sits in runs along whichever axis has wall / cap neighbours;
+// edge position isn't reliable for an interior-wall door.
+void sealDoorAsWall(Room& room, Coordinate door)
+{
+  auto isWallish = [&](Coordinate c) {
+    return Room::inBounds(c) && (room.getTileType(c) == TileType::Wall ||
+                                 room.getTileType(c) == TileType::DoorCap);
+  };
+  const bool horizontalRun = isWallish(Coordinate{door.x - 1, door.y}) ||
+                             isWallish(Coordinate{door.x + 1, door.y});
+  const wchar_t wallGlyph = horizontalRun ? L'═' : L'║';
+
+  auto sealCell = [&](Coordinate coord) {
+    Tile tile(TileType::Wall, coord);
+    tile.setSymbol(wallGlyph);
+    room.setTile(coord, tile);
+  };
+
+  sealCell(door);
+
+  const Coordinate flankA = horizontalRun ? Coordinate{door.x - 1, door.y}
+                                          : Coordinate{door.x, door.y - 1};
+  const Coordinate flankB = horizontalRun ? Coordinate{door.x + 1, door.y}
+                                          : Coordinate{door.x, door.y + 1};
+  for (const Coordinate& flank : {flankA, flankB})
+  {
+    // only overwrite an actual door cap; leave an adjacent corner or junction
+    // glyph intact.
+    if (Room::inBounds(flank) && room.getTileType(flank) == TileType::DoorCap)
+    {
+      sealCell(flank);
+    }
+  }
+}
+
 void sealUnlinkedDoors(std::map<int, Room>& rooms,
                        const RoomConnections& roomConnections)
 {
@@ -191,10 +214,9 @@ void sealUnlinkedDoors(std::map<int, Room>& rooms,
     for (const auto& doorEntry : room.getDoors())
     {
       const Coordinate& door = doorEntry.second;
-      if (roomConnections.find(DoorConnection{id, door}) ==
-          roomConnections.end())
+      if (!roomConnections.contains(DoorConnection{id, door}))
       {
-        room.setTile(door, Tile(TileType::Wall, door));
+        sealDoorAsWall(room, door);
       }
     }
   }

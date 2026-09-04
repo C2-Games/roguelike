@@ -137,9 +137,9 @@ struct Room
    * @brief Bounds-checked tile symbol query.
    *
    * @param pos Grid position to test.
-   * @return The tile's display symbol, or ' ' if out of bounds.
+   * @return The tile's display symbol, or L' ' if out of bounds.
    */
-  char getTileSymbol(Coordinate pos) const;
+  wchar_t getTileSymbol(Coordinate pos) const;
 
   /** @brief Reset every cell in the visible grid to false. */
   void clearVisible();

@@ -52,15 +52,8 @@ void EntityLayer::drawProjectiles(const EntityLayerPacket& data)
   {
     const Coordinate pos = projectile.position;
 
-    // wide-char draw: the orb is a true Unicode glyph (not a plain `char`),
-    // so it needs cchar_t/setcchar/mvwadd_wch rather than mvwaddch.
-    // Note: setcchar's colour argument is the raw ncurses pair number, not
-    // a chtype from colorAttr().
-    cchar_t cc;  // cchar_t = complex character type.
-    wchar_t glyph[] = {L'●', L'\0'};
-    short pairId = static_cast<short>(projectile.color);
-    setcchar(&cc, glyph, A_NORMAL, pairId, nullptr);
-    mvwadd_wch(win_, pos.y, pos.x, &cc);
+    // the orb is a true Unicode glyph, not a plain char.
+    addWideGlyph(pos.y, pos.x, L'●', projectile.color);
   };
 };
 

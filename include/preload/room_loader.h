@@ -39,13 +39,13 @@ ParsedRoom loadRoom(int roomID, const std::filesystem::path& path);
 Coordinate doorAt(const Room& room, DoorNumber number);
 
 /**
- * @brief Find the tile one step inward from a door position.
+ * @brief Find the walkable tile one step inward from a door position.
  *
- * @param doorPos Door tile's grid position, assumed to lie on the room's
- *                boundary.
- * @return The adjacent tile position, one step toward room interior.
+ * @param room Room the door belongs to.
+ * @param doorPos Door tile's grid position.
+ * @return The orthogonally adjacent walkable tile, or doorPos if none is.
  */
-Coordinate inwardOfDoor(Coordinate doorPos);
+Coordinate inwardOfDoor(const Room& room, Coordinate doorPos);
 
 }  // namespace room_loader
 

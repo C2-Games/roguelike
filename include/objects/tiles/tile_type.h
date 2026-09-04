@@ -10,7 +10,9 @@ enum class TileType : std::uint8_t
   Door,
   Void,
   Pillar,
-  EntryWay
+  EntryWay,
+  DoorCap,
+  DoorLocked
 };
 
 #endif

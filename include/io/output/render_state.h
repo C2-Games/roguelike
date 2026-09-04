@@ -20,7 +20,7 @@ enum class TileVisibility : std::uint8_t
 
 struct TileView
 {
-  char symbol = ' ';
+  wchar_t symbol = ' ';
   TileVisibility visibility = TileVisibility::Unseen;
 };
 

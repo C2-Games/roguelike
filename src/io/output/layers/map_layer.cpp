@@ -2,7 +2,6 @@
 
 #include <ncurses.h>
 
-#include "io/output/colors.h"
 #include "io/output/render_state.h"
 #include "io/output/window_position.h"
 #include "objects/room/room_dimensions.h"
@@ -21,28 +20,34 @@ void MapLayer::drawMap(const MapLayerPacket& data)
       //   visible   -> normal render (terminal default colours).
       //   explored  -> light grey glyph on grey background for non-blank
       //                tile symbols (walls, doors, floor).
-      //                Result: the whole explored area reads as a uniform
+      //                result: the whole explored area reads as a uniform
       //                grey shade with walls/doors/floor picked out on top.
       //   unseen    -> solid dark grey block so the room shape stays
       //                hidden until first sighting.
-      //
-      // Hook: door tiles could branch here on tile.getType() == Door and
-      // OR in colorAttr(ColorPair::DoorDefault) once the pair is defined.
+      // to tint doors here (e.g. colorAttr(ColorPair::DoorDefault)) or set
+      // the locked door apart, TileView would need to carry the tile type
+      // or a flag; today it carries only the glyph, and an open door is
+      // recognised by its symbol being blank.
       if (tile.visibility == TileVisibility::Visible)
       {
-        mvwaddch(win_, y, x, tile.symbol);
+        addWideGlyph(y, x, tile.symbol, ColorPair::Default);
       }
       else if (tile.visibility == TileVisibility::Explored)
       {
-        mvwaddch(win_, y, x, tile.symbol | colorAttr(ColorPair::FogExplored));
+        // a blank open-door cell would be dropped by ncurses overlay(), so
+        // substitute a non-blank filler to keep the fogged doorway cell. an
+        // open door is the only blank-symbol tile that reaches this branch:
+        // Tile::toggleReveal never marks a Void tile explored.
+        const wchar_t glyph = tile.symbol == L' ' ? L'.' : tile.symbol;
+        addWideGlyph(y, x, glyph, ColorPair::FogExplored);
       }
       else
       {
-        // Fog block: ncurses overlay() drops blanks, so we must draw a
-        // non-blank glyph. Because the pair has fg == bg, whatever glyph
+        // fog block: ncurses overlay() drops blanks, so we must draw a
+        // non-blank glyph. because the pair has fg == bg, whatever glyph
         // we pick is invisible against its own background and only the
         // solid grey cell shows through. '.' is arbitrary.
-        mvwaddch(win_, y, x, '.' | colorAttr(ColorPair::FogUnexplored));
+        addWideGlyph(y, x, L'.', ColorPair::FogUnexplored);
       }
     };
   };
