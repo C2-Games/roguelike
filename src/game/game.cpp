@@ -20,8 +20,6 @@ namespace
 // fixed until a real seed-input/new-game flow exists: every launch should
 // reproduce the same room/enemy layout for a given level config.
 constexpr std::mt19937::result_type DEFAULT_SEED = 80085;
-// duration, in frames, that the player's hit-flash stays visible.
-constexpr int HIT_FLASH_FRAMES = 8;
 // how far short of the frame deadline the coarse sleep stops.
 constexpr auto SLEEP_MARGIN = std::chrono::microseconds(1000);
 }  // namespace
@@ -239,12 +237,20 @@ void Game::update()
     {
       combat::applyDamage(player_,
                           combat::meleeDamage(enemy->getAttackDamage()));
-      playerHitFlashFramesRemaining_ = HIT_FLASH_FRAMES;
     }
   }
-  if (playerHitFlashFramesRemaining_ > 0)
+
+  // tick every entity's hit-flash once per frame, across all rooms: an enemy
+  // hit just before the player leaves its room would otherwise freeze
+  // mid-flash and show a stale tint on return. ticking after the damage pass
+  // makes the frame a hit lands the first visible flash frame.
+  player_.tickHitFlash();
+  for (auto& [roomID, roomObjects] : levelData_.roomData)
   {
-    --playerHitFlashFramesRemaining_;
+    for (auto& enemy : roomObjects.enemies)
+    {
+      enemy->tickHitFlash();
+    }
   }
 }
 
@@ -288,7 +294,7 @@ RenderState Game::buildRenderState() const
   state.entity.player =
       EntityView{player_.getPosition(),
                  player_.isAlive() ? player_.getSymbol() : EntitySymbol{},
-                 playerHitFlashFramesRemaining_ > 0, ColorPair::PlayerHit};
+                 player_.hasHitFlash(), ColorPair::EntityHit};
 
   const RoomObjects& objects = currentRoomObjects();
 
@@ -297,8 +303,9 @@ RenderState Game::buildRenderState() const
     const Coordinate& position = enemy->getPosition();
     if (enemy->isAlive() && room.isVisible(position))
     {
-      state.entity.enemies.push_back(
-          EntityView{position, enemy->getSymbol(), false, ColorPair::Default});
+      state.entity.enemies.push_back(EntityView{position, enemy->getSymbol(),
+                                                enemy->hasHitFlash(),
+                                                ColorPair::EntityHit});
     }
   }
 
