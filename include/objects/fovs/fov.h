@@ -42,6 +42,18 @@ struct FOV
   const std::vector<Coordinate>* leavingOffsets(Coordinate dir) const;
 
   /**
+   * @brief Upper bound, in tiles along either axis, on how far this FOV
+   * reaches from its origin.
+   *
+   * Used by wall-aware visibility sweeps (e.g. recursive shadowcasting) to
+   * bound recursion depth before clipping the result to the exact shape via
+   * `in()`.
+   *
+   * @return int Maximum absolute offset coordinate among this FOV's offsets.
+   */
+  int maxRadius() const { return radius_; }
+
+  /**
    * @brief Create an independent copy of this FOV.
    *
    * @return std::unique_ptr<FOV> A new owned FOV of the same concrete kind.
@@ -77,6 +89,7 @@ struct FOV
  private:
   std::set<Coordinate> offsets_;
   std::map<Coordinate, std::vector<Coordinate>> leaving_;
+  int radius_;
 };
 
 #endif

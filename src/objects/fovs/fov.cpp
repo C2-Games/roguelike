@@ -1,11 +1,13 @@
 #include "objects/fovs/fov.h"
 
 #include <algorithm>
+#include <cstdlib>
 #include <iterator>
 #include <typeinfo>
 #include <utility>
 
-FOV::FOV(std::set<Coordinate> offsets) : offsets_(std::move(offsets))
+FOV::FOV(std::set<Coordinate> offsets)
+    : offsets_(std::move(offsets)), radius_(0)
 {
   static const std::vector<Coordinate> CARDINALS = {
       Coordinate(0, -1), Coordinate(0, 1), Coordinate(-1, 0), Coordinate(1, 0)};
@@ -16,6 +18,11 @@ FOV::FOV(std::set<Coordinate> offsets) : offsets_(std::move(offsets))
                  [this, &dir](const Coordinate& s) {
                    return !offsets_.contains(s - dir);
                  });
+  }
+
+  for (const Coordinate& offset : offsets_)
+  {
+    radius_ = std::max({radius_, std::abs(offset.x), std::abs(offset.y)});
   }
 }
 

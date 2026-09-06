@@ -6,7 +6,7 @@
 
 Player::Player(Coordinate position, int health, int speed)
     : Entity(position, EntitySymbol{{'@'}}, health, speed,
-             std::make_unique<EllipseFOV>(16, 10)),
+             std::make_unique<EllipseFOV>(18, 9)),
       maxHealth_(health)
 {}
 
