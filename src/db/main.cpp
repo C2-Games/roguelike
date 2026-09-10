@@ -7,8 +7,8 @@ int main(int argc, char** argv)
 {
   if (argc != 4)
   {
-    std::cerr
-        << "usage: generate_db <schema.sql path> <assets_dir> <db_path>\n";
+    std::cerr << "usage: generate_db <schema.sql path> <seed_data.sql path> "
+                 "<db_path>\n";
     return 1;
   }
 
