@@ -13,9 +13,9 @@ bool Tile::isWalkable() const
     case TileType::Floor:
     case TileType::Door:
     case TileType::EntryWay:
+    case TileType::Void:
       return true;
     case TileType::Wall:
-    case TileType::Void:
     case TileType::Pillar:
     case TileType::DoorCap:
     case TileType::DoorLocked:

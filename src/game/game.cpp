@@ -238,7 +238,16 @@ void Game::update()
       combat::applyDamage(player_,
                           combat::meleeDamage(enemy->getAttackDamage()));
     }
+    // defensive: enemy AI keys off TileType::Floor so nothing routes onto Void
+    // today. kept for spawn-on-Void and any future forced-movement mechanic.
+    combat::applyTerrainDamage(*enemy, room);
   }
+
+  // standing on a Void tile is lethal. a void-killed enemy keeps its occupancy
+  // and corpse until the next update()'s reapDead (which runs before this
+  // pass), one frame later; the player's death ends the run via Game::run's
+  // !isAlive() check.
+  combat::applyTerrainDamage(player_, room);
 
   // tick every entity's hit-flash once per frame, across all rooms: an enemy
   // hit just before the player leaves its room would otherwise freeze

@@ -272,8 +272,10 @@ Coordinate inwardOfDoor(const Room& room, Coordinate doorPos)
       Coordinate{doorPos.x + 1, doorPos.y},
       Coordinate{doorPos.x - 1, doorPos.y}};
   const auto* const walkable = std::find_if(
-      neighbours.begin(), neighbours.end(),
-      [&](const Coordinate& neighbour) { return room.isWalkable(neighbour); });
+      neighbours.begin(), neighbours.end(), [&](const Coordinate& neighbour) {
+        return room.isWalkable(neighbour) &&
+               room.getTileType(neighbour) != TileType::Void;
+      });
   return walkable != neighbours.end() ? *walkable : doorPos;
 }
 

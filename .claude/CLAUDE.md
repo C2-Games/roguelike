@@ -96,6 +96,10 @@ only (walkability, via `Tile::typeRules_`); it holds no glyph. `MapLayer`
 renders the map through the wide-char ncurses path (`setcchar` / `mvwadd_wch`),
 like the entity and HUD layers. `TileType` gained `DoorCap` (door edge caps) and
 `DoorLocked` (a static locked-door visual, `⚿` — no lock/unlock gameplay yet).
+`TileType::Void` is now walkable but instantly lethal — `systems/combat`'s
+`applyTerrainDamage` (sequenced by `game/` after the movement pass) kills any
+entity that ends a move on a Void tile. Enemy pathfinding and wander still steer
+around Void because they key off `TileType::Floor`, not `isWalkable()`.
 
 **Preload helpers:** free functions available to preload files live under
 `preload/utils/` in `namespace preload` — `readJson` (`json_io.h`), `trim` /
