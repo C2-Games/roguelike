@@ -41,6 +41,11 @@ include
 
 `preload/` sits outside the `objects/`/`systems/`/`game/`/`io/` grouping — it's a
 load-time-only module, described in its own subsection under Module Map below.
+
+`db/` (top-level `schema.sql`) plus `src/db/`/`include/db/` (the generator
+code, following the same split as every other module) sits outside the
+runtime tree shown above entirely — it's a build-time-only tool, described in
+its own subsection under Module Map below.
  
 <!-- src/ mirrors this same tree for .cpp implementations. -->
  
@@ -218,6 +223,27 @@ sequenceDiagram
 - **Depended on by:** `game/` only — at construction, and again on door
   transitions (`room_loader::inwardOfDoor`), since `game/` does not persist
   the load-time context itself.
+
+### `db/` — build-time database generation
+
+- **Responsibility:** Generates `game_data.db` (a SQLite database, gitignored,
+  never committed) from `db/schema.sql` plus the existing
+  `assets/enemies/*.json`, `assets/weapons/*.json`, and
+  `assets/levels/level_*/*.json` files, via a standalone `generate_db`
+  executable that CMake runs automatically as part of a normal build.
+- **Owns / knows about:** `db/schema.sql`'s table shapes and how to parse the
+  existing JSON asset formats into rows.
+- **Does NOT know about:** `objects/`, `systems/`, `game/`, `io/`, or
+  `preload/` — it has zero dependency on any of them, unlike `preload/`
+  (which does depend on `objects/`).
+- **Depends on:** `assets/` (JSON, read-only), and the external `SQLiteCpp`
+  and `nlohmann_json` libraries.
+- **Depended on by:** nothing yet — it sits entirely outside the
+  `io/input → game → systems → objects` dependency graph; a future issue
+  (#248) will be the first runtime consumer of `game_data.db`. For that same
+  reason it isn't added to the Mermaid dependency diagram above — like
+  `preload/`, it's a documented exception outside that graph, not a node
+  within it.
 
 ### `io/` — input & output only
  
