@@ -23,11 +23,11 @@ std::string trim(std::string s)
 // hand-rolled rather than using mbrtowc because preload runs before
 // ui_manager.cpp calls setlocale.
 std::vector<char32_t> decodeUtf8(const std::string& line,
-                                 const std::filesystem::path& path, int row)
+                                 std::string_view source, int row)
 {
   auto fail = [&](unsigned char offending, const std::string& reason) {
     std::ostringstream oss;
-    oss << "Malformed UTF-8 in row " << row << " of " << path.string() << " ("
+    oss << "Malformed UTF-8 in row " << row << " of " << source << " ("
         << reason << "): byte 0x" << std::hex << std::uppercase << std::setw(2)
         << std::setfill('0') << static_cast<unsigned int>(offending);
     throw std::runtime_error(oss.str());

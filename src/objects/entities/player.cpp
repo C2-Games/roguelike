@@ -5,7 +5,7 @@
 #include "objects/fovs/ellipse_fov.h"
 
 Player::Player(Coordinate position, int health, int speed)
-    : Entity(position, EntitySymbol{{'@'}}, health, speed,
+    : Entity(position, EntitySymbol{{L'@'}}, health, speed,
              std::make_unique<EllipseFOV>(18, 9)),
       maxHealth_(health)
 {}

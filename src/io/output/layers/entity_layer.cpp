@@ -4,54 +4,41 @@
 
 #include <cstddef>
 
-#include "io/output/colors.h"
 #include "io/output/render_state.h"
 #include "io/output/window_position.h"
 
-namespace
-{
+EntityLayer::EntityLayer(int h, int w, int y, int x) : RenderStack(h, w, y, x)
+{}
 
-// draws each non-empty cell of `symbol` at `origin + (col, row)`.
-void drawSymbol(WINDOW* win, const EntitySymbol& symbol, Coordinate origin)
+void EntityLayer::drawSymbol(const EntitySymbol& symbol, Coordinate origin,
+                             ColorPair color)
 {
   for (std::size_t row = 0; row < symbol.size(); ++row)
   {
     for (std::size_t col = 0; col < symbol[row].size(); ++col)
     {
-      const char cell = symbol[row][col];
-      if (cell == '\0')
+      const wchar_t cell = symbol[row][col];
+      if (cell == L'\0')
       {
         continue;
       }
 
       const int x = origin.x + static_cast<int>(col);
       const int y = origin.y + static_cast<int>(row);
-      mvwaddch(win, y, x, cell);
+      addWideGlyph(y, x, cell, color);
     }
   }
 }
 
-}  // namespace
-
-EntityLayer::EntityLayer(int h, int w, int y, int x) : RenderStack(h, w, y, x)
-{}
-
 void EntityLayer::drawEnemies(const EntityLayerPacket& data)
 {
   // per-enemy hit-flash tint is honoured below; the untinted enemy still draws
-  // in the terminal default. hook: OR in colorAttr(ColorPair::EnemyDefault) for
-  // that base case once enemy colouring is designed.
+  // in the terminal default. hook: pass ColorPair::EnemyDefault for that base
+  // case once enemy colouring is designed.
   for (const auto& enemy : data.enemies)
   {
-    if (enemy.tinted)
-    {
-      wattron(win_, colorAttr(enemy.tintColor));
-    }
-    drawSymbol(win_, enemy.symbol, enemy.position);
-    if (enemy.tinted)
-    {
-      wattroff(win_, colorAttr(enemy.tintColor));
-    }
+    const ColorPair color = enemy.tinted ? enemy.tintColor : ColorPair::Default;
+    drawSymbol(enemy.symbol, enemy.position, color);
   };
 };
 
@@ -68,15 +55,9 @@ void EntityLayer::drawProjectiles(const EntityLayerPacket& data)
 
 void EntityLayer::drawPlayer(const EntityLayerPacket& data)
 {
-  if (data.player.tinted)
-  {
-    wattron(win_, colorAttr(data.player.tintColor));
-  }
-  drawSymbol(win_, data.player.symbol, data.player.position);
-  if (data.player.tinted)
-  {
-    wattroff(win_, colorAttr(data.player.tintColor));
-  }
+  const ColorPair color =
+      data.player.tinted ? data.player.tintColor : ColorPair::Default;
+  drawSymbol(data.player.symbol, data.player.position, color);
 };
 
 void EntityLayer::doRender(const EntityLayerPacket& data)

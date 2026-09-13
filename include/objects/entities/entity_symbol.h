@@ -3,6 +3,6 @@
 
 #include <vector>
 
-using EntitySymbol = std::vector<std::vector<char>>;
+using EntitySymbol = std::vector<std::vector<wchar_t>>;
 
 #endif
