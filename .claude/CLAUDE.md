@@ -94,8 +94,10 @@ box-drawing wall/cap art, otherwise from `preload::defaultGlyph(TileType)`
 (`preload/utils/tile_glyph.h`). `TileType` itself carries gameplay semantics
 only (walkability, via `Tile::typeRules_`); it holds no glyph. `MapLayer`
 renders the map through the wide-char ncurses path (`setcchar` / `mvwadd_wch`),
-like the entity and HUD layers. `TileType` gained `DoorCap` (door edge caps) and
-`DoorLocked` (a static locked-door visual, `⚿` — no lock/unlock gameplay yet).
+like the entity and HUD layers — `EntitySymbol` cells are `wchar_t` too, decoded
+via `preload::decodeUtf8` the same way room-grid glyphs are. `TileType` gained
+`DoorCap` (door edge caps) and `DoorLocked` (a static locked-door visual, `⚿`
+— no lock/unlock gameplay yet).
 `TileType::Void` is now walkable but instantly lethal — `systems/combat`'s
 `applyTerrainDamage` (sequenced by `game/` after the movement pass) kills any
 entity that ends a move on a Void tile. Enemy pathfinding and wander still steer

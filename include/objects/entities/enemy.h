@@ -37,7 +37,7 @@ class Enemy : public Entity
    * default, 5.
    */
   explicit Enemy(Coordinate position, std::unique_ptr<FOV> fov,
-                 EntitySymbol symbol = {{'E'}}, int health = 100,
+                 EntitySymbol symbol = {{L'E'}}, int health = 100,
                  int speed = 10, int attackDamage = 10,
                  int chaseMemoryDuration = 5);
 

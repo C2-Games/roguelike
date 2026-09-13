@@ -2,6 +2,9 @@
 #define ENTITY_LAYER_H
 
 #include "io/output/render_stack.h"
+#include "objects/colors.h"
+#include "objects/coordinate.h"
+#include "objects/entities/entity_symbol.h"
 
 struct EntityLayerPacket;
 
@@ -53,6 +56,18 @@ class EntityLayer : public RenderStack
    * @param termWidth New terminal width (columns).
    */
   void onResize(int termHeight, int termWidth) override;
+
+ private:
+  /**
+   * @brief Draw each non-empty cell of an entity symbol at `origin + (col,
+   * row)`.
+   *
+   * @param symbol Entity's per-cell glyph grid.
+   * @param origin Top-left coordinate to draw the symbol at.
+   * @param color Colour pair to draw every cell in.
+   */
+  void drawSymbol(const EntitySymbol& symbol, Coordinate origin,
+                  ColorPair color);
 };
 
 #endif
