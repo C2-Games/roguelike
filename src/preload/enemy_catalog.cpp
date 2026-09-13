@@ -2,21 +2,25 @@
 
 #include <SQLiteCpp/SQLiteCpp.h>
 
+#include <algorithm>
 #include <map>
 #include <string>
 #include <utility>
 
 #include "objects/fovs/ellipse_fov.h"
+#include "preload/utils/text.h"
 
 namespace
 {
 
-// splits a ";"-joined row string into an EntitySymbol grid, one char per
-// cell.
-EntitySymbol decodeSymbol(const std::string& encoded)
+// splits a ";"-joined row string into an EntitySymbol grid, decoding each
+// row's UTF-8 text into wide-char cells.
+EntitySymbol decodeSymbol(const std::string& encoded, const std::string& name)
 {
+  const std::string source = "db:enemies.symbol[" + name + "]";
   EntitySymbol symbol;
   std::size_t rowStart = 0;
+  int row = 0;
   while (rowStart <= encoded.size())
   {
     const std::size_t rowEnd = encoded.find(';', rowStart);
@@ -24,8 +28,13 @@ EntitySymbol decodeSymbol(const std::string& encoded)
         rowStart,
         rowEnd == std::string::npos ? std::string::npos : rowEnd - rowStart);
 
-    std::vector<char> row(rowText.begin(), rowText.end());
-    symbol.push_back(std::move(row));
+    const std::vector<char32_t> codepoints =
+        preload::decodeUtf8(rowText, source, row);
+    std::vector<wchar_t> rowCells(codepoints.size());
+    std::transform(codepoints.begin(), codepoints.end(), rowCells.begin(),
+                   [](char32_t cp) { return static_cast<wchar_t>(cp); });
+    symbol.push_back(std::move(rowCells));
+    ++row;
 
     if (rowEnd == std::string::npos)
     {
@@ -60,7 +69,8 @@ EnemyCatalog::EnemyCatalog(SQLite::Database& database)
     {
       symbolEntry =
           symbolsByName
-              .emplace(name, decodeSymbol(statement.getColumn(1).getString()))
+              .emplace(name,
+                       decodeSymbol(statement.getColumn(1).getString(), name))
               .first;
     }
     const EntitySymbol& symbol = symbolEntry->second;

@@ -210,7 +210,7 @@ void parseRoomGrid(std::ifstream& in, Room& room,
 
     // the grid is authored in multi-byte box-drawing glyphs, so work in
     // codepoints from here on.
-    std::vector<char32_t> cps = preload::decodeUtf8(line, path, y);
+    std::vector<char32_t> cps = preload::decodeUtf8(line, path.string(), y);
 
     // pad short lines with spaces (Void) but reject over-long lines to catch
     // authoring mistakes.
