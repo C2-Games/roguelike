@@ -1,9 +1,9 @@
 #include "preload/level_loader.h"
 
-#include <algorithm>
-#include <iterator>
+#include <SQLiteCpp/SQLiteCpp.h>
+
+#include <cstdint>
 #include <map>
-#include <nlohmann/json.hpp>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -15,7 +15,6 @@
 #include "preload/enemy_catalog.h"
 #include "preload/room_generator.h"
 #include "preload/room_loader.h"
-#include "preload/utils/json_io.h"
 
 namespace
 {
@@ -30,145 +29,13 @@ struct RoomAdjacency
   DoorNumber toDoor;
 };
 
-// one room's metadata, parsed from room_<id>.json.
+// one room's metadata, queried from the rooms/room_enemy_spawns tables.
 struct RoomConfig
 {
-  int id = 0;
   std::string name;
   std::string ref;  // filename under assets/rooms/
   std::vector<EnemySpawnConfig> enemies;
 };
-
-// fully parsed contents of a level directory.
-struct LevelConfig
-{
-  LevelMeta meta;
-  std::vector<RoomAdjacency> adjacency;  // from map.json
-  std::map<int, RoomConfig> rooms;       // id -> per-room config
-};
-
-LevelMeta parseLevelMeta(const nlohmann::json& j)
-{
-  return LevelMeta{
-      j.at("id").get<int>(),
-      j.at("name").get<std::string>(),
-      j.at("description").get<std::string>(),
-      j.at("roomCount").get<int>(),
-      j.at("startRoomID").get<int>(),
-      j.at("bossRoomID").get<int>(),
-  };
-}
-
-LevelMeta loadLevelMeta(const std::filesystem::path& path)
-{
-  try
-  {
-    return parseLevelMeta(preload::readJson(path));
-  }
-  catch (const std::exception& e)
-  {
-    throw std::runtime_error("malformed level.json at " + path.string() + ": " +
-                             e.what());
-  }
-}
-
-struct MapData
-{
-  std::vector<int> roomIDs;
-  std::vector<RoomAdjacency> adjacency;
-};
-
-MapData parseMap(const nlohmann::json& j)
-{
-  MapData data;
-
-  const auto& rooms = j.at("rooms");
-  data.roomIDs.reserve(rooms.size());
-  std::transform(rooms.begin(), rooms.end(), std::back_inserter(data.roomIDs),
-                 [](const nlohmann::json& id) { return id.get<int>(); });
-
-  const auto& edges = j.at("edges");
-  data.adjacency.reserve(edges.size());
-  std::transform(edges.begin(), edges.end(), std::back_inserter(data.adjacency),
-                 [](const nlohmann::json& edge) {
-                   const auto& from = edge.at("from");
-                   const auto& to = edge.at("to");
-                   return RoomAdjacency{
-                       from.at("room").get<int>(),
-                       from.at("door").get<DoorNumber>(),
-                       to.at("room").get<int>(),
-                       to.at("door").get<DoorNumber>(),
-                   };
-                 });
-
-  return data;
-}
-
-MapData loadMap(const std::filesystem::path& path)
-{
-  try
-  {
-    return parseMap(preload::readJson(path));
-  }
-  catch (const std::exception& e)
-  {
-    throw std::runtime_error("malformed map.json at " + path.string() + ": " +
-                             e.what());
-  }
-}
-
-EnemySpawnConfig parseEnemySpawnConfig(const nlohmann::json& j)
-{
-  const nlohmann::json& range = j.at("range");
-  if (!range.is_array() || range.size() != 2)
-  {
-    throw std::runtime_error("enemy entry '" + j.at("name").get<std::string>() +
-                             "' needs a two-element range");
-  }
-
-  return EnemySpawnConfig{
-      j.at("name").get<std::string>(),
-      j.at("tier").get<int>(),
-      {range[0].get<int>(), range[1].get<int>()},
-  };
-}
-
-RoomConfig parseRoomConfig(const nlohmann::json& j)
-{
-  RoomConfig config;
-  config.id = j.at("id").get<int>();
-  config.name = j.at("name").get<std::string>();
-  config.ref = j.at("ref").get<std::string>();
-
-  if (j.contains("enemies"))
-  {
-    for (const auto& entry : j.at("enemies"))
-    {
-      config.enemies.push_back(parseEnemySpawnConfig(entry));
-    }
-  }
-  return config;
-}
-
-RoomConfig loadRoomConfig(const std::filesystem::path& path, int expectedId)
-{
-  try
-  {
-    RoomConfig config = parseRoomConfig(preload::readJson(path));
-    if (config.id != expectedId)
-    {
-      throw std::runtime_error("id " + std::to_string(config.id) +
-                               " does not match expected id " +
-                               std::to_string(expectedId));
-    }
-    return config;
-  }
-  catch (const std::exception& e)
-  {
-    throw std::runtime_error("malformed room config at " + path.string() +
-                             ": " + e.what());
-  }
-}
 
 // replace a door cell and its two flanking cap cells with unbroken wall. the
 // wall the door sits in runs along whichever axis has wall / cap neighbours;
@@ -222,71 +89,96 @@ void sealUnlinkedDoors(std::map<int, Room>& rooms,
   }
 }
 
-// load and cross-validate an entire level directory (level.json, map.json,
-// and every room_<id>.json map.json references). throws std::runtime_error
-// on any missing file, malformed JSON, or cross-reference mismatch (id
-// mismatches, room-count mismatches).
-LevelConfig loadLevelConfig(const std::filesystem::path& levelDir)
-{
-  LevelConfig config;
-  config.meta = loadLevelMeta(levelDir / "level.json");
-
-  MapData map = loadMap(levelDir / "map.json");
-  config.adjacency = std::move(map.adjacency);
-
-  for (int id : map.roomIDs)
-  {
-    std::filesystem::path roomPath =
-        levelDir / ("room_" + std::to_string(id) + ".json");
-    config.rooms[id] = loadRoomConfig(roomPath, id);
-  }
-
-  if (static_cast<int>(map.roomIDs.size()) != config.meta.roomCount)
-  {
-    throw std::runtime_error(
-        "level.json roomCount (" + std::to_string(config.meta.roomCount) +
-        ") does not match map.json room count (" +
-        std::to_string(map.roomIDs.size()) + ") in " + levelDir.string());
-  }
-
-  auto requireKnownRoom = [&config, &levelDir](int roomID) {
-    if (config.rooms.find(roomID) == config.rooms.end())
-    {
-      throw std::runtime_error(
-          "map.json edge references room " + std::to_string(roomID) +
-          ", which is not in its room list, in " + levelDir.string());
-    }
-  };
-  for (const RoomAdjacency& edge : config.adjacency)
-  {
-    requireKnownRoom(edge.fromRoom);
-    requireKnownRoom(edge.toRoom);
-  }
-
-  return config;
-}
-
 }  // namespace
 
 namespace preload
 {
 
-LevelData loadLevel(const std::filesystem::path& levelDir,
+LevelData loadLevel(int levelID, const std::filesystem::path& dbPath,
                     const std::filesystem::path& assetsDir,
                     GameServices& services)
 {
-  EnemyCatalog catalog(assetsDir / "enemies");
+  SQLite::Database database(dbPath.string(), SQLite::OPEN_READONLY);
   std::filesystem::path roomsDir = assetsDir / "rooms";
 
-  LevelConfig config = loadLevelConfig(levelDir);
+  SQLite::Statement levelStatement(
+      database,
+      "SELECT name, description, room_count, start_room_id, boss_room_id "
+      "FROM levels WHERE id = ?");
+  levelStatement.bind(1, levelID);
+  if (!levelStatement.executeStep())
+  {
+    throw std::runtime_error("no level with id " + std::to_string(levelID) +
+                             " in " + dbPath.string());
+  }
+  LevelMeta meta{levelID,
+                 levelStatement.getColumn(0).getString(),
+                 levelStatement.getColumn(1).getString(),
+                 levelStatement.getColumn(2).getInt(),
+                 levelStatement.getColumn(3).getInt(),
+                 levelStatement.getColumn(4).getInt()};
 
-  std::map<int, Room> rooms;
+  // rooms.id is a synthetic global primary key, distinct from
+  // local_room_id (the room's authored id); room_edges and
+  // room_enemy_spawns reference the synthetic id, so it's kept here to
+  // look up each room's enemy spawns.
+  std::map<int, RoomConfig> rooms;
+  SQLite::Statement roomsStatement(
+      database,
+      "SELECT id, local_room_id, name, ref FROM rooms WHERE level_id = ?");
+  roomsStatement.bind(1, levelID);
+  while (roomsStatement.executeStep())
+  {
+    const int64_t roomID = roomsStatement.getColumn(0).getInt64();
+    const int localRoomID = roomsStatement.getColumn(1).getInt();
+
+    RoomConfig config;
+    config.name = roomsStatement.getColumn(2).getString();
+    config.ref = roomsStatement.getColumn(3).getString();
+
+    SQLite::Statement spawnsStatement(
+        database,
+        "SELECT enemy_name, tier, range_min, range_max FROM "
+        "room_enemy_spawns WHERE room_id = ?");
+    spawnsStatement.bind(1, roomID);
+    while (spawnsStatement.executeStep())
+    {
+      config.enemies.push_back(
+          EnemySpawnConfig{spawnsStatement.getColumn(0).getString(),
+                           spawnsStatement.getColumn(1).getInt(),
+                           {spawnsStatement.getColumn(2).getInt(),
+                            spawnsStatement.getColumn(3).getInt()}});
+    }
+
+    rooms[localRoomID] = std::move(config);
+  }
+
+  // room_edges stores the synthetic room id; join back to rooms to recover
+  // the local_room_id every other room structure keys on.
+  std::vector<RoomAdjacency> adjacency;
+  SQLite::Statement edgesStatement(
+      database,
+      "SELECT re.from_door, r1.local_room_id, re.to_door, r2.local_room_id "
+      "FROM room_edges re JOIN rooms r1 ON re.from_room_id = r1.id JOIN "
+      "rooms r2 ON re.to_room_id = r2.id WHERE re.level_id = ?");
+  edgesStatement.bind(1, levelID);
+  while (edgesStatement.executeStep())
+  {
+    adjacency.push_back(RoomAdjacency{edgesStatement.getColumn(1).getInt(),
+                                      edgesStatement.getColumn(0).getInt(),
+                                      edgesStatement.getColumn(3).getInt(),
+                                      edgesStatement.getColumn(2).getInt()});
+  }
+
+  EnemyCatalog catalog(database);
+
+  std::map<int, Room> builtRooms;
   RoomData roomData;
-  for (const auto& [id, roomCfg] : config.rooms)
+  for (const auto& [id, roomCfg] : rooms)
   {
     room_loader::ParsedRoom parsed =
         room_loader::loadRoom(id, roomsDir / roomCfg.ref);
-    auto roomEntry = rooms.emplace(id, std::move(parsed.room)).first;
+    auto roomEntry = builtRooms.emplace(id, std::move(parsed.room)).first;
     roomData[id] = room_generator::generate(
         roomEntry->second, parsed.enemySpawns, parsed.lootSpawns,
         parsed.itemSpawns, roomCfg.enemies, catalog, services);
@@ -295,21 +187,22 @@ LevelData loadLevel(const std::filesystem::path& levelDir,
   // each edge is authored once and wired both ways, so the graph cannot be
   // asymmetric by construction.
   RoomConnections roomConnections;
-  for (const RoomAdjacency& edge : config.adjacency)
+  for (const RoomAdjacency& edge : adjacency)
   {
     Coordinate fromDoor =
-        room_loader::doorAt(rooms.at(edge.fromRoom), edge.fromDoor);
-    Coordinate toDoor = room_loader::doorAt(rooms.at(edge.toRoom), edge.toDoor);
+        room_loader::doorAt(builtRooms.at(edge.fromRoom), edge.fromDoor);
+    Coordinate toDoor =
+        room_loader::doorAt(builtRooms.at(edge.toRoom), edge.toDoor);
     roomConnections[DoorConnection{edge.fromRoom, fromDoor}] =
         DoorConnection{edge.toRoom, toDoor};
     roomConnections[DoorConnection{edge.toRoom, toDoor}] =
         DoorConnection{edge.fromRoom, fromDoor};
   }
 
-  sealUnlinkedDoors(rooms, roomConnections);
+  sealUnlinkedDoors(builtRooms, roomConnections);
 
-  return LevelData{std::move(config.meta), std::move(roomConnections),
-                   std::move(roomData), std::move(rooms)};
+  return LevelData{std::move(meta), std::move(roomConnections),
+                   std::move(roomData), std::move(builtRooms)};
 }
 
 }  // namespace preload

@@ -13,18 +13,6 @@ set(CURSES_NEED_NCURSES TRUE)
 set(CURSES_NEED_WIDE TRUE)
 find_package(Curses REQUIRED)
 
-find_package(nlohmann_json 3.11 QUIET)
-if(NOT nlohmann_json_FOUND)
-    include(FetchContent)
-    FetchContent_Declare(
-        nlohmann_json
-        GIT_REPOSITORY https://github.com/nlohmann/json.git
-        GIT_TAG v3.12.0
-        GIT_SHALLOW TRUE
-    )
-    FetchContent_MakeAvailable(nlohmann_json)
-endif()
-
 find_package(SQLiteCpp QUIET)
 if(NOT SQLiteCpp_FOUND)
     include(FetchContent)
@@ -62,7 +50,6 @@ set(SOURCES
     src/preload/room_loader.cpp
     src/preload/enemy_catalog.cpp
     src/preload/room_generator.cpp
-    src/preload/utils/json_io.cpp
     src/preload/utils/text.cpp
     src/preload/utils/tile_glyph.cpp
     src/systems/movement/pathfinding.cpp
@@ -99,11 +86,11 @@ target_include_directories(roguelike SYSTEM PRIVATE
 # linked thrid-party libraries.
 target_link_libraries(roguelike PRIVATE
     ${CURSES_LIBRARIES}
-    nlohmann_json::nlohmann_json
+    SQLiteCpp
 )
 
 target_include_directories(roguelike SYSTEM PRIVATE
-    $<TARGET_PROPERTY:nlohmann_json::nlohmann_json,INTERFACE_INCLUDE_DIRECTORIES>
+    $<TARGET_PROPERTY:SQLiteCpp,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
 # expose the wide-char ncurses API for macOS/Homebrew builds.
@@ -129,42 +116,38 @@ install(FILES
 
 install(DIRECTORY assets DESTINATION .)
 
+# roguelike queries game_data.db at startup, so a release package needs it
+# alongside the binary same as assets/.
+install(FILES ${CMAKE_SOURCE_DIR}/game_data.db DESTINATION .)
+
 # game_data.db generator executable.
 add_executable(generate_db
     src/db/main.cpp
     src/db/generate_database.cpp
-    src/db/json_utils.cpp
-    src/db/seed_enemies.cpp
-    src/db/seed_weapons.cpp
-    src/db/seed_levels.cpp
 )
 
 target_include_directories(generate_db PRIVATE include)
 
 target_link_libraries(generate_db PRIVATE
     SQLiteCpp
-    nlohmann_json::nlohmann_json
 )
 
 target_include_directories(generate_db SYSTEM PRIVATE
     $<TARGET_PROPERTY:SQLiteCpp,INTERFACE_INCLUDE_DIRECTORIES>
-    $<TARGET_PROPERTY:nlohmann_json::nlohmann_json,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
 # run generate_db at build time to produce game_data.db from db/schema.sql +
-# the enemy/weapon/level assets. independent of the roguelike target, since
-# nothing consumes the database yet.
-file(GLOB_RECURSE GAME_DATA_JSON CONFIGURE_DEPENDS
-    ${CMAKE_SOURCE_DIR}/assets/enemies/*.json
-    ${CMAKE_SOURCE_DIR}/assets/weapons/*.json
-    ${CMAKE_SOURCE_DIR}/assets/levels/*.json
-)
+# db/seed_data.sql. roguelike depends on this target since it queries the
+# database at startup.
 set(GAME_DATA_DB ${CMAKE_SOURCE_DIR}/game_data.db)
 add_custom_command(
     OUTPUT ${GAME_DATA_DB}
-    COMMAND generate_db ${CMAKE_SOURCE_DIR}/db/schema.sql ${CMAKE_SOURCE_DIR}/assets ${GAME_DATA_DB}
-    DEPENDS generate_db ${CMAKE_SOURCE_DIR}/db/schema.sql ${GAME_DATA_JSON}
+    COMMAND generate_db ${CMAKE_SOURCE_DIR}/db/schema.sql ${CMAKE_SOURCE_DIR}/db/seed_data.sql ${GAME_DATA_DB}
+    DEPENDS generate_db ${CMAKE_SOURCE_DIR}/db/schema.sql ${CMAKE_SOURCE_DIR}/db/seed_data.sql
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Generating game_data.db from db/schema.sql + assets/*.json"
+    COMMENT "Generating game_data.db from db/schema.sql + db/seed_data.sql"
 )
 add_custom_target(game_db ALL DEPENDS ${GAME_DATA_DB})
+
+# roguelike queries game_data.db at startup, so it must be built first.
+add_dependencies(roguelike game_db)

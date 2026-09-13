@@ -71,7 +71,7 @@ Build scripts are bash (`scripts/*.sh`) — on Windows use Git Bash or WSL.
 - Manual equivalent: `cmake -B .build/release -S . && cmake --build .build/release`
 - Run from a directory containing `assets/` (repo root, or the build output needs `assets/` alongside it): `./.build/release/roguelike`
 
-Dependencies: wide-char ncurses (`libncurses-dev` on Debian/Ubuntu/WSL, `brew install ncurses` on macOS), `nlohmann_json`, and `SQLiteCpp` (both fetched automatically via CMake `FetchContent` if not found on the system). CMake 3.16+, C++20.
+Dependencies: wide-char ncurses (`libncurses-dev` on Debian/Ubuntu/WSL, `brew install ncurses` on macOS) and `SQLiteCpp` (fetched automatically via CMake `FetchContent` if not found on the system). CMake 3.16+, C++20.
 
 There is no test suite in this repo (no `tests/` directory, no CTest/GoogleTest/Catch2 wiring). CI correctness gates are formatting, static analysis, and a successful build only.
 
@@ -102,8 +102,8 @@ entity that ends a move on a Void tile. Enemy pathfinding and wander still steer
 around Void because they key off `TileType::Floor`, not `isWalkable()`.
 
 **Preload helpers:** free functions available to preload files live under
-`preload/utils/` in `namespace preload` — `readJson` (`json_io.h`), `trim` /
-`decodeUtf8` (`text.h`), `defaultGlyph` (`tile_glyph.h`). File-local parse
-helpers stay in their `.cpp`'s anonymous namespace.
+`preload/utils/` in `namespace preload` — `trim` / `decodeUtf8` (`text.h`),
+`defaultGlyph` (`tile_glyph.h`). File-local parse helpers stay in their
+`.cpp`'s anonymous namespace.
 
 @.claude/ARCHITECTURE.md

@@ -1,108 +1,81 @@
 #include "preload/enemy_catalog.h"
 
-#include <nlohmann/json.hpp>
-#include <stdexcept>
+#include <SQLiteCpp/SQLiteCpp.h>
+
+#include <map>
+#include <string>
 #include <utility>
 
 #include "objects/fovs/ellipse_fov.h"
-#include "preload/utils/json_io.h"
 
 namespace
 {
 
-// "tier_1" -> 1, "tier_2" -> 2, ...
-int parseTierKey(const std::string& key)
-{
-  const std::string prefix = "tier_";
-  if (key.rfind(prefix, 0) != 0)
-  {
-    throw std::runtime_error("attribute key '" + key +
-                             "' does not match the expected 'tier_<N>' shape");
-  }
-  return std::stoi(key.substr(prefix.size()));
-}
-
-EnemyTierAttributes parseTierAttributes(const EntitySymbol& symbol,
-                                        const nlohmann::json& attrs)
-{
-  const auto& fovArr = attrs.at("fov");
-  return EnemyTierAttributes{
-      symbol,
-      attrs.at("health").get<int>(),
-      attrs.at("damage").at("amount").get<int>(),
-      std::make_unique<EllipseFOV>(fovArr.at(0).get<int>(),
-                                   fovArr.at(1).get<int>()),
-      attrs.at("chase").get<int>(),
-      attrs.at("speed").get<int>(),
-  };
-}
-
-// walks the nested symbol array (rows of cells) authored in enemy JSON into
-// an EntitySymbol grid.
-EntitySymbol parseSymbol(const nlohmann::json& symbolJson)
+// splits a ";"-joined row string into an EntitySymbol grid, one char per
+// cell.
+EntitySymbol decodeSymbol(const std::string& encoded)
 {
   EntitySymbol symbol;
-  for (const auto& row : symbolJson)
+  std::size_t rowStart = 0;
+  while (rowStart <= encoded.size())
   {
-    std::vector<char> parsedRow;
-    for (const auto& cell : row)
+    const std::size_t rowEnd = encoded.find(';', rowStart);
+    const std::string rowText = encoded.substr(
+        rowStart,
+        rowEnd == std::string::npos ? std::string::npos : rowEnd - rowStart);
+
+    std::vector<char> row(rowText.begin(), rowText.end());
+    symbol.push_back(std::move(row));
+
+    if (rowEnd == std::string::npos)
     {
-      const std::string cellStr = cell.get<std::string>();
-      parsedRow.push_back(cellStr.empty() ? '\0' : cellStr.at(0));
+      break;
     }
-    symbol.push_back(std::move(parsedRow));
+    rowStart = rowEnd + 1;
   }
   return symbol;
 }
 
 }  // namespace
 
-EnemyCatalog::EnemyCatalog(const std::filesystem::path& dir)
+EnemyCatalog::EnemyCatalog(SQLite::Database& database)
 {
-  if (!std::filesystem::exists(dir) || !std::filesystem::is_directory(dir))
-  {
-    throw std::runtime_error("enemy catalog directory not found: " +
-                             dir.string());
-  }
+  SQLite::Statement statement(
+      database,
+      "SELECT enemies.name, enemies.symbol, enemy_tiers.tier, "
+      "enemy_tiers.health, enemy_tiers.damage_amount, "
+      "enemy_tiers.damage_type, enemy_tiers.fov_x, enemy_tiers.fov_y, "
+      "enemy_tiers.chase, enemy_tiers.speed FROM enemies JOIN enemy_tiers ON "
+      "enemy_tiers.enemy_id = enemies.id");
 
-  bool foundAny = false;
-  for (const auto& entry : std::filesystem::directory_iterator(dir))
+  // the join repeats each enemy's name/symbol once per tier row; cache the
+  // decoded symbol per name so it's parsed once regardless of tier count.
+  std::map<std::string, EntitySymbol> symbolsByName;
+
+  while (statement.executeStep())
   {
-    if (!entry.is_regular_file() || entry.path().extension() != ".json")
+    const std::string name = statement.getColumn(0).getString();
+    auto symbolEntry = symbolsByName.find(name);
+    if (symbolEntry == symbolsByName.end())
     {
-      continue;
+      symbolEntry =
+          symbolsByName
+              .emplace(name, decodeSymbol(statement.getColumn(1).getString()))
+              .first;
     }
-    foundAny = true;
-    loadFile(entry.path());
-  }
+    const EntitySymbol& symbol = symbolEntry->second;
+    const int tier = statement.getColumn(2).getInt();
+    const int health = statement.getColumn(3).getInt();
+    const int damageAmount = statement.getColumn(4).getInt();
+    const int fovX = statement.getColumn(6).getInt();
+    const int fovY = statement.getColumn(7).getInt();
+    const int chase = statement.getColumn(8).getInt();
+    const int speed = statement.getColumn(9).getInt();
 
-  if (!foundAny)
-  {
-    throw std::runtime_error("no enemy *.json files found in: " + dir.string());
-  }
-}
-
-void EnemyCatalog::loadFile(const std::filesystem::path& path)
-{
-  try
-  {
-    const nlohmann::json enemyJson = preload::readJson(path);
-
-    const std::string name = enemyJson.at("name").get<std::string>();
-    const EntitySymbol symbol = parseSymbol(enemyJson.at("symbol"));
-
-    std::map<int, EnemyTierAttributes> tiers;
-    for (const auto& [tierKey, attrs] : enemyJson.at("attributes").items())
-    {
-      tiers.emplace(parseTierKey(tierKey), parseTierAttributes(symbol, attrs));
-    }
-
-    catalog_[name] = std::move(tiers);
-  }
-  catch (const std::exception& e)
-  {
-    throw std::runtime_error("malformed enemy definition in " + path.string() +
-                             ": " + e.what());
+    catalog_[name][tier] = EnemyTierAttributes{
+        symbol, health, damageAmount, std::make_unique<EllipseFOV>(fovX, fovY),
+        chase,  speed,
+    };
   }
 }
 

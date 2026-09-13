@@ -16,7 +16,7 @@ include
   game/            game.h, services.h, logger.h, level_data.h
   preload/         level_loader.h, level_meta.h, room_loader.h,
                     room_generator.h, enemy_catalog.h
-    utils/         json_io.h, text.h, tile_glyph.h
+    utils/         text.h, tile_glyph.h
   systems/
     movement/      movement.h, pathfinding.h, goal_map_cache.h,
                     move_enemy.h, move_player.h
@@ -213,13 +213,14 @@ sequenceDiagram
 
 ### `preload/` — load-time construction only
 
-- **Responsibility:** Builds the initial `LevelData` from on-disk level,
-  room, and enemy config — everything needed to hand `game/` a fully formed
-  level before the first turn runs.
-- **Owns / knows about:** level/room/enemy file formats and how to parse
-  them into `objects/` types.
+- **Responsibility:** Builds the initial `LevelData` from `game_data.db`
+  (level/room/enemy config) and on-disk room templates — everything needed to
+  hand `game/` a fully formed level before the first turn runs.
+- **Owns / knows about:** the `game_data.db` schema and room `.txt` template
+  format, and how to turn both into `objects/` types.
 - **Does NOT know about:** `systems/`, `io/`, or per-turn gameplay rules.
-- **Depends on:** `objects/`.
+- **Depends on:** `objects/`; the external `SQLiteCpp` library, for reading
+  `game_data.db`.
 - **Depended on by:** `game/` only — at construction, and again on door
   transitions (`room_loader::inwardOfDoor`), since `game/` does not persist
   the load-time context itself.
@@ -227,23 +228,23 @@ sequenceDiagram
 ### `db/` — build-time database generation
 
 - **Responsibility:** Generates `game_data.db` (a SQLite database, gitignored,
-  never committed) from `db/schema.sql` plus the existing
-  `assets/enemies/*.json`, `assets/weapons/*.json`, and
-  `assets/levels/level_*/*.json` files, via a standalone `generate_db`
-  executable that CMake runs automatically as part of a normal build.
-- **Owns / knows about:** `db/schema.sql`'s table shapes and how to parse the
-  existing JSON asset formats into rows.
+  never committed) from `db/schema.sql` plus the checked-in `db/seed_data.sql`,
+  via a standalone `generate_db` executable that CMake runs automatically as
+  part of a normal build.
+- **Owns / knows about:** `db/schema.sql`'s table shapes and `db/seed_data.sql`'s
+  seed rows.
 - **Does NOT know about:** `objects/`, `systems/`, `game/`, `io/`, or
   `preload/` — it has zero dependency on any of them, unlike `preload/`
   (which does depend on `objects/`).
 - **Depends on:** `assets/` (JSON, read-only), and the external `SQLiteCpp`
-  and `nlohmann_json` libraries.
-- **Depended on by:** nothing yet — it sits entirely outside the
-  `io/input → game → systems → objects` dependency graph; a future issue
-  (#248) will be the first runtime consumer of `game_data.db`. For that same
-  reason it isn't added to the Mermaid dependency diagram above — like
-  `preload/`, it's a documented exception outside that graph, not a node
-  within it.
+  library.
+- **Depended on by:** `preload/` (via `roguelike`), which queries
+  `game_data.db` at startup; `roguelike`'s build also depends on `db/`'s
+  output directly (`add_dependencies(roguelike game_db)` in
+  `CMakeLists.txt`), so `game_data.db` is generated before `roguelike` can
+  build. It still sits outside the `io/input → game → systems → objects`
+  dependency graph proper, so — like `preload/` — it isn't added to the
+  Mermaid dependency diagram above.
 
 ### `io/` — input & output only
  

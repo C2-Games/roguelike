@@ -28,8 +28,7 @@ Game::Game(UIManager& uiManager, int fps)
     : fps_(fps),
       services_(DEFAULT_SEED),
       player_(Coordinate(Room::WIDTH / 2, Room::HEIGHT / 2)),
-      levelData_(
-          preload::loadLevel("assets/levels/level_1", "assets", services_)),
+      levelData_(preload::loadLevel(1, "game_data.db", "assets", services_)),
       currentRoomID_(levelData_.meta.startRoomID),
       uiManager_(uiManager)
 {
