@@ -36,6 +36,7 @@ set(SOURCES
     src/objects/entities/player.cpp
     src/objects/entities/enemy.cpp
     src/objects/direction.cpp
+    src/objects/colors.cpp
     src/objects/fovs/fov.cpp
     src/objects/fovs/ellipse_fov.cpp
     src/io/ui_manager.cpp
@@ -64,7 +65,6 @@ set(SOURCES
     src/systems/visibility/recompute.cpp
     src/systems/visibility/update.cpp
     src/objects/tiles/tile.cpp
-    src/objects/weapons/weapon.cpp
     src/objects/weapons/projectile.cpp
     src/objects/room/room.cpp
 )

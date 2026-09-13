@@ -19,10 +19,11 @@ struct Projectile
    * @param damage Damage dealt to the first entity hit.
    * @param tilesPerTick Tiles advanced per Game::update() call.
    * @param range Max tiles traveled before the projectile expires.
-   * @param color Color used to render the projectile's orb.
+   * @param ammoSymbol Glyph copied from the firing weapon's ammo at spawn
+   * time.
    */
   Projectile(Coordinate position, Direction direction, Damage damage,
-             int tilesPerTick, int range, ColorPair color);
+             int tilesPerTick, int range, char ammoSymbol);
 
   /**
    * @brief Get the projectile's current position.
@@ -44,6 +45,13 @@ struct Projectile
    * @return ColorPair
    */
   ColorPair getColor() const { return color_; }
+
+  /**
+   * @brief Get this projectile's ammo glyph.
+   *
+   * @return The ammo glyph copied from the firing weapon at spawn time.
+   */
+  char getAmmoSymbol() const { return ammoSymbol_; }
 
   /**
    * @brief Get the damage this projectile deals on a hit.
@@ -93,6 +101,7 @@ struct Projectile
   int tilesPerTick_;
   int remainingRange_;
   ColorPair color_;
+  char ammoSymbol_;
   bool active_ = true;
 };
 

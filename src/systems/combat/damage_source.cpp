@@ -4,10 +4,7 @@
 
 namespace combat
 {
-Damage weaponDamage(const Weapon& weapon)
-{
-  return Damage{DamageType::Base, weapon.getDamage(), 0.0};
-}
+Damage weaponDamage(const Weapon& weapon) { return weapon.damage; }
 
 Damage meleeDamage(int amount) { return Damage{DamageType::Base, amount, 0.0}; }
 }  // namespace combat
