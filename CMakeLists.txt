@@ -36,6 +36,7 @@ set(SOURCES
     src/objects/entities/player.cpp
     src/objects/entities/enemy.cpp
     src/objects/direction.cpp
+    src/objects/colors.cpp
     src/objects/fovs/fov.cpp
     src/objects/fovs/ellipse_fov.cpp
     src/io/ui_manager.cpp
@@ -49,6 +50,7 @@ set(SOURCES
     src/preload/level_loader.cpp
     src/preload/room_loader.cpp
     src/preload/enemy_catalog.cpp
+    src/preload/weapon_catalog.cpp
     src/preload/room_generator.cpp
     src/preload/utils/text.cpp
     src/preload/utils/tile_glyph.cpp
@@ -64,7 +66,6 @@ set(SOURCES
     src/systems/visibility/recompute.cpp
     src/systems/visibility/update.cpp
     src/objects/tiles/tile.cpp
-    src/objects/weapons/weapon.cpp
     src/objects/weapons/projectile.cpp
     src/objects/room/room.cpp
 )

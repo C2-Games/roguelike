@@ -37,11 +37,11 @@ void initColors()
   // moves off it.
   registerPair(ColorPair::FogExplored, COLOR_WHITE, kGreyDark);
 
-  // Weapon/projectile colors: one distinct foreground per WeaponType.
-  registerPair(ColorPair::WeaponBasic, COLOR_CYAN, COLOR_BLACK);
-  registerPair(ColorPair::WeaponRapid, COLOR_YELLOW, COLOR_BLACK);
-  registerPair(ColorPair::WeaponHeavy, COLOR_RED, COLOR_BLACK);
-  registerPair(ColorPair::WeaponSniper, COLOR_MAGENTA, COLOR_BLACK);
+  // damage-type colors: one distinct foreground per DamageType.
+  registerPair(ColorPair::DamageBase, COLOR_CYAN, COLOR_BLACK);
+  registerPair(ColorPair::DamageElectric, COLOR_YELLOW, COLOR_BLACK);
+  registerPair(ColorPair::DamageFire, COLOR_RED, COLOR_BLACK);
+  registerPair(ColorPair::DamagePoison, COLOR_MAGENTA, COLOR_BLACK);
 
   // Health bar: one fill colour per threshold band, plus a dim grey for the
   // portion already lost so the bar's full width stays readable.
