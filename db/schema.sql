@@ -27,19 +27,20 @@ CREATE TABLE enemy_tiers (
 CREATE TABLE weapons (
     id INTEGER PRIMARY KEY,
     name TEXT UNIQUE NOT NULL,
-    type TEXT,
-    base_damage INTEGER,
-    base_speed INTEGER,
-    base_range INTEGER
+    symbol TEXT,
+    ammo_symbol TEXT
 );
 
 CREATE TABLE weapon_tiers (
     id INTEGER PRIMARY KEY,
     weapon_id INTEGER NOT NULL,
     tier INTEGER,
-    damage INTEGER,
+    damage_amount INTEGER,
+    damage_type TEXT,
+    damage_duration REAL,
     speed INTEGER,
     range INTEGER,
+    fire_rate INTEGER,
     FOREIGN KEY (weapon_id) REFERENCES weapons (id)
 );
 

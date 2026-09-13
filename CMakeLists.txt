@@ -50,6 +50,7 @@ set(SOURCES
     src/preload/level_loader.cpp
     src/preload/room_loader.cpp
     src/preload/enemy_catalog.cpp
+    src/preload/weapon_catalog.cpp
     src/preload/room_generator.cpp
     src/preload/utils/text.cpp
     src/preload/utils/tile_glyph.cpp

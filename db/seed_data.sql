@@ -5,18 +5,18 @@
 
 INSERT INTO enemies (id, name, class, symbol) VALUES (1, 'goblin', 'base', 'G');
 
-INSERT INTO weapons (id, name, type, base_damage, base_speed, base_range) VALUES (1, 'bow', 'Ranged', 10, 5, 15);
-INSERT INTO weapons (id, name, type, base_damage, base_speed, base_range) VALUES (2, 'fisticuff', 'Melee', 5, 10, 1);
+INSERT INTO weapons (id, name, symbol, ammo_symbol) VALUES (1, 'bow', '}', '.');
+INSERT INTO weapons (id, name, symbol, ammo_symbol) VALUES (2, 'fisticuff', '(', '*');
 
 INSERT INTO levels (id, name, description, room_count, start_room_id, boss_room_id) VALUES (1, 'Level 1', 'Goblin''s Den', 8, 1, 8);
 
 INSERT INTO enemy_tiers (id, enemy_id, tier, health, damage_amount, damage_type, fov_x, fov_y, chase, speed, extra_drops) VALUES (1, 1, 1, 50, 10, 'base', 20, 10, 5, 10, NULL);
 INSERT INTO enemy_tiers (id, enemy_id, tier, health, damage_amount, damage_type, fov_x, fov_y, chase, speed, extra_drops) VALUES (2, 1, 2, 100, 10, 'poison', 20, 10, 5, 10, NULL);
 
-INSERT INTO weapon_tiers (id, weapon_id, tier, damage, speed, range) VALUES (1, 1, 1, 15, 7, 20);
-INSERT INTO weapon_tiers (id, weapon_id, tier, damage, speed, range) VALUES (2, 1, 2, 20, 9, 25);
-INSERT INTO weapon_tiers (id, weapon_id, tier, damage, speed, range) VALUES (3, 2, 1, 7, 12, 1);
-INSERT INTO weapon_tiers (id, weapon_id, tier, damage, speed, range) VALUES (4, 2, 2, 10, 15, 1);
+INSERT INTO weapon_tiers (id, weapon_id, tier, damage_amount, damage_type, damage_duration, speed, range, fire_rate) VALUES (1, 1, 1, 15, 'base', 0, 7, 20, 2);
+INSERT INTO weapon_tiers (id, weapon_id, tier, damage_amount, damage_type, damage_duration, speed, range, fire_rate) VALUES (2, 1, 2, 20, 'base', 0, 9, 25, 3);
+INSERT INTO weapon_tiers (id, weapon_id, tier, damage_amount, damage_type, damage_duration, speed, range, fire_rate) VALUES (3, 2, 1, 7, 'base', 0, 12, 1, 4);
+INSERT INTO weapon_tiers (id, weapon_id, tier, damage_amount, damage_type, damage_duration, speed, range, fire_rate) VALUES (4, 2, 2, 10, 'base', 0, 15, 1, 5);
 
 INSERT INTO rooms (id, level_id, local_room_id, name, ref) VALUES (1, 1, 1, 'Entrance Hall', 'cross_hall.txt');
 INSERT INTO rooms (id, level_id, local_room_id, name, ref) VALUES (2, 1, 2, 'Goblin Lair', 'rect_pillar_hall.txt');
