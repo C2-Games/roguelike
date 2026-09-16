@@ -240,8 +240,12 @@ void Game::update()
   {
     if (movement::advanceEnemy(*enemy, player_, room, goalMapCache_, services_))
     {
-      combat::applyDamage(player_,
-                          combat::meleeDamage(enemy->getAttackDamage()));
+      auto projectile = combat::spawnProjectile(*enemy, fps_);
+      if (projectile != nullptr)
+      {
+        objects.projectiles.push_back(std::move(projectile));
+        enemy->setActionState(EntityActionState::Attack);
+      }
     }
     // defensive: enemy AI keys off TileType::Floor so nothing routes onto Void
     // today. kept for spawn-on-Void and any future forced-movement mechanic.
@@ -265,6 +269,7 @@ void Game::update()
     for (auto& enemy : roomObjects.enemies)
     {
       enemy->tickHitFlash();
+      combat::tickAttackCooldown(*enemy);
     }
   }
 }

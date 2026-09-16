@@ -2,9 +2,7 @@
 #define PLAYER_H
 
 #include "objects/coordinate.h"
-#include "objects/direction.h"
 #include "objects/entities/entity.h"
-#include "objects/weapons/weapon.h"
 
 class Player : public Entity
 {
@@ -34,51 +32,8 @@ class Player : public Entity
    */
   void changeFOV(int rx, int ry);
 
-  /**
-   * @brief Get the direction the player last faced (from movement input).
-   *
-   * @return Direction
-   */
-  Direction getLastDirection() const { return lastDirection_; }
-
-  /**
-   * @brief Set the direction the player last faced.
-   *
-   * @param dir New facing direction.
-   */
-  void setLastDirection(Direction dir) { lastDirection_ = dir; }
-
-  /**
-   * @brief Get the player's currently equipped weapon.
-   *
-   * @return const Weapon&
-   */
-  const Weapon& getWeapon() const { return weapon_; }
-
-  /**
-   * @brief Get the number of frames remaining before the next attack
-   * attempt.
-   *
-   * @return The number of frames remaining.
-   */
-  int getAttackCooldownRemaining() const { return attackCooldownRemaining_; }
-
-  /**
-   * @brief Set the number of frames remaining before the next attack
-   * attempt.
-   *
-   * @param frames New number of frames remaining.
-   */
-  void setAttackCooldownRemaining(int frames)
-  {
-    attackCooldownRemaining_ = frames;
-  }
-
  private:
   int maxHealth_;
-  Direction lastDirection_ = Direction::East;
-  Weapon weapon_;
-  int attackCooldownRemaining_ = 0;
 };
 
 #endif

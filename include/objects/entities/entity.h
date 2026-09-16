@@ -5,8 +5,10 @@
 #include <memory>
 
 #include "objects/coordinate.h"
+#include "objects/direction.h"
 #include "objects/entities/entity_symbol.h"
 #include "objects/fovs/fov.h"
+#include "objects/weapons/weapon.h"
 
 enum class EntityActionState : std::uint8_t
 {
@@ -22,7 +24,7 @@ class Entity
 {
  public:
   Entity(Coordinate position, EntitySymbol symbol, int health, int speed,
-         std::unique_ptr<FOV> fov);
+         std::unique_ptr<FOV> fov, const Weapon& weapon);
 
   virtual ~Entity() = default;
 
@@ -130,6 +132,46 @@ class Entity
     return fov_->in(position_, position);
   }
 
+  /**
+   * @brief Get the entity's currently equipped weapon.
+   *
+   * @return const Weapon&
+   */
+  const Weapon& getWeapon() const { return weapon_; }
+
+  /**
+   * @brief Get the direction the entity last faced.
+   *
+   * @return Direction
+   */
+  Direction getLastDirection() const { return lastDirection_; }
+
+  /**
+   * @brief Set the direction the entity last faced.
+   *
+   * @param dir New facing direction.
+   */
+  void setLastDirection(Direction dir) { lastDirection_ = dir; }
+
+  /**
+   * @brief Get the number of frames remaining before the next attack
+   * attempt.
+   *
+   * @return The number of frames remaining.
+   */
+  int getAttackCooldownRemaining() const { return attackCooldownRemaining_; }
+
+  /**
+   * @brief Set the number of frames remaining before the next attack
+   * attempt.
+   *
+   * @param frames New number of frames remaining.
+   */
+  void setAttackCooldownRemaining(int frames)
+  {
+    attackCooldownRemaining_ = frames;
+  }
+
  protected:
   Coordinate position_;
   EntitySymbol symbol_;
@@ -139,6 +181,9 @@ class Entity
   std::unique_ptr<FOV> fov_;
   EntityActionState actionState_;
   int hitFlashFramesRemaining_;
+  Weapon weapon_;
+  Direction lastDirection_ = Direction::East;
+  int attackCooldownRemaining_ = 0;
 
   /**
    * @brief Move hook that moves player to new position based on their speed.
