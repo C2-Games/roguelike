@@ -15,6 +15,8 @@ enum class AIState : std::uint8_t
            // searching.
   Chase,   // player is currently in FoV; target is their live position.
   Search,  // lost sight; target is the last-known position.
+  Attack,  // player is within min(FoV range, weapon range); holds ground
+           // and fires instead of moving.
 };
 
 class Enemy : public Entity
@@ -105,34 +107,12 @@ class Enemy : public Entity
    */
   int getChaseMemoryDuration() const { return chaseMemoryDuration_; }
 
-  /**
-   * @brief Get the number of frames remaining before the next attack
-   * attempt.
-   *
-   * @return The number of frames remaining.
-   */
-  int getAttackCooldownRemaining() const { return attackCooldownRemaining_; }
-
-  /**
-   * @brief Set the number of frames remaining before the next attack
-   * attempt.
-   *
-   * @param frames New number of frames remaining.
-   */
-  void setAttackCooldownRemaining(int frames)
-  {
-    attackCooldownRemaining_ = frames;
-  }
-
  private:
   int attackDamage_;
   int chaseMemoryDuration_;
   int chaseTurnsRemaining_;
   std::optional<Coordinate> lastKnownPlayerPos_;
   AIState aiState_;
-
-  // frames remaining before the next attack attempt
-  int attackCooldownRemaining_;
 };
 
 #endif
