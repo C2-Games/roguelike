@@ -2,6 +2,7 @@
 
 #include <algorithm>
 
+#include "game/services.h"
 #include "objects/direction.h"
 #include "objects/entities/enemy.h"
 #include "objects/entities/entity.h"
@@ -15,7 +16,7 @@ namespace combat
 
 void advanceProjectile(Projectile& projectile, const Room& room,
                        const std::vector<std::unique_ptr<Enemy>>& enemies,
-                       Player& player)
+                       Player& player, GameServices& services)
 {
   for (int i = 0; i < projectile.getTilesPerTick(); ++i)
   {
@@ -50,7 +51,8 @@ void advanceProjectile(Projectile& projectile, const Room& room,
       }
       if (target != nullptr)
       {
-        applyDamage(*target, projectile.getDamage());
+        applyDamage(*target, projectile.getDamage(), projectile.getCrit(),
+                    services.combatRng);
       }
       return;
     }

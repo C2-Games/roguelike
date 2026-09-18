@@ -16,6 +16,7 @@ struct Weapon
   int speed;
   char symbol;
   char ammoSymbol;
+  double crit[5];
 };
 
 #endif

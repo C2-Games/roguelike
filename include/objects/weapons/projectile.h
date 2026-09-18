@@ -21,9 +21,12 @@ struct Projectile
    * @param range Max tiles traveled before the projectile expires.
    * @param ammoSymbol Glyph copied from the firing weapon's ammo at spawn
    * time.
+   * @param crit Combined firing-entity + weapon crit-chance tiers
+   * (2x/3x/4x/5x/10x).
    */
   Projectile(Coordinate position, Direction direction, Damage damage,
-             int tilesPerTick, int range, char ammoSymbol);
+             int tilesPerTick, int range, char ammoSymbol,
+             const double (&crit)[5]);
 
   /**
    * @brief Get the projectile's current position.
@@ -52,6 +55,13 @@ struct Projectile
    * @return The ammo glyph copied from the firing weapon at spawn time.
    */
   char getAmmoSymbol() const { return ammoSymbol_; }
+
+  /**
+   * @brief Get this projectile's combined crit-chance tiers.
+   *
+   * @return const double(&)[5]
+   */
+  const double (&getCrit() const)[5] { return crit_; }
 
   /**
    * @brief Get the damage this projectile deals on a hit.
@@ -102,6 +112,7 @@ struct Projectile
   int remainingRange_;
   ColorPair color_;
   char ammoSymbol_;
+  double crit_[5];
   bool active_ = true;
 };
 

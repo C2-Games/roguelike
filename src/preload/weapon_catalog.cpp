@@ -67,6 +67,7 @@ WeaponCatalog::WeaponCatalog(SQLite::Database& database)
         statement.getColumn(7).getInt(),
         statement.getColumn(1).getString()[0],
         statement.getColumn(2).getString()[0],
+        {},
     };
   }
 }

@@ -21,9 +21,15 @@ std::unique_ptr<Projectile> spawnProjectile(Entity& entity, int fps)
   const Coordinate spawnPos = entity.getPosition();
   const Weapon& weapon = entity.getWeapon();
 
+  double crit[5];
+  for (int i = 0; i < 5; ++i)
+  {
+    crit[i] = entity.getCrit()[i] + weapon.crit[i];
+  }
+
   auto projectile = std::make_unique<Projectile>(
       spawnPos, direction, weaponDamage(weapon), weapon.speed, weapon.range,
-      weapon.ammoSymbol);
+      weapon.ammoSymbol, crit);
 
   const int cooldownFrames = weapon.fireRate > 0 ? fps / weapon.fireRate : fps;
   entity.setAttackCooldownRemaining(cooldownFrames);
