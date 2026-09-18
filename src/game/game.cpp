@@ -221,7 +221,8 @@ void Game::update()
   {
     if (projectile->isActive())
     {
-      combat::advanceProjectile(*projectile, room, objects.enemies, player_);
+      combat::advanceProjectile(*projectile, room, objects.enemies, player_,
+                                services_);
     }
   }
   objects.projectiles.erase(

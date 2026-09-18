@@ -140,6 +140,13 @@ class Entity
   const Weapon& getWeapon() const { return weapon_; }
 
   /**
+   * @brief Get the entity's own crit-chance tiers (2x/3x/4x/5x/10x).
+   *
+   * @return const double(&)[5]
+   */
+  const double (&getCrit() const)[5] { return crit_; }
+
+  /**
    * @brief Get the direction the entity last faced.
    *
    * @return Direction
@@ -182,6 +189,7 @@ class Entity
   EntityActionState actionState_;
   int hitFlashFramesRemaining_;
   Weapon weapon_;
+  double crit_[5];
   Direction lastDirection_ = Direction::East;
   int attackCooldownRemaining_ = 0;
 

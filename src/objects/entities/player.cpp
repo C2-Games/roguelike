@@ -12,8 +12,15 @@ Player::Player(Coordinate position, int health, int speed)
     : Entity(position, EntitySymbol{{L'@'}}, health, speed,
              std::make_unique<EllipseFOV>(18, 9),
              Weapon{Damage{DamageType::Base, 10, 0.0},
-                    colorForDamageType(DamageType::Base), "Basic Bolt", 15, 2,
-                    1, 2, '*', '.'}),
+                    colorForDamageType(DamageType::Base),
+                    "Basic Bolt",
+                    15,
+                    2,
+                    1,
+                    2,
+                    '*',
+                    '.',
+                    {.2, .1, .05, .025, .01}}),
       maxHealth_(health)
 {}
 
