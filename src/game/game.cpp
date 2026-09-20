@@ -4,6 +4,7 @@
 #include <chrono>
 #include <optional>
 #include <thread>
+#include <utility>
 
 #include "io/input/game_commands.h"
 #include "io/ui_manager.h"
@@ -137,10 +138,15 @@ void Game::handleInput()
       direction = Direction::East;
       break;
     case GameCommand::Attack:
-      currentRoomObjects().projectiles.push_back(
-          combat::spawnProjectile(player_));
-      player_.setActionState(EntityActionState::Attack);
+    {
+      auto projectile = combat::spawnProjectile(player_, fps_);
+      if (projectile != nullptr)
+      {
+        currentRoomObjects().projectiles.push_back(std::move(projectile));
+        player_.setActionState(EntityActionState::Attack);
+      }
       return;
+    }
     case GameCommand::Quit:
       setState(GameState::End);
       break;
@@ -253,6 +259,7 @@ void Game::update()
   // mid-flash and show a stale tint on return. ticking after the damage pass
   // makes the frame a hit lands the first visible flash frame.
   player_.tickHitFlash();
+  combat::tickAttackCooldown(player_);
   for (auto& [roomID, roomObjects] : levelData_.roomData)
   {
     for (auto& enemy : roomObjects.enemies)
@@ -333,9 +340,8 @@ RenderState Game::buildRenderState() const
   state.hud.roomCount = levelData_.meta.roomCount;
 
   const Weapon& weapon = player_.getWeapon();
-  state.hud.weapon =
-      WeaponView{weapon.getName(), weapon.getDamage(), weapon.getSpeed(),
-                 weapon.getRange(), weapon.getColor()};
+  state.hud.weapon = WeaponView{weapon.name, weapon.damage.amount, weapon.speed,
+                                weapon.range, weapon.color};
 
   state.debug.playerPosition = player_.getPosition();
   state.debug.fps = currentFps_;

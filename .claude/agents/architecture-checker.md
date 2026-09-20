@@ -32,8 +32,8 @@ For each file/symbol the plan would create or touch, and each interaction it des
 - **Rule 1 (game objects are mutually exclusive):** would the change have one game-object class
   reference, call a method on, or `#include` another game-object class directly?
 - **Rule 2 (data objects are the exception):** is what's crossing the boundary a plain-data struct
-  with no behavior (`Coordinate`, `Colors`, `TileType`, `RoomTypes`, `Weapon`, `WeaponType`,
-  `WeaponAttributes`, `DamageType`, `EntitySymbol`, or their present-day equivalents), or something
+  with no behavior (`Coordinate`, `Colors`, `TileType`, `RoomTypes`, `Weapon`,
+  `DamageType`, `EntitySymbol`, or their present-day equivalents), or something
   that actually carries logic?
 - **Rule 3 (systems are the only place objects interact, and are mutually exclusive too):** would
   two game objects end up interacting somewhere other than a system-equivalent layer? Would one

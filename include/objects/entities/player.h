@@ -55,10 +55,30 @@ class Player : public Entity
    */
   const Weapon& getWeapon() const { return weapon_; }
 
+  /**
+   * @brief Get the number of frames remaining before the next attack
+   * attempt.
+   *
+   * @return The number of frames remaining.
+   */
+  int getAttackCooldownRemaining() const { return attackCooldownRemaining_; }
+
+  /**
+   * @brief Set the number of frames remaining before the next attack
+   * attempt.
+   *
+   * @param frames New number of frames remaining.
+   */
+  void setAttackCooldownRemaining(int frames)
+  {
+    attackCooldownRemaining_ = frames;
+  }
+
  private:
   int maxHealth_;
   Direction lastDirection_ = Direction::East;
   Weapon weapon_;
+  int attackCooldownRemaining_ = 0;
 };
 
 #endif

@@ -28,7 +28,7 @@ include
     entities/      enemy.h, entity_symbol.h, entity.h, player.h
     tiles/         tile_type.h, tile.h
     room/          room.h, room_dimensions.h
-    weapons/       weapon.h, weapon_attributes.h, weapon_type.h, projectile.h
+    weapons/       weapon.h, projectile.h
     damage/        damage.h, damage_type.h
     coordinate.h, direction.h, colors.h, map.h, door_connections.h
   io/
@@ -73,8 +73,8 @@ hanging off these seven rules.
    `systems/movement`, which now drive `Enemy`'s plain `getAIState`/
    `setAIState` (and similar) accessors.
 3. **Data objects (structs) are the one exception.** Plain-data types with
-   no behavior — `Coordinate`, `Colors`, `TileType`, `Weapon`, `WeaponType`,
-   `WeaponAttributes`, `DamageType`, `EntitySymbol`, `DoorConnection` —
+   no behavior — `Coordinate`, `Colors`, `TileType`, `Weapon`, `DamageType`,
+   `EntitySymbol`, `DoorConnection` —
    carry no logic, so anything may hold or pass them freely. They're the
    shared currency that's allowed to cross boundaries other things can't.
 4. **Systems are the only place two game objects are allowed to interact —
@@ -127,7 +127,7 @@ flowchart TB
  
     subgraph OBJ["objects/"]
         Classes["game objects — classes\nEntity, Player, Enemy, Room,\nTile, Projectile, Fov..."]
-        Data["data objects — structs\nCoordinate, Colors, TileType,\nWeapon, WeaponType, WeaponAttributes,\nDamageType, EntitySymbol..."]
+        Data["data objects — structs\nCoordinate, Colors, TileType,\nWeapon, DamageType, EntitySymbol..."]
     end
  
     In -->|GameCommand| G

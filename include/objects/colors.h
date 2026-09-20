@@ -3,6 +3,8 @@
 
 #include <cstdint>
 
+#include "objects/damage/damage_type.h"
+
 enum class ColorPair : std::uint8_t
 {
   Default = 0,        ///< Terminal default (used inside the FoV).
@@ -12,10 +14,10 @@ enum class ColorPair : std::uint8_t
   EnemyDefault = 3,  ///< Placeholder for future enemy tinting.
   DoorDefault = 4,   ///< Placeholder for future door tinting.
 
-  WeaponBasic = 5,   ///< Basic Bolt color.
-  WeaponRapid = 6,   ///< Rapid Dart color.
-  WeaponHeavy = 7,   ///< Heavy Slug color.
-  WeaponSniper = 8,  ///< Sniper Round color.
+  DamageBase = 5,      ///< Base damage type color.
+  DamageElectric = 6,  ///< Electric damage type color.
+  DamageFire = 7,      ///< Fire damage type color.
+  DamagePoison = 8,    ///< Poison damage type color.
 
   HealthGood = 9,       ///< Health bar fill above the warning threshold.
   HealthWarn = 10,      ///< Health bar fill at or below 50 health.
@@ -26,5 +28,13 @@ enum class ColorPair : std::uint8_t
   EntityHit = 14,  ///< One-shot red flash on any entity (player or enemy) that
                    ///< just took damage.
 };
+
+/**
+ * @brief Map a damage type to the color its projectiles/effects render in.
+ *
+ * @param type The damage type to look up.
+ * @return The color pair registered for that damage type.
+ */
+ColorPair colorForDamageType(DamageType type);
 
 #endif
