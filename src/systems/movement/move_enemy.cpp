@@ -1,6 +1,7 @@
 #include "systems/movement/move_enemy.h"
 
 #include <algorithm>
+#include <cstdlib>
 #include <optional>
 #include <random>
 #include <utility>
@@ -17,30 +18,25 @@
 namespace
 {
 
-// frames of cooldown between an enemy's melee attack attempts.
-constexpr int ATTACK_COOLDOWN_FRAMES = 30;
-
-// outcome of a single down-gradient step attempt.
-struct GradientStep
+// chebyshev (king-move) distance between two coordinates.
+int chebyshevDistance(Coordinate a, Coordinate b)
 {
-  Coordinate nextTile;  // pos unchanged if no move (blocked or attacking).
-  bool wouldAttackPlayer = false;  // true when the best down-gradient neighbor
-                                   // is the player's tile.
-};
+  return std::max(std::abs(a.x - b.x), std::abs(a.y - b.y));
+}
 
-// pick a strictly-decreasing goal-map neighbor to step onto.
+// pick the next tile to step onto along a strictly-decreasing goal-map
+// gradient.
 //
-// returns `pos` unchanged (with `wouldAttackPlayer = false`) when there are
-// no valid down-gradient moves (goal unreachable, enemy already on goal, or
-// every reachable neighbor is occupied).
-GradientStep stepDownGradient(Coordinate pos, const GoalMap& map,
-                              const Room& room, Coordinate playerPos,
-                              GameServices& services)
+// returns `pos` unchanged when there are no valid down-gradient moves (goal
+// unreachable, enemy already on goal, or every reachable neighbor is
+// occupied).
+Coordinate stepDownGradient(Coordinate pos, const GoalMap& map,
+                            const Room& room, GameServices& services)
 {
   int currentDist = map[pos.x][pos.y];
   if (currentDist == UNREACHABLE || currentDist == 0)
   {
-    return {pos, false};
+    return pos;
   }
 
   struct Cand
@@ -78,17 +74,10 @@ GradientStep stepDownGradient(Coordinate pos, const GoalMap& map,
       candidates.begin(), candidates.end(),
       [](const Cand& a, const Cand& b) { return a.dist < b.dist; });
 
-  if (!candidates.empty() && candidates.front().coord == playerPos)
-  {
-    return {pos, true};
-  }
-
   auto freeCandidate =
-      std::find_if(candidates.begin(), candidates.end(), [&](const Cand& c) {
-        return c.coord != playerPos && !room.isOccupied(c.coord);
-      });
-  return {freeCandidate != candidates.end() ? freeCandidate->coord : pos,
-          false};
+      std::find_if(candidates.begin(), candidates.end(),
+                   [&](const Cand& c) { return !room.isOccupied(c.coord); });
+  return freeCandidate != candidates.end() ? freeCandidate->coord : pos;
 }
 
 // pick a random walkable Floor neighbor not occupied by another enemy.
@@ -129,10 +118,21 @@ void transitionAIState(Enemy& enemy, bool inFoV, Coordinate playerPos)
   {
     enemy.setLastKnownPlayerPos(playerPos);
     enemy.setChaseTurnsRemaining(enemy.getChaseMemoryDuration());
-    enemy.setAIState(AIState::Chase);
+    const int attackRange =
+        std::min(enemy.getFOV().maxRadius(), enemy.getWeapon().range);
+    if (chebyshevDistance(enemy.getPosition(), playerPos) <= attackRange)
+    {
+      enemy.setLastDirection(directionTowards(enemy.getPosition(), playerPos));
+      enemy.setAIState(AIState::Attack);
+    }
+    else
+    {
+      enemy.setAIState(AIState::Chase);
+    }
     return;
   }
-  if (enemy.getAIState() == AIState::Chase)
+  if (enemy.getAIState() == AIState::Attack ||
+      enemy.getAIState() == AIState::Chase)
   {
     enemy.setAIState(AIState::Search);
   }
@@ -163,16 +163,15 @@ std::optional<Coordinate> planMove(Enemy& enemy, bool inFoV,
       return playerPos;
     case AIState::Search:
       return enemy.getLastKnownPlayerPos();
+    case AIState::Attack:
     case AIState::Sentry:
       return std::nullopt;
   }
   return std::nullopt;
 }
 
-// moves the enemy to `nextTile`, updating occupancy, chase memory, and the
-// attack cooldown. returns true when this resolves into an attack.
-bool resolveMove(Enemy& enemy, Room& room, Coordinate nextTile, bool inFoV,
-                 bool wouldAttackPlayer)
+// moves the enemy to `nextTile`, updating occupancy and chase memory.
+void resolveMove(Enemy& enemy, Room& room, Coordinate nextTile, bool inFoV)
 {
   const Coordinate oldPos = enemy.getPosition();
   room.toggleOccupied(oldPos, false);
@@ -188,20 +187,6 @@ bool resolveMove(Enemy& enemy, Room& room, Coordinate nextTile, bool inFoV,
       enemy.setLastKnownPlayerPos(std::nullopt);
     }
   }
-
-  if (!wouldAttackPlayer)
-  {
-    enemy.setAttackCooldownRemaining(0);
-    return false;
-  }
-  if (enemy.getAttackCooldownRemaining() > 0)
-  {
-    enemy.setAttackCooldownRemaining(enemy.getAttackCooldownRemaining() - 1);
-    return false;
-  }
-  enemy.setAttackCooldownRemaining(ATTACK_COOLDOWN_FRAMES - 1);
-  enemy.setActionState(EntityActionState::Attack);
-  return true;
 }
 
 }  // namespace
@@ -216,19 +201,18 @@ bool advanceEnemy(Enemy& enemy, const Player& player, Room& room,
   const bool inFoV = enemy.inFOV(playerPos);
   std::optional<Coordinate> target = planMove(enemy, inFoV, playerPos);
 
+  if (enemy.getAIState() == AIState::Attack)
+  {
+    return true;
+  }
+
   Coordinate nextTile;
-  bool wasBlockedByPlayer = false;
   if (target.has_value())
   {
     const GoalMap& map = cache.getOrCompute(room, *target);
-    GradientStep step =
-        stepDownGradient(enemy.getPosition(), map, room, playerPos, services);
-    if (step.wouldAttackPlayer)
-    {
-      wasBlockedByPlayer = true;
-      nextTile = enemy.getPosition();
-    }
-    else if (step.nextTile == enemy.getPosition())
+    Coordinate step =
+        stepDownGradient(enemy.getPosition(), map, room, services);
+    if (step == enemy.getPosition())
     {
       // no legal down-gradient step (target unreachable or all reachable
       // neighbors blocked by other enemies). wander instead so the enemy
@@ -237,7 +221,7 @@ bool advanceEnemy(Enemy& enemy, const Player& player, Room& room,
     }
     else
     {
-      nextTile = step.nextTile;
+      nextTile = step;
     }
   }
   else
@@ -246,7 +230,8 @@ bool advanceEnemy(Enemy& enemy, const Player& player, Room& room,
     nextTile = pickWanderTile(enemy.getPosition(), room, services);
   }
 
-  return resolveMove(enemy, room, nextTile, inFoV, wasBlockedByPlayer);
+  resolveMove(enemy, room, nextTile, inFoV);
+  return false;
 }
 
 }  // namespace movement

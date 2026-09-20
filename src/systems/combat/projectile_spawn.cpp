@@ -1,42 +1,42 @@
 #include "systems/combat/projectile_spawn.h"
 
 #include "objects/direction.h"
-#include "objects/entities/player.h"
+#include "objects/entities/entity.h"
 #include "objects/weapons/projectile.h"
 #include "systems/combat/damage_source.h"
 
 namespace combat
 {
 
-std::unique_ptr<Projectile> spawnProjectile(Player& player, int fps)
+std::unique_ptr<Projectile> spawnProjectile(Entity& entity, int fps)
 {
-  if (player.getAttackCooldownRemaining() > 0)
+  if (entity.getAttackCooldownRemaining() > 0)
   {
     return nullptr;
   }
 
-  // "fire" a projectile in the player's last-faced direction starting on
-  // the player's own tile.
-  Direction direction = player.getLastDirection();
-  const Coordinate spawnPos = player.getPosition();
-  const Weapon& weapon = player.getWeapon();
+  // "fire" a projectile in the entity's last-faced direction starting on
+  // the entity's own tile.
+  Direction direction = entity.getLastDirection();
+  const Coordinate spawnPos = entity.getPosition();
+  const Weapon& weapon = entity.getWeapon();
 
   auto projectile = std::make_unique<Projectile>(
       spawnPos, direction, weaponDamage(weapon), weapon.speed, weapon.range,
       weapon.ammoSymbol);
 
   const int cooldownFrames = weapon.fireRate > 0 ? fps / weapon.fireRate : fps;
-  player.setAttackCooldownRemaining(cooldownFrames);
+  entity.setAttackCooldownRemaining(cooldownFrames);
 
   return projectile;
 }
 
-void tickAttackCooldown(Player& player)
+void tickAttackCooldown(Entity& entity)
 {
-  int remaining = player.getAttackCooldownRemaining();
+  int remaining = entity.getAttackCooldownRemaining();
   if (remaining > 0)
   {
-    player.setAttackCooldownRemaining(remaining - 1);
+    entity.setAttackCooldownRemaining(remaining - 1);
   }
 }
 
