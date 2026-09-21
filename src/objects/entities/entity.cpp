@@ -12,5 +12,6 @@ Entity::Entity(Coordinate position, EntitySymbol symbol, int health, int speed,
       fov_(std::move(fov)),
       actionState_(EntityActionState::Idle),
       hitFlashFramesRemaining_(0),
-      weapon_(weapon)
+      weapon_(weapon),
+      crit_{}
 {}

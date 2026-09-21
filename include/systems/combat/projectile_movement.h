@@ -8,6 +8,7 @@ class Enemy;
 class Player;
 class Projectile;
 struct Room;
+struct GameServices;
 
 namespace combat
 {
@@ -16,7 +17,7 @@ namespace combat
 // range is exhausted.
 void advanceProjectile(Projectile& projectile, const Room& room,
                        const std::vector<std::unique_ptr<Enemy>>& enemies,
-                       Player& player);
+                       Player& player, GameServices& services);
 }  // namespace combat
 
 #endif
