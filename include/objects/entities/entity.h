@@ -24,7 +24,8 @@ class Entity
 {
  public:
   Entity(Coordinate position, EntitySymbol symbol, int health, int speed,
-         std::unique_ptr<FOV> fov, const Weapon& weapon);
+         std::unique_ptr<FOV> fov, const Weapon& weapon,
+         Orientation orientation = Orientation::Horizontal);
 
   virtual ~Entity() = default;
 
@@ -57,6 +58,14 @@ class Entity
   Coordinate getPosition() const { return position_; };
 
   /**
+   * @brief Get the entity's current orientation.
+   *
+   * @return The entity's current facing, used to derive its display/
+   * footprint grid.
+   */
+  Orientation getOrientation() const { return orientation_; }
+
+  /**
    * @brief Get entity speed.
    *
    * @return const int [frames / move]
@@ -85,11 +94,35 @@ class Entity
   bool isAlive() const { return health_ > 0; };
 
   /**
-   * @brief Move entity to new position.
+   * @brief Set the entity's position.
    *
-   * @param newPos Corrdinates of new position.
+   * @param position New position.
    */
-  void moveTo(Coordinate newPos) { moveHook(newPos); };
+  void setPosition(Coordinate position) { position_ = position; }
+
+  /**
+   * @brief Set the entity's orientation.
+   *
+   * @param orientation New orientation.
+   */
+  void setOrientation(Orientation orientation) { orientation_ = orientation; }
+
+  /**
+   * @brief Advance the per-frame movement throttle.
+   *
+   * @return True once frameCounter_ reaches speed_ (and resets), meaning
+   * this frame may commit a position/orientation change; false otherwise.
+   */
+  bool tickMovementFrame()
+  {
+    frameCounter_ += 1;
+    if (frameCounter_ % speed_ == 0)
+    {
+      frameCounter_ = 0;
+      return true;
+    }
+    return false;
+  }
 
   /**
    * @brief Set entities action state.
@@ -181,6 +214,7 @@ class Entity
 
  protected:
   Coordinate position_;
+  Orientation orientation_;
   EntitySymbol symbol_;
   int health_;
   int speed_;
@@ -192,27 +226,6 @@ class Entity
   double crit_[5];
   Direction lastDirection_ = Direction::East;
   int attackCooldownRemaining_ = 0;
-
-  /**
-   * @brief Move hook that moves player to new position based on their speed.
-   *
-   * @param newPos The potential new position to move entitiy.
-   */
-  void moveHook(Coordinate newPos)
-  {
-    // when move hook is called, we assume a frame.
-    frameCounter_ += 1;
-
-    if (frameCounter_ % speed_ == 0)
-    {
-      frameCounter_ = 0;  // reset counter.
-      if (!(newPos == position_))
-      {
-        setActionState(EntityActionState::Move);
-      }
-      position_ = newPos;
-    };
-  };
 };
 
 #endif

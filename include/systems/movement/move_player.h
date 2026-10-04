@@ -34,7 +34,7 @@ struct PlayerStepOutcome
  * @param direction Direction to attempt to move the player in.
  * @return Blocked (no-op), Moved (player already relocated), or AtDoor
  * (player left on their current tile; the caller resolves the room
- * transition, or calls player.moveTo() itself for an unlinked door).
+ * transition, or calls movement::moveEntity() itself for an unlinked door).
  */
 PlayerStepOutcome stepPlayer(Player& player, Room& room, Direction direction);
 

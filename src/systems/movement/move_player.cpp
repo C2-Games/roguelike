@@ -4,6 +4,7 @@
 #include "objects/entities/player.h"
 #include "objects/room/room.h"
 #include "objects/tiles/tile_type.h"
+#include "systems/movement/move_entity.h"
 
 namespace movement
 {
@@ -24,7 +25,7 @@ PlayerStepOutcome stepPlayer(Player& player, Room& room, Direction direction)
 
   const Coordinate oldPos = player.getPosition();
   room.toggleOccupied(oldPos, false);
-  player.moveTo(nextPos);
+  moveEntity(player, nextPos);
   room.toggleOccupied(nextPos, true);
   return {PlayerStepKind::Moved, Coordinate()};
 }

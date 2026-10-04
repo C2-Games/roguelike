@@ -37,11 +37,13 @@ class Enemy : public Entity
    * @param chaseMemoryDuration Number of enemy moves the enemy will continue
    * hunting toward the last-seen player tile after losing line of sight. By
    * default, 5.
+   * @param orientation Starting orientation of enemy. By default, Horizontal.
    */
   explicit Enemy(Coordinate position, std::unique_ptr<FOV> fov,
                  EntitySymbol symbol = {{L'E'}}, int health = 100,
                  int speed = 10, int attackDamage = 10,
-                 int chaseMemoryDuration = 5);
+                 int chaseMemoryDuration = 5,
+                 Orientation orientation = Orientation::Horizontal);
 
   /**
    * @brief Get the enemy's attack damage.

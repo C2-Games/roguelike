@@ -3,6 +3,7 @@
 
 #include "systems/movement/goal_map_cache.h"
 #include "systems/movement/move_enemy.h"
+#include "systems/movement/move_entity.h"
 #include "systems/movement/move_player.h"
 
 #endif
