@@ -21,9 +21,10 @@ namespace movement
  * @param room Room the enemy occupies, for wall/occupancy queries.
  * @param cache Goal-map cache used to path toward the chase target.
  * @param services RNG source for movement tiebreaks and wandering.
- * @return True when the enemy is in AIState::Attack range this frame and
- * wants to fire (the caller should ask systems/combat to spawn a
- * projectile); false when the enemy moved or held per its non-Attack state.
+ * @return True when the enemy is in AIState::Attack this frame (in range,
+ * row/column aligned, with a clear line of fire) and wants to fire (the caller
+ * should ask systems/combat to spawn a projectile); false when the enemy moved
+ * or held per its non-Attack state.
  */
 bool advanceEnemy(Enemy& enemy, const Player& player, Room& room,
                   const GoalMapCache& cache, GameServices& services);

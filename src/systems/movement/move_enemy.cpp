@@ -25,6 +25,28 @@ int chebyshevDistance(Coordinate a, Coordinate b)
   return std::max(std::abs(a.x - b.x), std::abs(a.y - b.y));
 }
 
+int unitStep(int v) { return std::clamp(v, -1, 1); }
+
+// true when `from` and `to` share a row or column and every tile strictly
+// between them is walkable and unoccupied. mirrors the stop rule in
+// systems/combat/projectile_movement.cpp; keep the two in sync.
+bool hasClearLineOfFire(Coordinate from, Coordinate to, const Room& room)
+{
+  if (from.x != to.x && from.y != to.y)
+  {
+    return false;
+  }
+  const Coordinate step{unitStep(to.x - from.x), unitStep(to.y - from.y)};
+  for (Coordinate tile = from + step; !(tile == to); tile = tile + step)
+  {
+    if (!room.isWalkable(tile) || room.isOccupied(tile))
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
 // pick the next tile to step onto along a strictly-decreasing goal-map
 // gradient.
 //
@@ -111,19 +133,22 @@ Coordinate pickWanderTile(Coordinate pos, const Room& room,
   return candidates[pick(services.movementRng)];
 }
 
-// refreshes the enemy's AI state (sentry/chase/search) based on whether the
-// player is currently visible.
-void transitionAIState(Enemy& enemy, bool inFoV, Coordinate playerPos)
+// refreshes the enemy's AI state (attack/chase/search/sentry) based on whether
+// the player is currently visible.
+void transitionAIState(Enemy& enemy, bool inFoV, Coordinate playerPos,
+                       const Room& room)
 {
   if (inFoV)
   {
     enemy.setLastKnownPlayerPos(playerPos);
     enemy.setChaseTurnsRemaining(enemy.getChaseMemoryDuration());
+    const Coordinate pos = enemy.getPosition();
     const int attackRange =
         std::min(enemy.getFOV().maxRadius(), enemy.getWeapon().range);
-    if (chebyshevDistance(enemy.getPosition(), playerPos) <= attackRange)
+    if (chebyshevDistance(pos, playerPos) <= attackRange &&
+        hasClearLineOfFire(pos, playerPos, room))
     {
-      enemy.setLastDirection(directionTowards(enemy.getPosition(), playerPos));
+      enemy.setLastDirection(directionTowards(pos, playerPos));
       enemy.setAIState(AIState::Attack);
     }
     else
@@ -155,9 +180,9 @@ void transitionAIState(Enemy& enemy, bool inFoV, Coordinate playerPos)
 
 // decides the enemy's current movement target, if any, from its AI state.
 std::optional<Coordinate> planMove(Enemy& enemy, bool inFoV,
-                                   Coordinate playerPos)
+                                   Coordinate playerPos, const Room& room)
 {
-  transitionAIState(enemy, inFoV, playerPos);
+  transitionAIState(enemy, inFoV, playerPos, room);
   switch (enemy.getAIState())
   {
     case AIState::Chase:
@@ -200,7 +225,7 @@ bool advanceEnemy(Enemy& enemy, const Player& player, Room& room,
 {
   const Coordinate playerPos = player.getPosition();
   const bool inFoV = enemy.inFOV(playerPos);
-  std::optional<Coordinate> target = planMove(enemy, inFoV, playerPos);
+  std::optional<Coordinate> target = planMove(enemy, inFoV, playerPos, room);
 
   if (enemy.getAIState() == AIState::Attack)
   {
