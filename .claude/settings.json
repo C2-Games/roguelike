@@ -1,8 +1,10 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "env": {
-    "GH_REPO": "C2-Games/roguelike"
+    "GH_REPO": "C2-Games/roguelike",
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
+  "teammateMode": "in-process",
   "permissions": {
     "deny": [
       "Bash(git commit)",
@@ -65,6 +67,30 @@
             "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/doc_drift.py\" || python \"$CLAUDE_PROJECT_DIR/.claude/hooks/doc_drift.py\"",
             "timeout": 20,
             "statusMessage": "Checking .claude/CLAUDE.md drift...",
+            "shell": "bash"
+          }
+        ]
+      }
+    ],
+    "TaskCreated": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/team_task_gate.py\" || python \"$CLAUDE_PROJECT_DIR/.claude/hooks/team_task_gate.py\"",
+            "timeout": 15,
+            "shell": "bash"
+          }
+        ]
+      }
+    ],
+    "TaskCompleted": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/team_task_gate.py\" || python \"$CLAUDE_PROJECT_DIR/.claude/hooks/team_task_gate.py\"",
+            "timeout": 15,
             "shell": "bash"
           }
         ]

@@ -51,12 +51,15 @@ issue on record); since `AskUserQuestion` is unavailable inside subagents, it do
 follow-ups on implementation approach, whether to split into multiple issues, parent/sub-issue
 linkage, and milestone — it gathers the data those questions need, hands it back with the draft(s),
 and the main agent asks the user and resumes `issue-drafter` with the answers before it creates
-anything; `.claude/agents/implementer.md` executes one isolated plan task at a time (dispatched in parallel
-when tasks are independent); `.claude/agents/reviewer.md` gives `/check` a read-only
+anything; `.claude/agents/implementer.md` executes one isolated plan task at a time (independent tasks run
+as a team, since `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` is set in `.claude/settings.json`; `TaskCreated` and
+`TaskCompleted` hooks run `.claude/hooks/team_task_gate.py` to gate them); `.claude/agents/reviewer.md` gives `/check` a read-only
 structure/efficiency/isolation/style pass over `src/`/`include/` changes, grounded in the
 originating issue; and `.claude/agents/architecture-checker.md` reads a not-yet-implemented plan against
 `ARCHITECTURE.md`'s coupling rules before `ExitPlanMode`, handing back violations and
-alternatives the same way `issue-drafter` hands back open questions. Plan-mode task breakdowns are also logged as tracked tasks
+alternatives the same way `issue-drafter` hands back open questions. `reviewer`, `architecture-checker`, and
+`issue-drafter` are dispatched without the `name` parameter, because a named agent becomes a teammate and
+returns no result. Plan-mode task breakdowns are also logged as tracked tasks
 (`TaskCreate`/`TaskUpdate`: `owner` = subagent, `addBlockedBy` = dependencies) before
 calling `ExitPlanMode` — see `/start-issue` step 7 for the mechanics.
 
