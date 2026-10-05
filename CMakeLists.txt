@@ -35,6 +35,7 @@ set(SOURCES
     src/objects/entities/entity.cpp
     src/objects/entities/player.cpp
     src/objects/entities/enemy.cpp
+    src/objects/entities/entity_symbol.cpp
     src/objects/direction.cpp
     src/objects/colors.cpp
     src/objects/fovs/fov.cpp
@@ -58,6 +59,7 @@ set(SOURCES
     src/systems/movement/goal_map_cache.cpp
     src/systems/movement/move_enemy.cpp
     src/systems/movement/move_player.cpp
+    src/systems/movement/move_entity.cpp
     src/systems/combat/damage_application.cpp
     src/systems/combat/damage_source.cpp
     src/systems/combat/projectile_movement.cpp

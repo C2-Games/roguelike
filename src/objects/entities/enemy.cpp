@@ -9,7 +9,8 @@
 #include "objects/weapons/weapon.h"
 
 Enemy::Enemy(Coordinate position, std::unique_ptr<FOV> fov, EntitySymbol symbol,
-             int health, int speed, int attackDamage, int chaseMemoryDuration)
+             int health, int speed, int attackDamage, int chaseMemoryDuration,
+             Orientation orientation)
     : Entity(position, std::move(symbol), health, speed, std::move(fov),
              Weapon{Damage{DamageType::Base, 8, 0.0},
                     colorForDamageType(DamageType::Base),
@@ -20,7 +21,8 @@ Enemy::Enemy(Coordinate position, std::unique_ptr<FOV> fov, EntitySymbol symbol,
                     2,
                     '*',
                     '.',
-                    {}}),
+                    {}},
+             orientation),
       attackDamage_(attackDamage),
       chaseMemoryDuration_(chaseMemoryDuration),
       chaseTurnsRemaining_(0),

@@ -13,6 +13,7 @@
 #include "objects/entities/player.h"
 #include "objects/room/room.h"
 #include "objects/tiles/tile_type.h"
+#include "systems/movement/move_entity.h"
 #include "systems/movement/pathfinding.h"
 
 namespace
@@ -175,7 +176,7 @@ void resolveMove(Enemy& enemy, Room& room, Coordinate nextTile, bool inFoV)
 {
   const Coordinate oldPos = enemy.getPosition();
   room.toggleOccupied(oldPos, false);
-  enemy.moveTo(nextTile);
+  movement::moveEntity(enemy, nextTile);
   room.toggleOccupied(enemy.getPosition(), true);
 
   if (!inFoV && !(enemy.getPosition() == oldPos) &&

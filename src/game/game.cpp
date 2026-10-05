@@ -177,14 +177,14 @@ void Game::handleInput()
       currentRoomID_ = conn.roomID;
       Coordinate landing =
           room_loader::inwardOfDoor(currentRoom(), conn.doorPosition);
-      player_.moveTo(landing);
+      movement::moveEntity(player_, landing);
       currentRoom().toggleOccupied(landing, true);
       player_.setActionState(EntityActionState::TransRoom);
     }
     else
     {
       currentRoom().toggleOccupied(player_.getPosition(), false);
-      player_.moveTo(outcome.doorPos);
+      movement::moveEntity(player_, outcome.doorPos);
       currentRoom().toggleOccupied(outcome.doorPos, true);
     }
   }
