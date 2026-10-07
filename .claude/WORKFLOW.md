@@ -158,7 +158,7 @@ flowchart TD
     Trivial -- "no" --> Plan["plan"]
  
     Plan --> ArchCheck{"architecture-checker:<br/>src/include touched?"}
-    ArchCheck -- "no" --> Implementer["implementer agent(s)<br/>one per Task: id + Depends on + Subagent<br/>edit + update CLAUDE.md<br/><i>gated by issue_gate.py</i>"]
+    ArchCheck -- "no" --> Implementer["implementer team (independent tasks)<br/>one per Task: id + Depends on + Subagent<br/>edit + update CLAUDE.md<br/><i>gated by issue_gate.py</i>"]
     ArchCheck -- "yes, no violations" --> Implementer
     ArchCheck -- "yes, violation found" --> Resolve["ask developer: alternative,<br/>proceed + update ARCHITECTURE.md,<br/>or revise plan"]
     Resolve --> Plan
@@ -202,6 +202,40 @@ prompted by `/pr`'s handoff or by the harness at session end — never automatic
 
 PR bodies stay short — a plain summary and change list, not a narration of how the change was
 decided.
+
+## Agent teams
+
+Independent `implementer` tasks run as an agent team. Everything else stays a subagent. Teams are
+enabled in `.claude/settings.json` (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`, `teammateMode: "in-process"`).
+
+**When a team forms.** Only plan tasks marked `independent` whose subagent is `implementer` join a
+team. A task with a `Depends on` marker still runs after its dependency. `architecture-checker`,
+`reviewer` and `issue-drafter` are dispatched without a `name`, so they remain result-returning
+subagents: they return one result to the caller and do not need a team.
+
+**Task list mapping.** Each plan task becomes a shared task. `owner` is the teammate that executes
+it, and `addBlockedBy` lists the tasks it depends on. Each teammate sends its final report to the lead
+via `SendMessage` before marking its task completed (see `implementer.md`).
+
+**Hook gating.** `.claude/hooks/team_task_gate.py` is wired to two events and blocks with exit 2,
+reason on stderr:
+
+- `TaskCreated` denies a task with no owner, or whose subject and description contain no
+  `issue #<n>` reference.
+- `TaskCompleted` denies completion while `.claude/.current-issue` is missing, or while its recorded
+  branch differs from HEAD. Re-run `/start-issue <number>` to refresh a stale record.
+
+**Display.** `teammateMode` is `in-process`, so teammates run inside the main session with no split
+panes. No tmux or iTerm2 is required; teams work in Windows Terminal and the VS Code terminal.
+
+**Cost.** Each teammate is a full Claude instance, so cost scales with team size. Keep teams to 3–5
+members. In-process teammate requests fall outside the main 5-minute cache bucket.
+
+**Escape hatch.** Set `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0` to turn teams off. `implementer` then
+reverts to a plain subagent.
+
+**Unverified.** The `TaskCreated`/`TaskCompleted` payload field names the hook reads are a guess until
+checked against the Claude Code hook docs.
 
 ## Common commands
 
