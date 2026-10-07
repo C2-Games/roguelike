@@ -60,6 +60,8 @@ set(SOURCES
     src/systems/movement/move_enemy.cpp
     src/systems/movement/move_player.cpp
     src/systems/movement/move_entity.cpp
+    src/systems/movement/footprint_pathfinding.cpp
+    src/systems/movement/footprint_goal_map_cache.cpp
     src/systems/combat/damage_application.cpp
     src/systems/combat/damage_source.cpp
     src/systems/combat/projectile_movement.cpp

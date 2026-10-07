@@ -15,6 +15,15 @@ using GoalMap = std::vector<std::vector<int>>;
 inline constexpr int UNREACHABLE = std::numeric_limits<int>::max();
 
 /**
+ * @brief Check whether a tile blocks movement/pathfinding.
+ *
+ * @param room The room whose tile grid is used for the lookup.
+ * @param pos Grid position to test.
+ * @return True if the tile at `pos` is anything other than TileType::Floor.
+ */
+bool isBlocking(const Room& room, Coordinate pos);
+
+/**
  * @brief Build a Dijkstra / BFS goal map rooted at the given tile (player/last
  * seen position).
  *
