@@ -19,7 +19,8 @@ include
     utils/         text.h, tile_glyph.h
   systems/
     movement/      movement.h, pathfinding.h, goal_map_cache.h,
-                    move_enemy.h, move_player.h, move_entity.h
+                    move_enemy.h, move_player.h, move_entity.h,
+                    footprint_pathfinding.h, footprint_goal_map_cache.h
     combat/        combat.h, damage_application.h, damage_source.h,
                     projectile_movement.h, projectile_spawn.h
     visibility/    visibility.h, delta.h, recompute.h, update.h
