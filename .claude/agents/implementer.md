@@ -55,3 +55,15 @@ When done (or when stopping on a hurdle), report back concisely:
 
 The dispatching session relies on this summary instead of re-reading every file, so make it
 complete enough to act on without re-inspection.
+
+## When you run as a team member
+
+When the session runs with agent teams enabled, you run as a named teammate rather than a plain
+subagent. A teammate's run ends with an idle notification and does not return its final output to
+the lead. So before marking your task completed, send your final report (the content described
+under "Final report" above) to the lead via `SendMessage`. That message is the substitute for a
+returned summary, so do not mark the task completed without sending it.
+
+When run as a team member, the runtime may add `Task` and `SendMessage` tools beyond the `tools:`
+frontmatter. This is accepted: the scope discipline above is unchanged, and those tools do not
+grant permission to run Bash, build, or commit.

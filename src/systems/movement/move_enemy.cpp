@@ -107,14 +107,16 @@ Coordinate pickWanderTile(Coordinate pos, const Room& room,
   return candidates[pick(services.movementRng)];
 }
 
-// refreshes the enemy's AI state (sentry/chase/search) based on whether the
-// player is currently visible.
-void transitionAIState(Enemy& enemy, bool inFoV, Coordinate playerPos)
+// refreshes the enemy's AI state (attack/chase/search/sentry) based on whether
+// the player is currently visible.
+void transitionAIState(Enemy& enemy, bool inFoV, Coordinate playerPos,
+                       const Room& room)
 {
   if (inFoV)
   {
     enemy.setLastKnownPlayerPos(playerPos);
     enemy.setChaseTurnsRemaining(enemy.getChaseMemoryDuration());
+    const Coordinate pos = enemy.getPosition();
     const int attackRange =
         std::min(enemy.getFOV().maxRadius(), enemy.getWeapon().range);
     if (isWithinRangeOfFootprint(
@@ -122,7 +124,7 @@ void transitionAIState(Enemy& enemy, bool inFoV, Coordinate playerPos)
             orientedSymbol(enemy.getSymbol(), enemy.getOrientation()),
             playerPos, attackRange))
     {
-      enemy.setLastDirection(directionTowards(enemy.getPosition(), playerPos));
+      enemy.setLastDirection(directionTowards(pos, playerPos));
       enemy.setAIState(AIState::Attack);
     }
     else
@@ -154,9 +156,9 @@ void transitionAIState(Enemy& enemy, bool inFoV, Coordinate playerPos)
 
 // decides the enemy's current movement target, if any, from its AI state.
 std::optional<Coordinate> planMove(Enemy& enemy, bool inFoV,
-                                   Coordinate playerPos)
+                                   Coordinate playerPos, const Room& room)
 {
-  transitionAIState(enemy, inFoV, playerPos);
+  transitionAIState(enemy, inFoV, playerPos, room);
   switch (enemy.getAIState())
   {
     case AIState::Chase:
@@ -197,7 +199,7 @@ bool advanceSingleCellEnemy(Enemy& enemy, const Player& player, Room& room,
 {
   const Coordinate playerPos = player.getPosition();
   const bool inFoV = enemy.inFOV(playerPos);
-  std::optional<Coordinate> target = planMove(enemy, inFoV, playerPos);
+  std::optional<Coordinate> target = planMove(enemy, inFoV, playerPos, room);
 
   if (enemy.getAIState() == AIState::Attack)
   {

@@ -69,7 +69,7 @@ nothing for a code reviewer to look at.
 
 If either is non-empty, dispatch the `reviewer` agent (`.claude/agents/reviewer.md`) via the
 `Agent` tool — it runs in the background; wait for its completion notification rather than
-blocking the turn or polling. It gives a read-only pass over the diff for structure, efficiency,
+blocking the turn or polling. Dispatch it without the `name` parameter so it stays a result-returning subagent rather than a teammate, which returns no result. It gives a read-only pass over the diff for structure, efficiency,
 long-term validity, and isolation of objects and behavior. Present its findings to the user
 directly as part of the `/check` output.
 

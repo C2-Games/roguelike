@@ -106,7 +106,7 @@ denies those edits outright. Run this first, every time.
    **Check the plan against architecture before presenting it.** Once the plan's tasks are drafted,
    if any of them touch `src/` or `include/`, dispatch the `architecture-checker` agent
    (`.claude/agents/architecture-checker.md`) with the plan's task list before calling
-   `ExitPlanMode`. It reads the plan against `ARCHITECTURE.md`'s six Coupling Rules and hands back
+   `ExitPlanMode`. Dispatch it without the `name` parameter so it stays a result-returning subagent rather than a teammate, which returns no result. It reads the plan against `ARCHITECTURE.md`'s six Coupling Rules and hands back
    any violation plus an architecture-preserving alternative — since `AskUserQuestion` is
    unavailable inside subagents, it hands the finding back rather than asking. If it reports a
    violation, ask the developer via `AskUserQuestion` which way to go: adopt the alternative,
