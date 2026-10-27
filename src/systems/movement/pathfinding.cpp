@@ -6,15 +6,10 @@
 #include "objects/room/room.h"
 #include "objects/tiles/tile_type.h"
 
-namespace
-{
-
 bool isBlocking(const Room& room, Coordinate pos)
 {
   return room.getTileType(pos) != TileType::Floor;
 }
-
-}  // namespace
 
 GoalMap computeGoalMap(const Room& room, Coordinate goal)
 {
