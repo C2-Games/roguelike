@@ -4,6 +4,9 @@
 -- then this file, no JSON parsing involved.
 
 INSERT INTO enemies (id, name, class, symbol) VALUES (1, 'goblin', 'base', 'G');
+-- debug_ogre: 3-wide x 1-tall footprint, for manually verifying #260's
+-- footprint-aware spawn placement (tight/overlapping spawn points).
+INSERT INTO enemies (id, name, class, symbol) VALUES (2, 'ogre', 'base', 'OOO');
 
 INSERT INTO weapons (id, name, symbol, ammo_symbol) VALUES (1, 'bow', '}', '.');
 INSERT INTO weapons (id, name, symbol, ammo_symbol) VALUES (2, 'fisticuff', '(', '*');
@@ -12,6 +15,7 @@ INSERT INTO levels (id, name, description, room_count, start_room_id, boss_room_
 
 INSERT INTO enemy_tiers (id, enemy_id, tier, health, damage_amount, damage_type, fov_x, fov_y, chase, speed, extra_drops) VALUES (1, 1, 1, 50, 10, 'base', 20, 10, 5, 10, NULL);
 INSERT INTO enemy_tiers (id, enemy_id, tier, health, damage_amount, damage_type, fov_x, fov_y, chase, speed, extra_drops) VALUES (2, 1, 2, 100, 10, 'poison', 20, 10, 5, 10, NULL);
+INSERT INTO enemy_tiers (id, enemy_id, tier, health, damage_amount, damage_type, fov_x, fov_y, chase, speed, extra_drops) VALUES (3, 2, 1, 200, 20, 'base', 20, 10, 5, 8, NULL);
 
 INSERT INTO weapon_tiers (id, weapon_id, tier, damage_amount, damage_type, damage_duration, speed, range, fire_rate) VALUES (1, 1, 1, 15, 'base', 0, 7, 20, 2);
 INSERT INTO weapon_tiers (id, weapon_id, tier, damage_amount, damage_type, damage_duration, speed, range, fire_rate) VALUES (2, 1, 2, 20, 'base', 0, 9, 25, 3);
@@ -45,6 +49,12 @@ INSERT INTO room_enemy_spawns (id, room_id, enemy_name, class, tier, range_min, 
 INSERT INTO room_enemy_spawns (id, room_id, enemy_name, class, tier, range_min, range_max) VALUES (8, 6, 'goblin', 'base', 1, 2, 5);
 INSERT INTO room_enemy_spawns (id, room_id, enemy_name, class, tier, range_min, range_max) VALUES (9, 6, 'goblin', 'base', 2, 1, 2);
 INSERT INTO room_enemy_spawns (id, room_id, enemy_name, class, tier, range_min, range_max) VALUES (10, 7, 'goblin', 'base', 1, 1, 3);
+-- debug_ogre fixtures for manually verifying #260 (temporary -- remove or
+-- keep once verification is done): room 1's two new adjacent E markers
+-- force an intra-batch footprint overlap; room 6's walled single-wide
+-- corridor E markers exercise the no-clear-footprint skip-and-log path.
+INSERT INTO room_enemy_spawns (id, room_id, enemy_name, class, tier, range_min, range_max) VALUES (11, 1, 'ogre', 'base', 1, 2, 2);
+INSERT INTO room_enemy_spawns (id, room_id, enemy_name, class, tier, range_min, range_max) VALUES (12, 6, 'ogre', 'base', 1, 2, 2);
 
 INSERT INTO room_loot_spawns (id, room_id, loot_name, class, tier, range_min, range_max) VALUES (1, 1, 'gold_pouch', 'currency', 1, 1, 3);
 INSERT INTO room_loot_spawns (id, room_id, loot_name, class, tier, range_min, range_max) VALUES (2, 2, 'gold_pouch', 'currency', 1, 4, 8);

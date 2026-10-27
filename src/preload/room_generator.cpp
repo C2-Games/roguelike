@@ -1,18 +1,79 @@
 #include "preload/room_generator.h"
 
 #include <algorithm>
+#include <cstdlib>
 #include <memory>
+#include <optional>
 #include <random>
+#include <set>
 
 #include "game/level_data.h"
 #include "game/logger.h"
 #include "game/services.h"
 #include "objects/entities/enemy.h"
+#include "objects/entities/entity_symbol.h"
 #include "objects/room/room.h"
 #include "preload/enemy_catalog.h"
 
 namespace
 {
+
+// a footprint origin paired with the full footprint found there, so callers
+// don't need to recompute footprintTiles for the winning candidate.
+struct SpawnOrigin
+{
+  Coordinate origin;
+  std::vector<Coordinate> footprint;
+};
+
+/**
+ * @brief Search a small radius around a desired spawn point for a fully
+ * clear, unclaimed footprint.
+ *
+ * @param room Room whose tile grid/occupancy is checked.
+ * @param desired The spawn table's original spawn point.
+ * @param symbol The spawning enemy's (always-Horizontal-authored, already
+ * rectangular) symbol grid.
+ * @param claimed Tiles already claimed earlier in this spawn batch (not yet
+ * reflected in `room`'s own occupancy, which is only toggled after the
+ * whole batch is placed).
+ * @return The first footprint origin found whose full footprint is Floor,
+ * unoccupied, and unclaimed, searching outward ring-by-ring from `desired`,
+ * paired with that footprint; `std::nullopt` if none is found within the
+ * search radius.
+ */
+std::optional<SpawnOrigin> findSpawnOrigin(const Room& room, Coordinate desired,
+                                           const EntitySymbol& symbol,
+                                           const std::set<Coordinate>& claimed)
+{
+  constexpr int SEARCH_RADIUS = 2;
+  for (int radius = 0; radius <= SEARCH_RADIUS; ++radius)
+  {
+    for (int dx = -radius; dx <= radius; ++dx)
+    {
+      for (int dy = -radius; dy <= radius; ++dy)
+      {
+        if (std::max(std::abs(dx), std::abs(dy)) != radius)
+        {
+          continue;  // only this ring -- closer candidates already tried.
+        }
+        const Coordinate candidate = desired + Coordinate(dx, dy);
+        const std::vector<Coordinate> footprint =
+            footprintTiles(candidate, symbol);
+        const bool clear = std::all_of(
+            footprint.begin(), footprint.end(), [&](Coordinate tile) {
+              return room.getTileType(tile) == TileType::Floor &&
+                     !room.isOccupied(tile) && !claimed.contains(tile);
+            });
+        if (clear)
+        {
+          return SpawnOrigin{candidate, footprint};
+        }
+      }
+    }
+  }
+  return std::nullopt;
+}
 
 // rolls a fresh set of enemies for a room from its spawn table.
 std::vector<std::unique_ptr<Enemy>> spawnEnemies(
@@ -24,6 +85,10 @@ std::vector<std::unique_ptr<Enemy>> spawnEnemies(
 
   std::vector<Coordinate> shuffledSpawns = enemySpawns;
   std::shuffle(shuffledSpawns.begin(), shuffledSpawns.end(), services.rng);
+
+  // room.isOccupied isn't populated until generate() finishes placing the
+  // whole batch, so intra-batch footprint overlap needs its own tracking.
+  std::set<Coordinate> claimed;
 
   std::size_t nextIdx = 0;
   for (const EnemySpawnConfig& entry : spawnTable)
@@ -58,10 +123,24 @@ std::vector<std::unique_ptr<Enemy>> spawnEnemies(
     for (int i = 0; i < count && nextIdx < shuffledSpawns.size();
          ++i, ++nextIdx)
     {
-      const Coordinate& pos = shuffledSpawns[nextIdx];
+      const Coordinate& desired = shuffledSpawns[nextIdx];
+      std::optional<SpawnOrigin> spawn =
+          findSpawnOrigin(room, desired, attrs->symbol, claimed);
+      if (!spawn.has_value())
+      {
+        LOG_ERR("Room " + std::to_string(room.getRoomID()) + ": '" +
+                entry.name +
+                "' found no clear footprint near spawn point; "
+                "skipping");
+        continue;
+      }
+      for (Coordinate tile : spawn->footprint)
+      {
+        claimed.insert(tile);
+      }
       enemies.push_back(std::make_unique<Enemy>(
-          pos, attrs->fov->clone(), attrs->symbol, attrs->health, attrs->speed,
-          attrs->attackDamage, attrs->chaseMemoryDuration));
+          spawn->origin, attrs->fov->clone(), attrs->symbol, attrs->health,
+          attrs->speed, attrs->attackDamage, attrs->chaseMemoryDuration));
     }
   }
 
@@ -86,7 +165,11 @@ RoomObjects generate(Room& room, const std::vector<Coordinate>& enemySpawns,
       spawnEnemies(room, enemySpawns, spawnTable, catalog, services);
   for (const auto& enemy : objects.enemies)
   {
-    room.toggleOccupied(enemy->getPosition(), true);
+    for (Coordinate tile :
+         footprintTiles(enemy->getPosition(), enemy->getSymbol()))
+    {
+      room.toggleOccupied(tile, true);
+    }
   }
   return objects;
 }

@@ -42,7 +42,7 @@ EntitySymbol decodeSymbol(const std::string& encoded, const std::string& name)
     }
     rowStart = rowEnd + 1;
   }
-  return symbol;
+  return padToRectangle(symbol);
 }
 
 }  // namespace
