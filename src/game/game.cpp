@@ -10,6 +10,7 @@
 #include "io/ui_manager.h"
 #include "objects/direction.h"
 #include "objects/entities/enemy.h"
+#include "objects/entities/entity_symbol.h"
 #include "objects/weapons/projectile.h"
 #include "preload/level_loader.h"
 #include "preload/room_loader.h"
@@ -239,7 +240,8 @@ void Game::update()
   // move enemies toward player or attack.
   for (auto& enemy : objects.enemies)
   {
-    if (movement::advanceEnemy(*enemy, player_, room, goalMapCache_, services_))
+    if (movement::advanceEnemy(*enemy, player_, room, goalMapCache_,
+                               footprintGoalMapCache_, services_))
     {
       auto projectile = combat::spawnProjectile(*enemy, fps_);
       if (projectile != nullptr)
@@ -324,9 +326,9 @@ RenderState Game::buildRenderState() const
     const Coordinate& position = enemy->getPosition();
     if (enemy->isAlive() && room.isVisible(position))
     {
-      state.entity.enemies.push_back(EntityView{position, enemy->getSymbol(),
-                                                enemy->hasHitFlash(),
-                                                ColorPair::EntityHit});
+      state.entity.enemies.push_back(EntityView{
+          position, orientedSymbol(enemy->getSymbol(), enemy->getOrientation()),
+          enemy->hasHitFlash(), ColorPair::EntityHit});
     }
   }
 

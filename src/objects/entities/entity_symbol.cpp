@@ -1,6 +1,7 @@
 #include "objects/entities/entity_symbol.h"
 
 #include <algorithm>
+#include <cstdlib>
 #include <numeric>
 
 #include "objects/direction.h"
@@ -123,4 +124,14 @@ bool isAdjacentToFootprint(Coordinate origin, const EntitySymbol& oriented,
       ALL_DIRECTIONS.begin(), ALL_DIRECTIONS.end(), [&](Direction direction) {
         return occupies(origin, oriented, target + toOffset(direction));
       });
+}
+
+bool isWithinRangeOfFootprint(Coordinate origin, const EntitySymbol& oriented,
+                              Coordinate target, int range)
+{
+  const std::vector<Coordinate> tiles = footprintTiles(origin, oriented);
+  return std::any_of(tiles.begin(), tiles.end(), [&](Coordinate tile) {
+    return std::max(std::abs(tile.x - target.x), std::abs(tile.y - target.y)) <=
+           range;
+  });
 }

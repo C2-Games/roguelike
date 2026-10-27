@@ -65,6 +65,7 @@ class Game
   LevelData levelData_;
   int currentRoomID_;
   GoalMapCache goalMapCache_;
+  FootprintGoalMapCache footprintGoalMapCache_;
 
   GameState state_ = GameState::Play;
   UIManager& uiManager_;

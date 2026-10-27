@@ -5,6 +5,7 @@
 
 #include "objects/entities/enemy.h"
 #include "objects/entities/entity.h"
+#include "objects/entities/entity_symbol.h"
 #include "objects/room/room.h"
 #include "objects/tiles/tile_type.h"
 
@@ -61,16 +62,22 @@ void applyTerrainDamage(Entity& entity, const Room& room)
 
 void reapDead(Room& room, std::vector<std::unique_ptr<Enemy>>& active)
 {
-  active.erase(std::remove_if(active.begin(), active.end(),
-                              [&room](const std::unique_ptr<Enemy>& enemy) {
-                                if (enemy->isAlive())
-                                {
-                                  return false;
-                                }
-                                room.toggleOccupied(enemy->getPosition(),
-                                                    false);
-                                return true;
-                              }),
-               active.end());
+  active.erase(
+      std::remove_if(active.begin(), active.end(),
+                     [&room](const std::unique_ptr<Enemy>& enemy) {
+                       if (enemy->isAlive())
+                       {
+                         return false;
+                       }
+                       for (Coordinate tile : footprintTiles(
+                                enemy->getPosition(),
+                                orientedSymbol(enemy->getSymbol(),
+                                               enemy->getOrientation())))
+                       {
+                         room.toggleOccupied(tile, false);
+                       }
+                       return true;
+                     }),
+      active.end());
 }
 }  // namespace combat

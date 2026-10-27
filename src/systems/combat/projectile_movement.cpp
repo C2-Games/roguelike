@@ -6,6 +6,7 @@
 #include "objects/direction.h"
 #include "objects/entities/enemy.h"
 #include "objects/entities/entity.h"
+#include "objects/entities/entity_symbol.h"
 #include "objects/entities/player.h"
 #include "objects/room/room.h"
 #include "objects/weapons/projectile.h"
@@ -41,7 +42,11 @@ void advanceProjectile(Projectile& projectile, const Room& room,
       auto hit = std::find_if(
           enemies.begin(), enemies.end(),
           [&candidate](const std::unique_ptr<Enemy>& enemy) {
-            return enemy->isAlive() && enemy->getPosition() == candidate;
+            return enemy->isAlive() &&
+                   occupies(enemy->getPosition(),
+                            orientedSymbol(enemy->getSymbol(),
+                                           enemy->getOrientation()),
+                            candidate);
           });
       Entity* target = hit != enemies.end() ? hit->get() : nullptr;
       if (target == nullptr && player.isAlive() &&

@@ -129,4 +129,17 @@ bool occupies(Coordinate origin, const EntitySymbol& oriented,
 bool isAdjacentToFootprint(Coordinate origin, const EntitySymbol& oriented,
                            Coordinate target);
 
+/**
+ * @brief Check whether any tile of a footprint is within Chebyshev range of
+ * a target tile.
+ *
+ * @param origin Absolute position of the grid's top-left corner.
+ * @param oriented Oriented symbol grid to check.
+ * @param target Tile to measure range against.
+ * @param range Maximum Chebyshev (king-move) distance to allow.
+ * @return True if at least one footprint tile is within `range` of `target`.
+ */
+bool isWithinRangeOfFootprint(Coordinate origin, const EntitySymbol& oriented,
+                              Coordinate target, int range);
+
 #endif
